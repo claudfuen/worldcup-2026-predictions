@@ -115,8 +115,10 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
         const cl = clinch[r.code];
         // Mathematically eliminated: out of top-2 AND best-3rd path is impossible
         // (>=8 other groups guarantee a 3rd-placed team with more points than this team can reach).
-        let eliminated = false;
-        if (cl.eliminatedTop2) {
+        // Eliminated if it can never finish top-3 (always 4th -> can't even be a best-third),
+        // or it's out of top-2 AND >=8 other groups guarantee a better third than it can reach.
+        let eliminated = cl.eliminatedTop3;
+        if (!eliminated && cl.eliminatedTop2) {
           const maxThird = maxReachablePoints(r.code, groupMatches[g]);
           const betterGroups = GROUPS.filter((og) => og !== g && minThirdByGroup[og] > maxThird).length;
           eliminated = betterGroups >= 8;

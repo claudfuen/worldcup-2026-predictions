@@ -10,6 +10,7 @@ export interface TeamClinch {
   second: boolean; // clinched exactly 2nd (guaranteed top-2 and can no longer finish 1st)
   top2: boolean; // clinched top-2 (position may still be open)
   eliminatedTop2: boolean;
+  eliminatedTop3: boolean; // can never finish top-3 (always 4th) => can never advance, even as a best-third
   guaranteedTop3: boolean;
 }
 export type GroupClinch = Record<string, TeamClinch>;
@@ -115,14 +116,16 @@ export function computeClinch(codes: string[], matches: GroupMatch[], ratings: R
 
   const canTop2 = new Set<string>(), canMiss = new Set<string>();
   const canWin = new Set<string>(), canNotWin = new Set<string>();
-  const canBe4th = new Set<string>();
+  const canBe4th = new Set<string>(), canTop3 = new Set<string>();
 
   enumerate(remaining, cap, (filled) => {
     const rows = rankGroup(codes, [...played, ...filled], ratings);
     const order = rows.map((x) => x.code);
     const top2 = new Set(order.slice(0, 2));
+    const top3 = new Set(order.slice(0, 3));
     for (const c of codes) {
       if (top2.has(c)) canTop2.add(c); else canMiss.add(c);
+      if (top3.has(c)) canTop3.add(c);
       if (order[0] === c) canWin.add(c); else canNotWin.add(c);
     }
     if (order[3]) canBe4th.add(order[3]);
@@ -141,6 +144,7 @@ export function computeClinch(codes: string[], matches: GroupMatch[], ratings: R
       second: top2 && !canWin.has(c), // guaranteed top-2 and can never finish 1st => clinched exactly 2nd
       top2,
       eliminatedTop2: !canTop2.has(c),
+      eliminatedTop3: !canTop3.has(c),
       guaranteedTop3: !canBe4th.has(c),
     };
   }

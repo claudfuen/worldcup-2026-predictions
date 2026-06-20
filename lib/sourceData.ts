@@ -15,7 +15,7 @@ export interface SourceData {
     decided: boolean;
     rows: {
       code: string; name: string; played: number; w: number; d: number; l: number; gf: number; ga: number; gd: number; pts: number;
-      clinch: { winner: boolean; second: boolean; top2: boolean; eliminatedTop2: boolean; guaranteedTop3: boolean };
+      clinch: { winner: boolean; second: boolean; top2: boolean; eliminatedTop2: boolean; eliminatedTop3: boolean; guaranteedTop3: boolean };
     }[];
   }[];
 }

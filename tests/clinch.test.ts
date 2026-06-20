@@ -27,6 +27,25 @@ describe("computeClinch — real Group B (the Canada/Switzerland red-team case)"
   });
 });
 
+describe("computeClinch — bottom team that can never finish top-3 (Haiti-style)", () => {
+  // Group C live: BRA 4(+3), MAR 4(+1), SCO 3, HAI 0(-4). Remaining: SCO-BRA, HAI-MAR.
+  // Haiti max 3 pts; BRA/MAR have 4; SCO beat HAI head-to-head -> HAI can never finish top-3.
+  const matches: GroupMatch[] = [
+    gm("BRA", "MAR", 2, 1), gm("SCO", "HAI", 2, 0), gm("BRA", "HAI", 1, 0), gm("MAR", "SCO", 1, 1),
+    gm("SCO", "BRA"), gm("HAI", "MAR"),
+  ];
+  const R2 = { BRA: 2208, MAR: 2073, SCO: 1876, HAI: 1691 };
+  const c = computeClinch(["BRA", "MAR", "SCO", "HAI"], matches, R2);
+  it("flags Haiti as eliminated from top-3 (can never advance)", () => {
+    expect(c.HAI.eliminatedTop3).toBe(true);
+    expect(c.HAI.eliminatedTop2).toBe(true);
+  });
+  it("does not over-eliminate the contenders", () => {
+    expect(c.BRA.eliminatedTop3).toBe(false);
+    expect(c.SCO.eliminatedTop3).toBe(false);
+  });
+});
+
 describe("computeClinch — fully decided group", () => {
   // Round robin: A beats all, B beats C&D, C beats D. A=9 B=6 C=3 D=0.
   const matches: GroupMatch[] = [
