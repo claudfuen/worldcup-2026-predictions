@@ -10,6 +10,14 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
+// Standard-normal sample (Box-Muller) from a uniform source. Used to model rating uncertainty.
+export function gaussian(rand: () => number): number {
+  let u = 0, v = 0;
+  while (u === 0) u = rand();
+  while (v === 0) v = rand();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
 // Sample a Poisson random variable via Knuth's algorithm using a uniform source.
 export function samplePoisson(lambda: number, rand: () => number): number {
   const L = Math.exp(-lambda);

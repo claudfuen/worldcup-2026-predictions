@@ -1,8 +1,10 @@
 // Build the Round of 32 from group results + third-place assignment, then simulate the bracket to a champion.
 // Knockout advancement uses Elo win-expectancy (handles draws -> ET/penalties without modeling them explicitly).
 import { KNOCKOUT } from "../data/bracket";
+import { SCHEDULE_BY_MATCH } from "../data/schedule";
 import type { Ratings } from "./types";
-import { expectedScore } from "./elo";
+import { koAdvanceProb } from "./poisson";
+import { hostEloBoost } from "./hosts";
 
 export interface GroupOutcome {
   // group letter -> [1st code, 2nd code, 3rd code, 4th code]
@@ -43,10 +45,10 @@ export function buildR32(groups: GroupOutcome, slotToTeam: Record<string, string
   return r32;
 }
 
-function playKO(homeCode: string, awayCode: string, ratings: Ratings, rand: () => number): string {
-  // Neutral venue; advancement probability = Elo win expectancy (win + half the draws resolved in ET/pens).
-  const pHome = expectedScore((ratings[homeCode] ?? 1500) - (ratings[awayCode] ?? 1500));
-  return rand() < pHome ? homeCode : awayCode;
+function playKO(homeCode: string, awayCode: string, ratings: Ratings, rand: () => number, venue: string): string {
+  // Advancement = regulation + extra time + penalty coin-flip, with host advantage if applicable.
+  const diff = (ratings[homeCode] ?? 1500) - (ratings[awayCode] ?? 1500) + hostEloBoost(homeCode, venue) - hostEloBoost(awayCode, venue);
+  return rand() < koAdvanceProb(diff) ? homeCode : awayCode;
 }
 
 export function simulateKnockout(
@@ -84,7 +86,7 @@ export function simulateKnockout(
     if (m.round === "F") { reached.F.add(home); reached.F.add(away); }
     lineups[m.match] = [home, away];
     if (m.round === "3P") continue; // third-place playoff doesn't affect our tallies
-    const w = playKO(home, away, ratings, rand);
+    const w = playKO(home, away, ratings, rand, SCHEDULE_BY_MATCH[m.match]?.venue ?? "");
     winners[m.match] = w;
     losers[m.match] = w === home ? away : home;
   }

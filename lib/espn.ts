@@ -2,7 +2,13 @@
 import { TEAM_BY_ESPN, TEAMS } from "./data/teams";
 import { updateElo, kWeight } from "./sim/elo";
 import { roundRobin } from "./sim/simulate";
+import { SCHEDULE } from "./data/schedule";
 import type { GroupMatch, Ratings } from "./sim/types";
+
+// venue per group fixture (by sorted team pair), from the canonical schedule
+const VENUE_BY_PAIR = new Map<string, string>(
+  SCHEDULE.filter((m) => m.round === "GROUP" && m.home && m.away).map((m) => [[m.home!, m.away!].sort().join("-"), m.venue]),
+);
 
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
 const GROUP_STAGE_END = "2026-06-27";
@@ -68,12 +74,14 @@ export function buildGroupMatches(results: FetchedMatch[]): Record<string, Group
   for (const g of "ABCDEFGHIJKL") {
     const codes = TEAMS.filter((t) => t.group === g).map((t) => t.code);
     groups[g] = roundRobin(g, codes).map((fixture) => {
+      const venue = VENUE_BY_PAIR.get([fixture.home, fixture.away].sort().join("-"));
       const r = byKey.get([fixture.home, fixture.away].sort().join("-"));
-      if (!r) return fixture;
+      if (!r) return { ...fixture, venue };
       // orient the stored result to this fixture's home/away
       const sameOrient = r.homeCode === fixture.home;
       return {
         ...fixture,
+        venue,
         played: true,
         homeGoals: sameOrient ? r.homeGoals : r.awayGoals,
         awayGoals: sameOrient ? r.awayGoals : r.homeGoals,

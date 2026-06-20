@@ -5,6 +5,7 @@ export interface GroupMatch {
   played: boolean;
   homeGoals?: number;
   awayGoals?: number;
+  venue?: string; // for host-advantage in simulation
 }
 
 export interface TeamRow {

@@ -4,8 +4,12 @@ import { rankGroup } from "./standings";
 import { selectAndAssignThirds, type ThirdTeam } from "./thirdPlace";
 import { buildR32, simulateKnockout, type GroupOutcome } from "./knockout";
 import { sampleScoreline } from "./poisson";
-import { mulberry32 } from "./rng";
+import { mulberry32, gaussian } from "./rng";
+import { hostEloBoost } from "./hosts";
 import { GROUPS } from "../data/teams";
+
+// Per-iteration rating uncertainty (Elo treated as an estimate, not exact) — fattens tails / curbs over-concentration.
+const RATING_SIGMA = 65;
 
 export interface TeamProb {
   code: string;
@@ -60,13 +64,18 @@ export function runMonteCarlo(
     }
 
   for (let it = 0; it < iterations; it++) {
+    // This run's perturbed strengths (rating uncertainty). Real ratings stay the FIFA-ranking tiebreak proxy.
+    const pr: Record<string, number> = {};
+    for (const c in teams) pr[c] = (ratings[c] ?? 1500) + gaussian(rand) * RATING_SIGMA;
+
     const groupOutcome: GroupOutcome = {};
     const thirds: ThirdTeam[] = [];
     for (const g of GROUPS) {
-      // realize this group's matches (played -> actual; unplayed -> sampled neutral scoreline)
+      // realize this group's matches (played -> actual; unplayed -> sampled scoreline w/ host advantage)
       const realized = groupMatches[g].map((m) => {
         if (m.played) return m;
-        const [hg, ag] = sampleScoreline((ratings[m.home] ?? 1500) - (ratings[m.away] ?? 1500), rand);
+        const diff = pr[m.home] - pr[m.away] + hostEloBoost(m.home, m.venue ?? "") - hostEloBoost(m.away, m.venue ?? "");
+        const [hg, ag] = sampleScoreline(diff, rand);
         return { ...m, played: true, homeGoals: hg, awayGoals: ag };
       });
       const codes = groupMatches[g].reduce<string[]>((acc, m) => {
@@ -94,7 +103,7 @@ export function runMonteCarlo(
       r32Opp[a][h] = (r32Opp[a][h] ?? 0) + 1;
     }
 
-    const ko = simulateKnockout(r32, ratings, rand);
+    const ko = simulateKnockout(r32, pr, rand);
     for (const [mn, [h, a]] of Object.entries(ko.lineups)) {
       const m = Number(mn);
       if (!matchAgg[m]) matchAgg[m] = { home: {}, away: {} };
