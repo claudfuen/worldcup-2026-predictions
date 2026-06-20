@@ -26,6 +26,8 @@ export interface SimResult {
   teams: Record<string, TeamProb>;
   // per team: distribution of Round-of-32 opponents (probability)
   r32Opponents: Record<string, Record<string, number>>;
+  // per knockout match number: probability each team fills the home/away slot
+  matchProjection: Record<number, { home: Record<string, number>; away: Record<string, number> }>;
 }
 
 // Round-robin fixtures (6 per group) from a list of 4 team codes.
@@ -45,6 +47,7 @@ export function runMonteCarlo(
   const rand = mulberry32(seed);
   const teams: Record<string, TeamProb> = {};
   const r32Opp: Record<string, Record<string, number>> = {};
+  const matchAgg: Record<number, { home: Record<string, number>; away: Record<string, number> }> = {};
   for (const g of GROUPS)
     for (const m of groupMatches[g]) for (const c of [m.home, m.away]) {
       if (!teams[c]) {
@@ -89,6 +92,12 @@ export function runMonteCarlo(
     }
 
     const ko = simulateKnockout(r32, ratings, rand);
+    for (const [mn, [h, a]] of Object.entries(ko.lineups)) {
+      const m = Number(mn);
+      if (!matchAgg[m]) matchAgg[m] = { home: {}, away: {} };
+      matchAgg[m].home[h] = (matchAgg[m].home[h] ?? 0) + 1;
+      matchAgg[m].away[a] = (matchAgg[m].away[a] ?? 0) + 1;
+    }
     for (const c of ko.reached.R16) teams[c].r16++;
     for (const c of ko.reached.QF) teams[c].qf++;
     for (const c of ko.reached.SF) teams[c].sf++;
@@ -108,5 +117,12 @@ export function runMonteCarlo(
     r32Opponents[c] = {};
     for (const opp in r32Opp[c]) r32Opponents[c][opp] = r32Opp[c][opp] / N;
   }
-  return { iterations: N, teams, r32Opponents };
+  const matchProjection: Record<number, { home: Record<string, number>; away: Record<string, number> }> = {};
+  for (const mn in matchAgg) {
+    const m = Number(mn);
+    matchProjection[m] = { home: {}, away: {} };
+    for (const c in matchAgg[m].home) matchProjection[m].home[c] = matchAgg[m].home[c] / N;
+    for (const c in matchAgg[m].away) matchProjection[m].away[c] = matchAgg[m].away[c] / N;
+  }
+  return { iterations: N, teams, r32Opponents, matchProjection };
 }

@@ -27,6 +27,7 @@ export interface KnockoutResult {
   finalists: string[];
   reached: Record<string, Set<string>>; // round label -> set of team codes that reached it
   r32: Record<number, [string, string]>; // match -> [home, away] codes
+  lineups: Record<number, [string, string]>; // every knockout match -> [home, away] this iteration
 }
 
 export function buildR32(groups: GroupOutcome, slotToTeam: Record<string, string>): Record<number, [string, string]> {
@@ -55,6 +56,7 @@ export function simulateKnockout(
 ): KnockoutResult {
   const winners: Record<number, string> = {};
   const losers: Record<number, string> = {};
+  const lineups: Record<number, [string, string]> = {};
   const reached: Record<string, Set<string>> = { R32: new Set(), R16: new Set(), QF: new Set(), SF: new Set(), F: new Set() };
 
   const resolveRef = (ref: string): string => {
@@ -80,6 +82,7 @@ export function simulateKnockout(
       reached[m.round].add(home); reached[m.round].add(away);
     }
     if (m.round === "F") { reached.F.add(home); reached.F.add(away); }
+    lineups[m.match] = [home, away];
     if (m.round === "3P") continue; // third-place playoff doesn't affect our tallies
     const w = playKO(home, away, ratings, rand);
     winners[m.match] = w;
@@ -93,5 +96,5 @@ export function simulateKnockout(
   const finalists = [champion, runnerUp];
   const semifinalists = [...new Set(sfMatches.flatMap((mn) => [winners[mn], losers[mn]]))];
 
-  return { winners, losers, champion, runnerUp, semifinalists, finalists, reached, r32 };
+  return { winners, losers, champion, runnerUp, semifinalists, finalists, reached, r32, lineups };
 }
