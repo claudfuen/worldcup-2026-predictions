@@ -51,7 +51,7 @@ export default async function MatchesPage() {
 
 function SignedOut() {
   return (
-    <main className="mx-auto max-w-md px-4 py-16 text-center sm:px-6">
+    <main className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-4 py-12 text-center sm:px-6">
       <div className="text-3xl">🎟️</div>
       <h1 className="mt-3 text-2xl font-semibold tracking-tight">My matches</h1>
       <p className="text-muted-foreground mt-2 text-sm">
