@@ -136,7 +136,7 @@ function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTi
               : "border-border"
       }`}
     >
-      <div className={`flex items-center justify-between gap-1 px-2.5 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "pt-1.5 text-[10px]" : "px-2 pt-1 text-[9px]"}`}>
+      <div className={`flex items-center justify-between gap-1 px-2.5 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "pt-2 pb-1 text-[10px]" : "px-2 pt-1.5 pb-1 text-[9px]"}`}>
         <span className="truncate">{final ? "🏆 Final" : `M${m.match}`} · {etDay(m.utc)} · {m.city}</span>
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
       </div>
