@@ -2,7 +2,7 @@
 // the outcome across EVERY possible remaining scoreline, under the real 2026 FIFA tiebreakers.
 // Conservative: any tie unresolved through overall goals-for (i.e. decided only by fair-play / FIFA ranking)
 // is treated as NOT clinched, so we never over-claim certainty.
-import { rankGroup } from "./standings";
+import { rankGroup, h2hKey, cmpTuple } from "./standings";
 import type { GroupMatch, Ratings } from "./types";
 
 export interface TeamClinch {
@@ -119,7 +119,8 @@ export function computeClinch(codes: string[], matches: GroupMatch[], ratings: R
   const canBe4th = new Set<string>(), canTop3 = new Set<string>();
 
   enumerate(remaining, cap, (filled) => {
-    const rows = rankGroup(codes, [...played, ...filled], ratings);
+    const all = [...played, ...filled];
+    const rows = rankGroup(codes, all, ratings);
     const order = rows.map((x) => x.code);
     const top2 = new Set(order.slice(0, 2));
     const top3 = new Set(order.slice(0, 3));
@@ -129,11 +130,18 @@ export function computeClinch(codes: string[], matches: GroupMatch[], ratings: R
       if (order[0] === c) canWin.add(c); else canNotWin.add(c);
     }
     if (order[3]) canBe4th.add(order[3]);
-    // Boundary tie unresolved through GF -> the 2nd-placed team isn't *safely* top-2 (fallback decided it).
-    const s = rows[1], t = rows[2];
-    if (s && t && s.pts === t.pts && s.gd === t.gd && s.gf === t.gf) canMiss.add(s.code);
-    const f = rows[0];
-    if (f && s && f.pts === s.pts && f.gd === s.gd && f.gf === s.gf) canNotWin.add(f.code);
+    // Two adjacent teams are "separated by a TRUSTED criterion" iff points / head-to-head / overall GD / GF
+    // distinguishes them. Only if ALL of those tie (i.e. the fallback fair-play/FIFA-ranking decided it) do we
+    // treat the boundary as unresolved and refuse to claim a clinch. (Earlier bug: ignored head-to-head.)
+    const trustedSep = (a: (typeof rows)[number], b: (typeof rows)[number]) => {
+      if (a.pts !== b.pts) return true;
+      const tied = rows.filter((r) => r.pts === a.pts).map((r) => r.code);
+      if (cmpTuple(h2hKey(a.code, tied, all), h2hKey(b.code, tied, all)) !== 0) return true;
+      return a.gd !== b.gd || a.gf !== b.gf;
+    };
+    const f = rows[0], s = rows[1], t = rows[2];
+    if (f && s && !trustedSep(f, s)) canNotWin.add(f.code); // 1st not safely clinched
+    if (s && t && !trustedSep(s, t)) canMiss.add(s.code); // 2nd not safely clinched
   });
 
   const out: GroupClinch = {};

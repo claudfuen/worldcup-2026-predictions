@@ -47,6 +47,24 @@ describe("computeClinch — bottom team that can never finish top-3 (Haiti-style
   });
 });
 
+describe("computeClinch — winner clinched via head-to-head (Mexico-style)", () => {
+  // Group A: MEX 6 (beat RSA, beat KOR 1-0), KOR 3, CZE 1, RSA 1. Remaining: CZE-MEX, RSA-KOR.
+  // Only KOR can reach 6; MEX beat KOR head-to-head, so MEX is mathematically 1st even if it loses.
+  const matches: GroupMatch[] = [
+    gm("MEX", "RSA", 2, 0), gm("KOR", "CZE", 2, 1), gm("CZE", "RSA", 1, 1), gm("MEX", "KOR", 1, 0),
+    gm("CZE", "MEX"), gm("RSA", "KOR"),
+  ];
+  const RA = { MEX: 2050, KOR: 1972, CZE: 1827, RSA: 1734 };
+  const c = computeClinch(["MEX", "KOR", "CZE", "RSA"], matches, RA);
+  it("flags Mexico as clinched group winner (head-to-head decides the 6-6 tie)", () => {
+    expect(c.MEX.winner).toBe(true);
+    expect(c.MEX.top2).toBe(true);
+  });
+  it("does not falsely clinch Korea as winner", () => {
+    expect(c.KOR.winner).toBe(false);
+  });
+});
+
 describe("computeClinch — fully decided group", () => {
   // Round robin: A beats all, B beats C&D, C beats D. A=9 B=6 C=3 D=0.
   const matches: GroupMatch[] = [

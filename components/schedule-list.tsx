@@ -15,16 +15,25 @@ const FILTERS = [
   { key: "KO", label: "Knockout" },
   { key: "mine", label: "🎟️ Mine" },
 ];
+const TIME_FILTERS = [
+  { key: "upcoming", label: "Today & later" },
+  { key: "past", label: "Past" },
+  { key: "all", label: "All dates" },
+];
 
 export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
   const [filter, setFilter] = useState("all");
+  const [time, setTime] = useState("upcoming");
   const tickets = new Set(MY_MATCH_NUMBERS);
+  const today = etDayKey(new Date().toISOString());
 
   const shown = matches.filter((m) => {
-    if (filter === "all") return true;
-    if (filter === "GROUP") return m.round === "GROUP";
-    if (filter === "KO") return m.round !== "GROUP";
-    if (filter === "mine") return tickets.has(m.match);
+    if (filter === "GROUP" && m.round !== "GROUP") return false;
+    if (filter === "KO" && m.round === "GROUP") return false;
+    if (filter === "mine" && !tickets.has(m.match)) return false;
+    const day = etDayKey(m.utc);
+    if (time === "upcoming" && day < today) return false;
+    if (time === "past" && day >= today) return false;
     return true;
   });
 
@@ -39,7 +48,7 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap gap-1.5">
+      <div className="mb-3 flex flex-wrap gap-1.5">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -52,6 +61,20 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
           </button>
         ))}
       </div>
+      <div className="mb-5 flex flex-wrap gap-1.5">
+        {TIME_FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setTime(f.key)}
+            className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+              time === f.key ? "border-primary/60 text-primary bg-primary/10 font-medium" : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+      {days.length === 0 && <p className="text-muted-foreground text-sm">No matches for this filter.</p>}
       <div className="space-y-6">
         {days.map((d) => (
           <div key={d.key}>

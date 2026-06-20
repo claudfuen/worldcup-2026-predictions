@@ -29,7 +29,7 @@ export function computeRows(teamCodes: string[], matches: GroupMatch[]): Record<
 }
 
 // Head-to-head mini-table among `codes`, counting only played matches between those teams.
-function h2hKey(code: string, codes: string[], matches: GroupMatch[]): [number, number, number] {
+export function h2hKey(code: string, codes: string[], matches: GroupMatch[]): [number, number, number] {
   const set = new Set(codes);
   let pts = 0, gd = 0, gf = 0;
   for (const m of matches) {
@@ -46,7 +46,7 @@ function h2hKey(code: string, codes: string[], matches: GroupMatch[]): [number, 
   return [pts, gd, gf];
 }
 
-function cmpTuple(a: number[], b: number[]): number {
+export function cmpTuple(a: number[], b: number[]): number {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return b[i] - a[i];
   return 0;
 }

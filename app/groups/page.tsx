@@ -24,12 +24,13 @@ export default async function GroupsPage() {
         ))}
       </div>
       <Legend />
-      <ThirdPlaceRace entries={data.thirdPlaceRace} />
+      <ThirdPlaceRace entries={data.thirdPlaceRace ?? []} />
     </main>
   );
 }
 
 function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
+  if (!entries.length) return null;
   return (
     <section className="mt-10">
       <h2 className="text-lg font-semibold tracking-tight">Third-place race</h2>
