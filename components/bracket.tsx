@@ -28,7 +28,7 @@ export function Bracket({ matches, highlightCode }: { matches: MatchInfo[]; high
               {ORDER[round].map((mn) => {
                 const m = byMatch.get(mn);
                 if (!m) return null;
-                return <Node key={mn} m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} />;
+                return <Node key={mn} m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} firstCol={round === "R32"} lastCol={round === "FINAL"} />;
               })}
             </div>
           </div>
@@ -38,16 +38,18 @@ export function Bracket({ matches, highlightCode }: { matches: MatchInfo[]; high
   );
 }
 
-function Node({ m, hasTicket, highlightCode }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string }) {
+function Node({ m, hasTicket, highlightCode, firstCol, lastCol }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string; firstCol?: boolean; lastCol?: boolean }) {
   const hi =
     highlightCode &&
     [m.home, m.away, m.projHome?.[0]?.code, m.projAway?.[0]?.code].includes(highlightCode);
   return (
     <div
-      className={`bg-card rounded-lg border text-xs ${
+      className={`bg-card relative rounded-lg border text-xs ${
         hi ? "border-primary/60 ring-primary/20 ring-1" : hasTicket ? "border-amber-500/50" : "border-border"
       }`}
     >
+      {!lastCol && <span className="bg-border/70 absolute top-1/2 left-full h-px w-1.5" aria-hidden />}
+      {!firstCol && <span className="bg-border/70 absolute top-1/2 right-full h-px w-1.5" aria-hidden />}
       <div className="text-muted-foreground flex items-center justify-between gap-1 px-2 pt-1 text-[9px]">
         <span className="truncate">M{m.match} · {etDay(m.utc)} · {m.city}</span>
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
