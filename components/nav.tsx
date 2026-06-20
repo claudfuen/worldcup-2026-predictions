@@ -19,7 +19,7 @@ export function Nav() {
       <div className="mx-auto flex max-w-6xl items-center gap-1 px-4 sm:px-6">
         <Link href="/" className="mr-3 flex shrink-0 items-center gap-2 py-3">
           <span className="text-base">🏆</span>
-          <span className="hidden text-sm font-semibold tracking-tight sm:inline">WC26 Oracle</span>
+          <span className="font-display hidden text-sm font-semibold tracking-tight sm:inline">WC26 Oracle</span>
         </Link>
         <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto">
           {LINKS.map((l) => {
