@@ -35,7 +35,7 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
     <section className="mt-10">
       <h2 className="text-lg font-semibold tracking-tight">Third-place race</h2>
       <p className="text-muted-foreground mt-1 mb-3 text-sm">
-        The <span className="text-foreground">8 best</span> of the 12 third-placed teams also reach the Round of 32,
+        The <span className="text-foreground">8 best</span>{" "}of the 12 third-placed teams also reach the Round of 32,
         ranked across groups by points → goal difference → goals scored. Each qualifier is slotted to a specific group
         winner by FIFA&apos;s fixed Annex C table (shown as the R32 match it feeds).
       </p>

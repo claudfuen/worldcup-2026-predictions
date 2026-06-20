@@ -28,4 +28,5 @@ export async function kvGetJSON<T>(key: string): Promise<T | null> {
 export const KV_CONFIGURED = Boolean(URL && TOKEN);
 
 // Bump when the payload shape changes so stale cached data is ignored.
-export const PRED_KEY = "predictions:v3";
+// v4: removed per-user `myMatches` from the shared payload (now stored per-user in Postgres).
+export const PRED_KEY = "predictions:v4";

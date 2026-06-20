@@ -1,8 +1,8 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { pct, etDay } from "@/lib/format";
-import { MY_MATCH_NUMBERS } from "@/lib/data/tickets";
 
 // Column orderings chosen so each match's two feeders are vertically adjacent (top half, then bottom half).
 const ORDER: Record<string, number[]> = {
@@ -12,26 +12,59 @@ const ORDER: Record<string, number[]> = {
   SF: [101, 102],
   FINAL: [104],
 };
+const ROUNDS = ["R32", "R16", "QF", "SF", "FINAL"] as const;
 const ROUND_LABEL: Record<string, string> = { R32: "Round of 32", R16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", FINAL: "Final" };
 
-export function Bracket({ matches, highlightCode }: { matches: MatchInfo[]; highlightCode?: string }) {
+export function Bracket({
+  matches,
+  myMatchNumbers = [],
+  highlightCode,
+}: {
+  matches: MatchInfo[];
+  myMatchNumbers?: number[];
+  highlightCode?: string;
+}) {
   const byMatch = new Map(matches.map((m) => [m.match, m]));
-  const tickets = new Set(MY_MATCH_NUMBERS);
+  const tickets = new Set(myMatchNumbers);
   return (
     <div className="overflow-x-auto pb-4">
-      <div className="flex min-w-[1100px] gap-3">
-        {(["R32", "R16", "QF", "SF", "FINAL"] as const).map((round) => (
-          <div key={round} className="flex flex-1 flex-col">
-            <div className="text-muted-foreground mb-2 px-1 text-[10px] font-semibold font-mono tracking-wide uppercase">
-              {ROUND_LABEL[round]}
+      <div className="flex min-w-[1140px] items-stretch">
+        {ROUNDS.map((round, ri) => (
+          <Fragment key={round}>
+            <div className="flex min-w-[176px] flex-1 flex-col">
+              <div className="text-muted-foreground mb-3 h-4 px-1 text-[10px] font-semibold font-mono tracking-wide uppercase">
+                {ROUND_LABEL[round]}
+              </div>
+              <div className="flex flex-1 flex-col">
+                {ORDER[round].map((mn) => {
+                  const m = byMatch.get(mn);
+                  return (
+                    <div key={mn} className="flex flex-1 items-center">
+                      {m && <Node m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} />}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex flex-1 flex-col justify-around gap-2">
-              {ORDER[round].map((mn) => {
-                const m = byMatch.get(mn);
-                if (!m) return null;
-                return <Node key={mn} m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} firstCol={round === "R32"} lastCol={round === "FINAL"} />;
-              })}
-            </div>
+            {ri < ROUNDS.length - 1 && <Connectors count={ORDER[ROUNDS[ri + 1]].length} />}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// A column of "⊐" brackets, one per next-round match. With uniform node heights, each
+// bracket's top/bottom edges land exactly on its two feeders' centers and its right edge
+// meets the target node — turning the columns into a connected tree.
+function Connectors({ count }: { count: number }) {
+  return (
+    <div className="flex w-4 shrink-0 flex-col">
+      <div className="mb-3 h-4" />
+      <div className="flex flex-1 flex-col">
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} className="flex flex-1 items-center">
+            <div className="border-muted-foreground/30 h-1/2 w-full rounded-r-md border-t border-r border-b" />
           </div>
         ))}
       </div>
@@ -39,19 +72,17 @@ export function Bracket({ matches, highlightCode }: { matches: MatchInfo[]; high
   );
 }
 
-function Node({ m, hasTicket, highlightCode, firstCol, lastCol }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string; firstCol?: boolean; lastCol?: boolean }) {
+function Node({ m, hasTicket, highlightCode }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string }) {
   const hi =
     highlightCode &&
     [m.home, m.away, m.projHome?.[0]?.code, m.projAway?.[0]?.code].includes(highlightCode);
   return (
     <Link
       href={`/match/${m.match}`}
-      className={`bg-card hover:bg-muted/30 relative block rounded-lg border text-xs ${
+      className={`bg-card hover:bg-muted/30 block w-full rounded-lg border text-xs ${
         hi ? "border-primary/60 ring-primary/20 ring-1" : hasTicket ? "border-amber-500/50" : "border-border"
       }`}
     >
-      {!lastCol && <span className="bg-border/70 absolute top-1/2 left-full h-px w-1.5" aria-hidden />}
-      {!firstCol && <span className="bg-border/70 absolute top-1/2 right-full h-px w-1.5" aria-hidden />}
       <div className="text-muted-foreground flex items-center justify-between gap-1 px-2 pt-1 text-[9px]">
         <span className="truncate">M{m.match} · {etDay(m.utc)} · {m.city}</span>
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
@@ -59,11 +90,6 @@ function Node({ m, hasTicket, highlightCode, firstCol, lastCol }: { m: MatchInfo
       <Side m={m} side="home" highlightCode={highlightCode} />
       <div className="border-border/40 border-t" />
       <Side m={m} side="away" highlightCode={highlightCode} />
-      {!m.defined && m.topMatchups?.[0] && (
-        <div className="text-muted-foreground/60 border-border/30 border-t px-2 py-0.5 text-[9px]">
-          top matchup {pct(m.topMatchups[0].prob)}
-        </div>
-      )}
     </Link>
   );
 }

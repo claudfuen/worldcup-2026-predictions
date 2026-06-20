@@ -47,6 +47,29 @@ export function wdlProbs(
   return wdlFromLambdas(lh, la, cfg.rho ?? POISSON_CONFIG.rho, cfg.maxGoals ?? 10);
 }
 
+// Most-likely exact scorelines from the rating gap, descending by probability (normalized over the grid).
+export function scorelineDist(
+  ratingDiff: number,
+  cfg: { supDiv?: number; totalGoals?: number; rho?: number } = {},
+  maxG = 6,
+): { h: number; a: number; prob: number }[] {
+  const [lh, la] = eloToLambdas(ratingDiff, cfg);
+  const rho = cfg.rho ?? POISSON_CONFIG.rho;
+  const out: { h: number; a: number; prob: number }[] = [];
+  let s = 0;
+  for (let i = 0; i <= maxG; i++) {
+    for (let j = 0; j <= maxG; j++) {
+      let p = poissonPmf(lh, i) * poissonPmf(la, j);
+      if (i <= 1 && j <= 1) p *= dcTau(i, j, lh, la, rho);
+      out.push({ h: i, a: j, prob: p });
+      s += p;
+    }
+  }
+  for (const o of out) o.prob /= s;
+  out.sort((a, b) => b.prob - a.prob);
+  return out;
+}
+
 // Probability the home/first side ADVANCES in a knockout: regulation, then ~1/3-length extra time,
 // then a coin-flip shootout on the remaining tie mass. Removes the favorite over-statement of bare Elo We.
 function koAdvanceRaw(ratingDiff: number, cfg: { supDiv?: number; totalGoals?: number; rho?: number }): number {

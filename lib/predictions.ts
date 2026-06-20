@@ -4,11 +4,10 @@ import { runMonteCarlo } from "./sim/simulate";
 import { rankGroup } from "./sim/standings";
 import { computeClinch, minThirdPlacePoints, maxThirdPlacePoints, maxReachablePoints } from "./sim/clinch";
 import { rankThirds, selectAndAssignThirds, type ThirdTeam } from "./sim/thirdPlace";
-import { wdlProbs } from "./sim/poisson";
+import { wdlProbs, eloToLambdas, scorelineDist } from "./sim/poisson";
 import { TEAMS, TEAM_BY_CODE, GROUPS } from "./data/teams";
 import { SCHEDULE } from "./data/schedule";
 import { KNOCKOUT } from "./data/bracket";
-import { MY_MATCHES } from "./data/tickets";
 import type { TeamProb } from "./sim/simulate";
 
 export interface TeamPrediction extends TeamProb {
@@ -57,12 +56,8 @@ export interface MatchInfo {
   // forecast for DEFINED matches only
   favorite?: { code: string; name: string; winProb: number };
   probs?: { home: number; draw: number; away: number };
-}
-
-export interface MyMatch extends MatchInfo {
-  tickets: number;
-  ticketVenue?: string;
-  note?: string;
+  xg?: { home: number; away: number }; // model expected goals
+  topScores?: { h: number; a: number; prob: number }[]; // most likely exact scorelines
 }
 
 export interface ThirdPlaceEntry {
@@ -88,7 +83,6 @@ export interface PredictionsPayload {
   groups: GroupView[];
   r32Opponents: Record<string, OpponentProb[]>;
   matches: MatchInfo[];
-  myMatches: MyMatch[];
   thirdPlaceRace: ThirdPlaceEntry[];
 }
 
@@ -221,20 +215,21 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
       if (ra) { info.away = ra; info.awayName = TEAM_BY_CODE[ra].name; }
       info.defined = Boolean(info.home && info.away);
     }
-    // forecast for DEFINED matches only (neutral venue)
-    if (info.defined && info.status !== "final" && info.home && info.away) {
-      const p = wdlProbs((ratings[info.home] ?? 1500) - (ratings[info.away] ?? 1500));
+    // forecast for DEFINED matches (neutral venue; pre-match rating gap). Kept for final matches too
+    // so the detail page can show the model's pre-match read alongside the actual result.
+    if (info.defined && info.home && info.away) {
+      const diff = (ratings[info.home] ?? 1500) - (ratings[info.away] ?? 1500);
+      const p = wdlProbs(diff);
       info.probs = { home: p.win, draw: p.draw, away: p.loss };
       const favCode = p.win >= p.loss ? info.home : info.away;
       info.favorite = { code: favCode, name: TEAM_BY_CODE[favCode].name, winProb: Math.max(p.win, p.loss) };
+      const [lh, la] = eloToLambdas(diff);
+      info.xg = { home: Math.round(lh * 10) / 10, away: Math.round(la * 10) / 10 };
+      if (info.status !== "final") {
+        info.topScores = scorelineDist(diff).slice(0, 6).map((s) => ({ h: s.h, a: s.a, prob: Math.round(s.prob * 1000) / 1000 }));
+      }
     }
     return info;
-  });
-
-  const byMatch = new Map(matches.map((m) => [m.match, m]));
-  const myMatches: MyMatch[] = MY_MATCHES.map((t) => {
-    const base = byMatch.get(t.match)!;
-    return { ...base, tickets: t.tickets, ticketVenue: t.venue, note: t.note };
   });
 
   const matchesPlayed = results.filter((r) => r.group != null && r.date.slice(0, 10) <= "2026-06-27").length;
@@ -275,7 +270,6 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
     groups,
     r32Opponents,
     matches,
-    myMatches,
     thirdPlaceRace,
   };
 }

@@ -4,7 +4,8 @@ import { getPredictions } from "@/lib/getPredictions";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
 import { etDateTime, pct } from "@/lib/format";
-import { MY_MATCH_NUMBERS } from "@/lib/data/tickets";
+import { MatchFlagButton } from "@/components/match-flag-button";
+import { getSessionUser, getUserMatchNumbers } from "@/lib/userMatches";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,8 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   const data = await getPredictions();
   const m = data.matches.find((x) => x.match === Number(match));
   if (!m) notFound();
-  const hasTicket = MY_MATCH_NUMBERS.includes(m.match);
+  const user = await getSessionUser();
+  const hasTicket = user ? (await getUserMatchNumbers(user.id)).includes(m.match) : false;
   const state: "final" | "defined" | "undefined" = m.status === "final" ? "final" : m.defined ? "defined" : "undefined";
 
   return (
@@ -29,7 +31,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-foreground font-semibold">{ROUND_NAME[m.round]}{m.group ? ` · Group ${m.group}` : ""}</span>
         <span className="text-muted-foreground">Match {m.match}</span>
-        {hasTicket && <span className="bg-amber-500/15 text-amber-400 rounded-full px-2 py-0.5 text-xs font-semibold">🎟️ You&apos;re going</span>}
+        <MatchFlagButton matchNo={m.match} initialOn={hasTicket} isAuthed={Boolean(user)} variant="button" />
       </div>
       <div className="text-muted-foreground mt-1 text-sm">{etDateTime(m.utc)} · {m.venue}, {m.city}</div>
 
@@ -42,9 +44,26 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
 
       {/* State-specific body */}
       {state === "final" && (
-        <p className="text-muted-foreground mt-5 text-sm">
-          Full time: <span className="text-foreground font-medium">{m.homeName} {m.homeScore}–{m.awayScore} {m.awayName}</span>.
-        </p>
+        <section className="mt-6">
+          <h2 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">Model&apos;s pre-match read</h2>
+          <div className="border-border bg-card space-y-3 rounded-2xl border p-5">
+            {m.probs ? (
+              <>
+                <ProbRow label={m.homeName!} value={m.probs.home} />
+                <ProbRow label="Draw" value={m.probs.draw} tone="muted" />
+                <ProbRow label={m.awayName!} value={m.probs.away} />
+                <p className="text-muted-foreground/70 pt-1 text-xs">
+                  {m.xg && <>Expected goals {m.xg.home.toFixed(1)}–{m.xg.away.toFixed(1)} · </>}
+                  actual result <span className="text-foreground/80">{m.homeScore}–{m.awayScore}</span>.
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Full time: <span className="text-foreground font-medium">{m.homeName} {m.homeScore}–{m.awayScore} {m.awayName}</span>.
+              </p>
+            )}
+          </div>
+        </section>
       )}
 
       {state === "defined" && m.probs && (
@@ -57,6 +76,28 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
             {m.round !== "GROUP" && (
               <p className="text-muted-foreground/70 pt-1 text-xs">Regulation result; knockout ties are decided by extra time and penalties.</p>
             )}
+          </div>
+        </section>
+      )}
+
+      {state === "defined" && m.topScores && m.topScores.length > 0 && (
+        <section className="mt-6">
+          <div className="mb-2 flex items-baseline justify-between">
+            <h2 className="text-muted-foreground text-xs font-semibold font-mono tracking-wide uppercase">Most likely scorelines</h2>
+            {m.xg && <span className="text-muted-foreground text-xs">xG {m.xg.home.toFixed(1)} – {m.xg.away.toFixed(1)}</span>}
+          </div>
+          <div className="border-border bg-card divide-border/50 divide-y rounded-2xl border">
+            {m.topScores.map((s, i) => (
+              <div key={`${s.h}-${s.a}`} className="flex items-center gap-2.5 px-4 py-2.5">
+                <Flag code={m.home} size={16} />
+                <span className="w-10 font-mono text-sm font-bold tabular-nums">{s.h}–{s.a}</span>
+                <Flag code={m.away} size={16} />
+                <div className="bg-muted/40 relative ml-1 h-1.5 flex-1 overflow-hidden rounded-full">
+                  <div className="bg-emerald-500/70 absolute inset-y-0 left-0 rounded-full" style={{ width: `${(s.prob / m.topScores![0].prob) * 100}%` }} />
+                </div>
+                <span className="text-muted-foreground w-10 text-right font-mono text-xs tabular-nums">{pct(s.prob)}</span>
+              </div>
+            ))}
           </div>
         </section>
       )}

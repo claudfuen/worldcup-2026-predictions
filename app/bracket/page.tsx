@@ -1,12 +1,17 @@
 import { getPredictions } from "@/lib/getPredictions";
 import { Bracket } from "@/components/bracket";
+import { getSessionUser, getUserMatchNumbers } from "@/lib/userMatches";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function BracketPage() {
-  const data = await getPredictions();
+  const user = await getSessionUser();
+  const [data, myMatchNumbers] = await Promise.all([
+    getPredictions(),
+    user ? getUserMatchNumbers(user.id) : Promise.resolve<number[]>([]),
+  ]);
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-6">
@@ -16,7 +21,7 @@ export default async function BracketPage() {
           tickets to. Scroll horizontally to follow the path to the final.
         </p>
       </div>
-      <Bracket matches={data.matches} highlightCode="BRA" />
+      <Bracket matches={data.matches} myMatchNumbers={myMatchNumbers} highlightCode="BRA" />
       <div className="border-border bg-card mt-6 rounded-xl border p-4">
         <h2 className="mb-1 text-sm font-semibold">Third-place play-off</h2>
         <ThirdPlace matches={data.matches} />

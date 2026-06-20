@@ -12,6 +12,11 @@ export function etTime(utc: string): string {
   return new Date(utc).toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" }) + " ET";
 }
 
+// Time without the "ET" suffix, for dense lists where the page header already states ET.
+export function etTimeShort(utc: string): string {
+  return new Date(utc).toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" });
+}
+
 export function etDay(utc: string): string {
   return new Date(utc).toLocaleString("en-US", { timeZone: ET, weekday: "short", month: "short", day: "numeric" });
 }

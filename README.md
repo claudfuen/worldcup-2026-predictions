@@ -1,4 +1,4 @@
-# World Cup 2026 Oracle
+# World Cup 2026 Predictions
 
 Monte Carlo predictions for the 2026 FIFA World Cup: probability each team wins its group, advances, and reaches each knockout round - recomputed periodically from live results.
 

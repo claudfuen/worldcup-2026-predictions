@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { expectedScore, updateElo, movMultiplier } from "../lib/sim/elo";
-import { eloToLambdas, wdlProbs, sampleScoreline } from "../lib/sim/poisson";
+import { eloToLambdas, wdlProbs, sampleScoreline, scorelineDist } from "../lib/sim/poisson";
 import { mulberry32 } from "../lib/sim/rng";
 
 describe("Elo", () => {
@@ -42,5 +42,32 @@ describe("Poisson scoreline model", () => {
     const a = sampleScoreline(150, mulberry32(42));
     const b = sampleScoreline(150, mulberry32(42));
     expect(a).toEqual(b);
+  });
+});
+
+describe("scorelineDist", () => {
+  it("normalizes to ~1 and is sorted descending by probability", () => {
+    const d = scorelineDist(0);
+    const sum = d.reduce((s, x) => s + x.prob, 0);
+    expect(sum).toBeCloseTo(1, 3);
+    for (let i = 1; i < d.length; i++) expect(d[i].prob).toBeLessThanOrEqual(d[i - 1].prob);
+  });
+  it("favors the stronger side: top scorelines lean home when the rating gap is large", () => {
+    const d = scorelineDist(400);
+    const top = d[0];
+    expect(top.h).toBeGreaterThanOrEqual(top.a);
+    // mass on home-win scorelines should exceed away-win mass
+    const homeWin = d.filter((x) => x.h > x.a).reduce((s, x) => s + x.prob, 0);
+    const awayWin = d.filter((x) => x.h < x.a).reduce((s, x) => s + x.prob, 0);
+    expect(homeWin).toBeGreaterThan(awayWin);
+  });
+  it("scoreline win/draw/loss mass matches wdlProbs for the same gap", () => {
+    const gap = 180;
+    const d = scorelineDist(gap, {}, 10);
+    const win = d.filter((x) => x.h > x.a).reduce((s, x) => s + x.prob, 0);
+    const draw = d.filter((x) => x.h === x.a).reduce((s, x) => s + x.prob, 0);
+    const p = wdlProbs(gap);
+    expect(win).toBeCloseTo(p.win, 2);
+    expect(draw).toBeCloseTo(p.draw, 2);
   });
 });

@@ -5,18 +5,18 @@ export default function MethodologyPage() {
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <h1 className="text-2xl font-semibold tracking-tight">How it works</h1>
       <div className="mt-6 space-y-6 text-sm leading-relaxed">
-        <Section title="Ratings — World Football Elo">
+        <Section title="Ratings - World Football Elo">
           Every team carries an Elo rating seeded from ~49,000 international matches (1872-present) and updated after each
           result. Updates are tournament-weighted (a World Cup match moves ratings more than a friendly), scaled by margin
           of victory, with a home-field adjustment on non-neutral matches. Backtested at <b>RPS ≈ 0.178</b> overall and
-          <b> ≈ 0.199</b> on World Cup matches — competitive with betting markets.
+          <b> ≈ 0.199</b> on World Cup matches - competitive with betting markets.
         </Section>
-        <Section title="Match model — Poisson scorelines">
+        <Section title="Match model - Poisson scorelines">
           The Elo gap between two teams maps to an expected goal supremacy and total, which feed two Poisson goal rates
-          (with a Dixon-Coles low-score correction). This yields both win/draw/loss probabilities and full scorelines —
+          (with a Dixon-Coles low-score correction). This yields both win/draw/loss probabilities and full scorelines -
           the latter needed to break group ties on goal difference.
         </Section>
-        <Section title="Simulation — Monte Carlo">
+        <Section title="Simulation - Monte Carlo">
           We simulate every remaining match ~20,000 times. Each run builds the 12 group tables using the{" "}
           <b>2026 FIFA tiebreakers</b> (a rule change: head-to-head is applied <i>before</i> overall goal difference),
           selects the 8 best third-placed teams, applies the official 495-row Annex C assignment table, then plays out the
@@ -26,15 +26,15 @@ export default function MethodologyPage() {
           With 12 groups, the top 2 of each (24 teams) advance automatically. To fill the 32-team Round of 32, the{" "}
           <b>8 best of the 12 third-placed teams</b> also go through, ranked across groups by points → goal difference →
           goals scored → fair-play → FIFA ranking. The twist: <i>which</i> third-placed team is sent to <i>which</i> group
-          winner is not free-form. Only 8 group winners host a third-placed team — the winners of groups{" "}
-          <b>A, B, D, E, G, I, K, L</b> — while the winners of C, F, H and J face runners-up instead. FIFA published a
+          winner is not free-form. Only 8 group winners host a third-placed team - the winners of groups{" "}
+          <b>A, B, D, E, G, I, K, L</b> - while the winners of C, F, H and J face runners-up instead. FIFA published a
           fixed table (Annex C) with all <b>495</b> possible combinations (one per set of which 8 groups produced a
           qualifying third), assigning each third to a specific winner so that no team meets a side from its own group too
           early. This simulator applies that exact 495-row table every iteration.
         </Section>
         <Section title="Certainty vs. probability">
           A percentage is a forecast; a checkmark is a fact. Group outcomes (win group, advance, eliminated) flip to a
-          definitive state only when <b>mathematically</b> guaranteed — verified by brute-forcing every remaining
+          definitive state only when <b>mathematically</b> guaranteed - verified by brute-forcing every remaining
           scoreline under the real tiebreakers, including the cross-group math for best-third elimination. Until then it
           stays a probability and is never shown as 100%.
         </Section>
