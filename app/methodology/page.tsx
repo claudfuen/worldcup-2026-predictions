@@ -34,9 +34,11 @@ export default function MethodologyPage() {
         </Section>
         <Section title="Certainty vs. probability">
           A percentage is a forecast; a checkmark is a fact. Group outcomes (win group, advance, eliminated) flip to a
-          definitive state only when <b>mathematically</b> guaranteed - verified by brute-forcing every remaining
-          scoreline under the real tiebreakers, including the cross-group math for best-third elimination. Until then it
-          stays a probability and is never shown as 100%.
+          definitive state only when <b>mathematically</b> guaranteed - we check every remaining win/draw/loss
+          combination and claim certainty only when no result could overturn it. Because goals are unbounded, anything
+          that would rest on goal difference can always be flipped by a big enough scoreline, so it stays a probability;
+          only points and head-to-head results can lock a place. This includes the cross-group math for best-third
+          elimination. A clinched outcome is never shown as a mere 100%.
         </Section>
         <Section title="Data">
           Live results, fixtures and venues come from ESPN&apos;s public feed; the bracket structure and third-place table
