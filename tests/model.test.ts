@@ -19,6 +19,18 @@ describe("Elo", () => {
   it("a bigger win moves ratings more", () => {
     expect(movMultiplier(4, 0)).toBeGreaterThan(movMultiplier(1, 0));
   });
+  it("amplifies upsets: an underdog win moves ratings more than the same-margin favorite win (signed MOV)", () => {
+    // movMultiplier's second arg is the SIGNED winner-minus-loser gap: negative (upset) amplifies.
+    expect(movMultiplier(2, -400)).toBeGreaterThan(movMultiplier(2, 400));
+    // end to end: a 1500 side beating a 1900 side 2-0 gains more than a 1900 side beating a 1500 side 2-0.
+    const [upWin] = updateElo(1500, 1900, 2, 0, { neutral: true, weight: 1 });
+    const [favWin] = updateElo(1900, 1500, 2, 0, { neutral: true, weight: 1 });
+    expect(upWin - 1500).toBeGreaterThan(favWin - 1900);
+  });
+  it("MOV multiplier denominator never blows up or flips sign at extreme gaps", () => {
+    expect(movMultiplier(3, -5000)).toBeGreaterThan(0);
+    expect(Number.isFinite(movMultiplier(3, -5000))).toBe(true);
+  });
 });
 
 describe("Poisson scoreline model", () => {

@@ -20,8 +20,13 @@ export function expectedScore(ratingDiff: number): number {
 }
 
 // Margin-of-victory multiplier (dampens blowouts, corrects for favorite autocorrelation).
-export function movMultiplier(goalDiff: number, ratingDiff: number): number {
-  return Math.log(goalDiff + 1) * (2.2 / (Math.abs(ratingDiff) * 0.001 + 2.2));
+// The second arg is the SIGNED winner-minus-loser rating gap (post-HFA): negative for an upset, which
+// shrinks the denominator and AMPLIFIES the rating move; positive for an expected win, which dampens it.
+// This sign is the entire autocorrelation correction (538 World-Football Elo). The denominator is floored
+// so an extreme (unreachable in practice) gap can never hit zero or flip the multiplier's sign.
+export function movMultiplier(goalDiff: number, winnerRatingDiff: number): number {
+  const denom = Math.max(winnerRatingDiff * 0.001 + 2.2, 0.5);
+  return Math.log(goalDiff + 1) * (2.2 / denom);
 }
 
 // Update both ratings after a match. Returns [newHome, newAway]. weight = kWeight(tournament).
@@ -38,6 +43,8 @@ export function updateElo(
   const we = expectedScore(drr);
   const actual = homeGoals > awayGoals ? 1 : homeGoals === awayGoals ? 0.5 : 0;
   const gd = Math.abs(homeGoals - awayGoals);
-  const k = kBase * opts.weight * movMultiplier(gd, drr);
+  // winner-perspective signed gap: + when the favourite (by drr) wins, - on an upset, 0 on a draw.
+  const winnerDr = actual > 0.5 ? drr : actual < 0.5 ? -drr : 0;
+  const k = kBase * opts.weight * movMultiplier(gd, winnerDr);
   return [ratingHome + k * (actual - we), ratingAway + k * (1 - actual - (1 - we))];
 }

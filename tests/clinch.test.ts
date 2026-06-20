@@ -82,6 +82,27 @@ describe("computeClinch — fully decided group", () => {
   });
 });
 
+describe("computeClinch — no false winner-clinch via overall GD (unbounded-goals soundness)", () => {
+  // Z 7(+10), Y 4, X 0, W 0. Played: Z-Y 4-4 draw, Z-X 5-0, Z-W 5-0, Y-W 1-0. Remaining: Y-X, X-W.
+  // Y can reach 7 by beating X; the Z-Y head-to-head was a 4-4 draw (level on H2H points), so a big
+  // enough Y win flips the OVERALL goal-difference tiebreak and dethrones Z. Z therefore has NOT
+  // clinched the group (a goal-cap brute force missed the >cap blowout and wrongly flagged Z winner),
+  // but Z HAS clinched top-2 (it can fall no lower than 2nd in any scenario).
+  const matches: GroupMatch[] = [
+    gm("Z", "Y", 4, 4), gm("Z", "X", 5, 0), gm("Z", "W", 5, 0), gm("Y", "W", 1, 0),
+    gm("Y", "X"), gm("X", "W"),
+  ];
+  const RZ = { Z: 1900, Y: 1850, X: 1700, W: 1650 };
+  const c = computeClinch(["Z", "Y", "X", "W"], matches, RZ);
+  it("does NOT falsely clinch Z as group winner (overall GD can be overturned by goals)", () => {
+    expect(c.Z.winner).toBe(false);
+  });
+  it("still clinches Z for top-2 (guaranteed no worse than 2nd)", () => {
+    expect(c.Z.top2).toBe(true);
+    expect(c.Z.second).toBe(false); // can still be 1st, so not clinched *exactly* 2nd
+  });
+});
+
 describe("computeClinch — winner clinched with a match to spare", () => {
   // A has 6 pts (beat B, beat C); D pointless; remaining C-D and A-... actually A done. B max 4, C max 4, D max 3.
   const matches: GroupMatch[] = [

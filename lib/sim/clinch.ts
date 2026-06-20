@@ -1,8 +1,13 @@
 // Mathematical clinching (NOT simulation probability). A team is only "clinched" if it is guaranteed
-// the outcome across EVERY possible remaining scoreline, under the real 2026 FIFA tiebreakers.
-// Conservative: any tie unresolved through overall goals-for (i.e. decided only by fair-play / FIFA ranking)
-// is treated as NOT clinched, so we never over-claim certainty.
-import { rankGroup, h2hKey, cmpTuple } from "./standings";
+// the outcome across EVERY possible remaining result, under the real 2026 FIFA tiebreakers.
+//
+// Goals are UNBOUNDED under the rules, so any separation that comes down to overall goal difference or
+// goals-for can always be flipped by a large-enough scoreline. The only goal-INDEPENDENT criteria are
+// (1) match points and (2) head-to-head points (recursively, among the teams tied on points). So we
+// enumerate only the win/draw/loss outcomes of the remaining matches (3^r) and, within each, separate
+// teams solely by points then recursive H2H points. Any pair left tied after that is treated as
+// "could go either way" (a blowout could decide it) — i.e. NOT a safe clinch. This is both sound and
+// far cheaper than a goal grid, and it never over-claims certainty.
 import type { GroupMatch, Ratings } from "./types";
 
 export interface TeamClinch {
@@ -15,20 +20,12 @@ export interface TeamClinch {
 }
 export type GroupClinch = Record<string, TeamClinch>;
 
-function enumerate(matches: GroupMatch[], cap: number, cb: (filled: GroupMatch[]) => void) {
-  const acc: GroupMatch[] = [];
-  const rec = (i: number) => {
-    if (i === matches.length) { cb(acc); return; }
-    const m = matches[i];
-    for (let h = 0; h <= cap; h++) {
-      for (let a = 0; a <= cap; a++) {
-        acc[i] = { ...m, played: true, homeGoals: h, awayGoals: a };
-        rec(i + 1);
-      }
-    }
-    acc.length = i;
-  };
-  rec(0);
+type Outcome = "H" | "D" | "A"; // home win / draw / away win
+interface MatchOutcome { home: string; away: string; o: Outcome }
+
+function playedOutcome(m: GroupMatch): Outcome {
+  const h = m.homeGoals as number, a = m.awayGoals as number;
+  return h > a ? "H" : h < a ? "A" : "D";
 }
 
 // Worst-case (minimum) points the eventual 3rd-placed team of a group can finish with, over all
@@ -107,42 +104,94 @@ export function maxReachablePoints(code: string, matches: GroupMatch[]): number 
   return pts + 3 * remaining;
 }
 
-export function computeClinch(codes: string[], matches: GroupMatch[], ratings: Ratings): GroupClinch {
+// Points a team earns from matches played *only between members of `group`*, for a given set of outcomes.
+function h2hPoints(code: string, group: Set<string>, out: MatchOutcome[]): number {
+  let p = 0;
+  for (const x of out) {
+    if (!group.has(x.home) || !group.has(x.away)) continue;
+    if (x.home === code) { if (x.o === "H") p += 3; else if (x.o === "D") p += 1; }
+    else if (x.away === code) { if (x.o === "A") p += 3; else if (x.o === "D") p += 1; }
+  }
+  return p;
+}
+
+// Split a set of teams (already tied on overall points) into ordered tiers using ONLY recursive
+// head-to-head points. Teams in the same returned tier are indistinguishable by goal-independent
+// criteria (their order would be decided by goals), so they are mutually "ambiguous".
+function h2hTiers(group: string[], out: MatchOutcome[]): string[][] {
+  if (group.length <= 1) return [group];
+  const set = new Set(group);
+  const pts = new Map(group.map((c) => [c, h2hPoints(c, set, out)]));
+  const distinct = [...new Set(group.map((c) => pts.get(c)!))].sort((a, b) => b - a);
+  if (distinct.length === 1) return [group]; // all level on H2H points => ambiguous from here on
+  const tiers: string[][] = [];
+  for (const v of distinct) {
+    const sub = group.filter((c) => pts.get(c) === v);
+    tiers.push(...h2hTiers(sub, out)); // re-apply criteria within the still-tied subset
+  }
+  return tiers;
+}
+
+// Goal-independent tier rank for every team in one full set of outcomes: lower index = strictly higher.
+// Teams sharing a tier are ambiguous (a scoreline could order them either way).
+function tierRank(codes: string[], out: MatchOutcome[]): Map<string, { tier: number; tierSize: number }> {
+  const pts: Record<string, number> = {};
+  for (const c of codes) pts[c] = 0;
+  for (const x of out) {
+    if (x.o === "H") pts[x.home] += 3;
+    else if (x.o === "A") pts[x.away] += 3;
+    else { pts[x.home] += 1; pts[x.away] += 1; }
+  }
+  const byPoints = [...new Set(codes.map((c) => pts[c]))].sort((a, b) => b - a);
+  const tiers: string[][] = [];
+  for (const v of byPoints) {
+    const grp = codes.filter((c) => pts[c] === v);
+    tiers.push(...h2hTiers(grp, out));
+  }
+  const rank = new Map<string, { tier: number; tierSize: number }>();
+  tiers.forEach((t, i) => t.forEach((c) => rank.set(c, { tier: i, tierSize: t.length })));
+  return rank;
+}
+
+// `ratings` is accepted for signature compatibility but is intentionally unused: clinching is decided
+// purely by points and head-to-head points, never by the FIFA-ranking fallback (which is goal/ranking
+// dependent and would itself never produce a guaranteed result here).
+export function computeClinch(codes: string[], matches: GroupMatch[], _ratings?: Ratings): GroupClinch {
   const played = matches.filter((m) => m.played);
   const remaining = matches.filter((m) => !m.played);
   const r = remaining.length;
-  // adaptive goal cap keeps the enumeration tractable while covering every realistic GD swing
-  const cap = r <= 2 ? 8 : r === 3 ? 5 : r === 4 ? 3 : 2;
 
-  const canTop2 = new Set<string>(), canMiss = new Set<string>();
   const canWin = new Set<string>(), canNotWin = new Set<string>();
-  const canBe4th = new Set<string>(), canTop3 = new Set<string>();
+  const canTop2 = new Set<string>(), canMiss = new Set<string>();
+  const canTop3 = new Set<string>(), canBe4th = new Set<string>();
 
-  enumerate(remaining, cap, (filled) => {
-    const all = [...played, ...filled];
-    const rows = rankGroup(codes, all, ratings);
-    const order = rows.map((x) => x.code);
-    const top2 = new Set(order.slice(0, 2));
-    const top3 = new Set(order.slice(0, 3));
+  const playedOut: MatchOutcome[] = played.map((m) => ({ home: m.home, away: m.away, o: playedOutcome(m) }));
+
+  const combo: Outcome[] = [];
+  const evaluate = () => {
+    const out: MatchOutcome[] = playedOut.concat(
+      remaining.map((m, i) => ({ home: m.home, away: m.away, o: combo[i] })),
+    );
+    const rank = tierRank(codes, out);
     for (const c of codes) {
-      if (top2.has(c)) canTop2.add(c); else canMiss.add(c);
-      if (top3.has(c)) canTop3.add(c);
-      if (order[0] === c) canWin.add(c); else canNotWin.add(c);
+      const { tier, tierSize } = rank.get(c)!;
+      const mustAbove = [...rank.values()].filter((v) => v.tier < tier).length;
+      const bestRank = mustAbove + 1;          // tiermates and below pushed under c by favourable goals
+      const worstRank = mustAbove + tierSize;  // c falls to the bottom of its own ambiguity tier
+      if (bestRank === 1) canWin.add(c);
+      if (worstRank > 1) canNotWin.add(c);
+      if (bestRank <= 2) canTop2.add(c);
+      if (worstRank > 2) canMiss.add(c);
+      if (bestRank <= 3) canTop3.add(c);
+      if (worstRank >= 4) canBe4th.add(c);
     }
-    if (order[3]) canBe4th.add(order[3]);
-    // Two adjacent teams are "separated by a TRUSTED criterion" iff points / head-to-head / overall GD / GF
-    // distinguishes them. Only if ALL of those tie (i.e. the fallback fair-play/FIFA-ranking decided it) do we
-    // treat the boundary as unresolved and refuse to claim a clinch. (Earlier bug: ignored head-to-head.)
-    const trustedSep = (a: (typeof rows)[number], b: (typeof rows)[number]) => {
-      if (a.pts !== b.pts) return true;
-      const tied = rows.filter((r) => r.pts === a.pts).map((r) => r.code);
-      if (cmpTuple(h2hKey(a.code, tied, all), h2hKey(b.code, tied, all)) !== 0) return true;
-      return a.gd !== b.gd || a.gf !== b.gf;
-    };
-    const f = rows[0], s = rows[1], t = rows[2];
-    if (f && s && !trustedSep(f, s)) canNotWin.add(f.code); // 1st not safely clinched
-    if (s && t && !trustedSep(s, t)) canMiss.add(s.code); // 2nd not safely clinched
-  });
+  };
+  const rec = (i: number) => {
+    if (i === r) { evaluate(); return; }
+    for (const o of ["H", "D", "A"] as Outcome[]) { combo[i] = o; rec(i + 1); }
+    combo.length = i;
+  };
+  rec(0);
 
   const out: GroupClinch = {};
   for (const c of codes) {

@@ -5,6 +5,7 @@ import { rankGroup } from "./sim/standings";
 import { computeClinch, minThirdPlacePoints, maxThirdPlacePoints, maxReachablePoints } from "./sim/clinch";
 import { rankThirds, selectAndAssignThirds, type ThirdTeam } from "./sim/thirdPlace";
 import { wdlProbs, eloToLambdas, scorelineDist } from "./sim/poisson";
+import { hostEloBoost } from "./sim/hosts";
 import { TEAMS, TEAM_BY_CODE, GROUPS } from "./data/teams";
 import { SCHEDULE } from "./data/schedule";
 import { KNOCKOUT } from "./data/bracket";
@@ -215,10 +216,14 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
       if (ra) { info.away = ra; info.awayName = TEAM_BY_CODE[ra].name; }
       info.defined = Boolean(info.home && info.away);
     }
-    // forecast for DEFINED matches (neutral venue; pre-match rating gap). Kept for final matches too
-    // so the detail page can show the model's pre-match read alongside the actual result.
+    // forecast for DEFINED matches. Includes the SAME host advantage the Monte Carlo applies (host
+    // nation gets an Elo boost at home, larger at altitude), so the per-match W/D/L, xG and scorelines
+    // shown on the detail page reconcile with the tournament odds. Kept for final matches too so the
+    // detail page can show the model's pre-match read alongside the actual result.
     if (info.defined && info.home && info.away) {
-      const diff = (ratings[info.home] ?? 1500) - (ratings[info.away] ?? 1500);
+      const diff =
+        (ratings[info.home] ?? 1500) - (ratings[info.away] ?? 1500) +
+        hostEloBoost(info.home, info.venue) - hostEloBoost(info.away, info.venue);
       const p = wdlProbs(diff);
       info.probs = { home: p.win, draw: p.draw, away: p.loss };
       const favCode = p.win >= p.loss ? info.home : info.away;
