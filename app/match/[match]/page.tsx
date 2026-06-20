@@ -35,9 +35,9 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
 
       {/* Matchup header */}
       <div className="border-border bg-card mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl border p-6">
-        <SideHeader code={m.home ?? m.projHome?.[0]?.code ?? null} label={m.homeName ?? m.slotHome ?? "TBD"} defined={Boolean(m.home)} score={m.status === "final" ? m.homeScore : undefined} win={m.status === "final" && (m.homeScore ?? 0) > (m.awayScore ?? 0)} />
+        <SideHeader m={m} side="home" />
         <div className="text-muted-foreground text-center text-xs">{m.status === "final" ? "FT" : "vs"}</div>
-        <SideHeader code={m.away ?? m.projAway?.[0]?.code ?? null} label={m.awayName ?? m.slotAway ?? "TBD"} defined={Boolean(m.away)} score={m.status === "final" ? m.awayScore : undefined} win={m.status === "final" && (m.awayScore ?? 0) > (m.homeScore ?? 0)} right />
+        <SideHeader m={m} side="away" right />
       </div>
 
       {/* State-specific body */}
@@ -77,8 +77,8 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
             </div>
           </section>
           <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Candidates title={m.slotHome ?? "Home"} list={m.projHome} />
-            <Candidates title={m.slotAway ?? "Away"} list={m.projAway} />
+            {!m.home && <Candidates title={prettySlot(m.slotHome)} list={m.projHome} />}
+            {!m.away && <Candidates title={prettySlot(m.slotAway)} list={m.projAway} />}
           </div>
         </>
       )}
@@ -86,12 +86,36 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   );
 }
 
-function SideHeader({ code, label, defined, score, win, right }: { code: string | null; label: string; defined: boolean; score?: number; win?: boolean; right?: boolean }) {
+function prettySlot(s?: string): string {
+  if (!s) return "TBD";
+  if (/^1[A-L]$/.test(s)) return `Winner ${s[1]}`;
+  if (/^2[A-L]$/.test(s)) return `Runner-up ${s[1]}`;
+  if (s.startsWith("3:")) return `3rd: ${s.slice(2).split(",").join("/")}`;
+  if (s.startsWith("W")) return `Winner of M${s.slice(1)}`;
+  if (s.startsWith("L")) return `Loser of M${s.slice(1)}`;
+  return s;
+}
+
+function SideHeader({ m, side, right }: { m: MatchInfo; side: "home" | "away"; right?: boolean }) {
+  const resolved = side === "home" ? m.home : m.away;
+  const name = side === "home" ? m.homeName : m.awayName;
+  const slot = side === "home" ? m.slotHome : m.slotAway;
+  const top = (side === "home" ? m.projHome : m.projAway)?.[0];
+  const score = m.status === "final" ? (side === "home" ? m.homeScore : m.awayScore) : undefined;
+  const other = m.status === "final" ? (side === "home" ? m.awayScore : m.homeScore) : undefined;
+  const win = score != null && other != null && score > other;
   return (
     <div className={`flex items-center gap-3 ${right ? "flex-row-reverse text-right" : ""}`}>
-      <Flag code={code} size={40} />
+      <Flag code={resolved ?? null} size={40} />
       <div>
-        <div className={`text-lg font-semibold ${defined ? "" : "text-foreground/70"} ${win ? "text-emerald-400" : ""}`}>{label}</div>
+        {resolved ? (
+          <div className={`text-lg font-semibold ${win ? "text-emerald-400" : ""}`}>{name}</div>
+        ) : (
+          <>
+            <div className="text-foreground/70 text-base font-medium">{prettySlot(slot)}</div>
+            {top && <div className="text-muted-foreground text-xs">likely {top.name} {pct(Math.min(top.prob, 0.99))}</div>}
+          </>
+        )}
         {score != null && <div className="font-mono text-3xl font-bold tabular-nums">{score}</div>}
       </div>
     </div>
