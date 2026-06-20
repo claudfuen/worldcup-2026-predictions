@@ -5,7 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
+    --font-heading: var(--font-display);
+    --font-display: var(--font-display);
     --font-sans: var(--font-sans);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -83,20 +84,20 @@
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.424 0.199 265.638);
-    --primary-foreground: oklch(0.97 0.014 254.604);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: oklch(0.166 0.008 168);
+    --foreground: oklch(0.968 0.004 160);
+    --card: oklch(0.206 0.009 168);
+    --card-foreground: oklch(0.968 0.004 160);
+    --popover: oklch(0.206 0.009 168);
+    --popover-foreground: oklch(0.968 0.004 160);
+    --primary: oklch(0.75 0.158 157);
+    --primary-foreground: oklch(0.18 0.03 165);
+    --secondary: oklch(0.27 0.01 168);
+    --secondary-foreground: oklch(0.968 0.004 160);
+    --muted: oklch(0.255 0.008 168);
+    --muted-foreground: oklch(0.66 0.012 165);
+    --accent: oklch(0.27 0.01 168);
+    --accent-foreground: oklch(0.968 0.004 160);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
@@ -120,8 +121,19 @@
   * {
     @apply border-border outline-ring/50;
     }
+  /* Refine Inter with OpenType features (single-story a, stylistic sets) per ui.sh */
+  html {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    }
+  /* Distinctive display font on large headings */
+  h1, h2 {
+    font-family: var(--font-display), var(--font-sans);
+    letter-spacing: -0.012em;
+    }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(58rem 30rem at 50% -10rem, color-mix(in oklab, var(--primary) 9%, transparent), transparent);
+    background-attachment: fixed;
     }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;

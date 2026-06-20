@@ -28,7 +28,7 @@ export function Nav() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`rounded-full px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-sm whitespace-nowrap ${
                   active ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >

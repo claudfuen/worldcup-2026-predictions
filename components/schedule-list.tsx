@@ -54,7 +54,7 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+            className={`rounded-full px-3 py-1.5 text-sm ${
               filter === f.key ? "bg-primary text-primary-foreground font-medium" : "bg-muted/50 text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -67,7 +67,7 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
           <button
             key={f.key}
             onClick={() => setTime(f.key)}
-            className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+            className={`rounded-full border px-3 py-1 text-xs ${
               time === f.key ? "border-primary/60 text-primary bg-primary/10 font-medium" : "border-border text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -79,7 +79,7 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
       <div className="space-y-6">
         {days.map((d) => (
           <div key={d.key}>
-            <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">{d.label}</h3>
+            <h3 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">{d.label}</h3>
             <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-xl border">
               {d.items.map((m) => <Row key={m.match} m={m} hasTicket={tickets.has(m.match)} />)}
             </div>
@@ -97,7 +97,7 @@ function Row({ m, hasTicket }: { m: MatchInfo; hasTicket: boolean }) {
   const awayLabel = m.awayName ?? (m.projAway?.[0] ? `${m.projAway[0].name}` : m.slotAway ?? "TBD");
   const final = m.status === "final";
   return (
-    <Link href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-3 py-2.5 transition-colors sm:px-4">
+    <Link href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-3 py-2.5 sm:px-4">
       <div className="text-muted-foreground w-14 shrink-0 text-xs">
         <div className="font-mono">{etTime(m.utc)}</div>
         <div className="text-[10px]">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>

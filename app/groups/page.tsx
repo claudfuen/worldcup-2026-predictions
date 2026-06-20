@@ -42,7 +42,7 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
       <div className="border-border bg-card overflow-hidden rounded-2xl border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-muted-foreground border-border/60 border-b text-[10px] tracking-wide uppercase">
+            <tr className="text-muted-foreground border-border/60 border-b text-[10px] tracking-wide">
               <th className="py-2 pr-1 pl-3 text-left font-medium">#</th>
               <th className="py-2 text-left font-medium">Third-placed team</th>
               <th className="w-8 px-1 text-center font-medium">GF</th>
@@ -87,13 +87,13 @@ function GroupCard({ group, teams, decided }: { group: string; teams: GroupTeamV
     <div className="border-border bg-card overflow-hidden rounded-2xl border">
       <div className="border-border/60 flex items-center justify-between border-b px-4 py-2.5">
         <h2 className="font-semibold">Group {group}</h2>
-        <span className={`text-[10px] font-medium tracking-wider uppercase ${decided ? "text-emerald-400" : "text-muted-foreground"}`}>
+        <span className={`text-[10px] font-medium font-mono tracking-wide uppercase ${decided ? "text-emerald-400" : "text-muted-foreground"}`}>
           {decided ? "Final" : "In progress"}
         </span>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-muted-foreground text-[10px] tracking-wide uppercase">
+          <tr className="text-muted-foreground text-[10px] tracking-wide">
             <th className="py-1.5 pr-1 pl-3 text-left font-medium">Team</th>
             <th className="w-6 px-1 text-center font-medium" title="Played">P</th>
             <th className="w-6 px-1 text-center font-medium" title="Won">W</th>

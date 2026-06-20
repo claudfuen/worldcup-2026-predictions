@@ -49,7 +49,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
 
       {state === "defined" && m.probs && (
         <section className="mt-6">
-          <h2 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Win probability</h2>
+          <h2 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">Win probability</h2>
           <div className="border-border bg-card space-y-3 rounded-2xl border p-5">
             <ProbRow label={m.homeName!} value={m.probs.home} />
             <ProbRow label="Draw" value={m.probs.draw} tone="muted" />
@@ -64,7 +64,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       {state === "undefined" && (
         <>
           <section className="mt-6">
-            <h2 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Most likely matchups</h2>
+            <h2 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">Most likely matchups</h2>
             <div className="border-border bg-card divide-border/50 divide-y rounded-2xl border">
               {(m.topMatchups ?? []).map((mu) => (
                 <div key={`${mu.home}|${mu.away}`} className="flex items-center gap-2 px-4 py-2.5 text-sm">
@@ -137,7 +137,7 @@ function ProbRow({ label, value, tone }: { label: string; value: number; tone?: 
 function Candidates({ title, list }: { title: string; list?: { code: string; name: string; prob: number }[] }) {
   return (
     <div className="border-border bg-card rounded-2xl border p-4">
-      <div className="text-muted-foreground mb-2 text-[10px] tracking-wider uppercase">Likely · {title}</div>
+      <div className="text-muted-foreground mb-2 text-[10px] font-mono tracking-wide uppercase">Likely · {title}</div>
       <div className="space-y-1.5">
         {(list ?? []).slice(0, 5).map((c) => (
           <div key={c.code} className="flex items-center gap-2 text-sm">

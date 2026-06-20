@@ -30,13 +30,13 @@ export default async function Page() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Title contenders */}
         <section className="lg:col-span-2">
-          <h2 className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase">Title odds</h2>
+          <h2 className="text-muted-foreground mb-3 text-xs font-semibold font-mono tracking-wide uppercase">Title odds</h2>
           <div className="border-border bg-card rounded-2xl border p-2">
             {contenders.map((t, i) => (
               <Link
                 key={t.code}
                 href="/bracket"
-                className="hover:bg-muted/40 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors"
+                className="hover:bg-muted/40 flex items-center gap-3 rounded-xl px-3 py-2.5"
               >
                 <span className="text-muted-foreground w-4 text-right font-mono text-xs">{i + 1}</span>
                 <Flag code={t.code} size={26} />
@@ -80,7 +80,7 @@ export default async function Page() {
 
 function NavCard({ href, title, desc }: { href: string; title: string; desc: string }) {
   return (
-    <Link href={href} className="border-border bg-card hover:border-primary/50 block rounded-2xl border p-4 transition-colors">
+    <Link href={href} className="border-border bg-card hover:border-primary/50 block rounded-2xl border p-4">
       <div className="font-semibold">{title}</div>
       <div className="text-muted-foreground mt-0.5 text-xs">{desc}</div>
     </Link>

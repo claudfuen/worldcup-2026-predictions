@@ -29,7 +29,7 @@ export default async function MatchesPage() {
 function TicketCard({ m }: { m: MyMatch }) {
   const roundName: Record<string, string> = { GROUP: m.group ? `Group ${m.group}` : "Group", R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", FINAL: "Final" };
   return (
-    <Link href={`/match/${m.match}`} className="border-border bg-card hover:border-primary/40 block overflow-hidden rounded-2xl border transition-colors">
+    <Link href={`/match/${m.match}`} className="border-border bg-card hover:border-primary/40 block overflow-hidden rounded-2xl border">
       <div className="border-border/60 flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="bg-amber-500/15 text-amber-400 rounded-full px-2 py-0.5 text-[11px] font-semibold">🎟️ {m.tickets}</span>
@@ -44,7 +44,7 @@ function TicketCard({ m }: { m: MyMatch }) {
       </div>
       {!m.defined && m.topMatchups && m.topMatchups.length > 0 && (
         <div className="border-border/50 border-t px-4 py-3">
-          <div className="text-muted-foreground mb-2 text-[10px] tracking-wider uppercase">Most likely matchups</div>
+          <div className="text-muted-foreground mb-2 text-[10px] font-mono tracking-wide uppercase">Most likely matchups</div>
           <div className="space-y-1.5">
             {m.topMatchups.map((mu) => (
               <div key={`${mu.home}|${mu.away}`} className="flex items-center gap-2 text-sm">
@@ -78,7 +78,7 @@ function SideBlock({ label, code, title, candidates, slot }: { label: string; co
   const list = candidates ?? [];
   return (
     <div>
-      <div className="text-muted-foreground mb-1.5 text-[10px] tracking-wider uppercase">{label} · {slot}</div>
+      <div className="text-muted-foreground mb-1.5 text-[10px] font-mono tracking-wide uppercase">{label} · {slot}</div>
       <div className="space-y-1">
         {list.slice(0, 3).map((c) => (
           <div key={c.code} className="flex items-center gap-2">

@@ -22,7 +22,7 @@ export function Bracket({ matches, highlightCode }: { matches: MatchInfo[]; high
       <div className="flex min-w-[1100px] gap-3">
         {(["R32", "R16", "QF", "SF", "FINAL"] as const).map((round) => (
           <div key={round} className="flex flex-1 flex-col">
-            <div className="text-muted-foreground mb-2 px-1 text-[10px] font-semibold tracking-wider uppercase">
+            <div className="text-muted-foreground mb-2 px-1 text-[10px] font-semibold font-mono tracking-wide uppercase">
               {ROUND_LABEL[round]}
             </div>
             <div className="flex flex-1 flex-col justify-around gap-2">
@@ -46,7 +46,7 @@ function Node({ m, hasTicket, highlightCode, firstCol, lastCol }: { m: MatchInfo
   return (
     <Link
       href={`/match/${m.match}`}
-      className={`bg-card hover:bg-muted/30 relative block rounded-lg border text-xs transition-colors ${
+      className={`bg-card hover:bg-muted/30 relative block rounded-lg border text-xs ${
         hi ? "border-primary/60 ring-primary/20 ring-1" : hasTicket ? "border-amber-500/50" : "border-border"
       }`}
     >

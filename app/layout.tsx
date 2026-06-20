@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, Inter } from "next/font/google"
+import { Space_Grotesk, Geist_Mono, Inter } from "next/font/google"
 
 import "./globals.css"
 import "flag-icons/css/flag-icons.min.css"
@@ -12,7 +12,9 @@ export const metadata: Metadata = {
   description: "Monte Carlo predictions for the 2026 FIFA World Cup — group winners, advancement, and knockout paths.",
 }
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'})
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+
+const display = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display" })
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -28,7 +30,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("dark antialiased", fontMono.variable, "font-sans", inter.variable)}
+      className={cn("dark scheme-only-dark antialiased", fontMono.variable, display.variable, "font-sans", inter.variable)}
     >
       <body className="bg-background text-foreground min-h-svh">
         <ThemeProvider defaultTheme="dark" enableSystem={false}>
