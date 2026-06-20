@@ -48,7 +48,7 @@ export function Bracket({
                     const m = byMatch.get(mn);
                     return (
                       <div key={mn} className="flex flex-1 items-center">
-                        {m && <Node m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} />}
+                        {m && <Node m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} final={round === "FINAL"} />}
                       </div>
                     );
                   })}
@@ -94,7 +94,7 @@ function MobileRounds({
       <div className="space-y-2.5">
         {ORDER[round].map((mn) => {
           const m = byMatch.get(mn);
-          return m ? <Node key={mn} m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} big /> : null;
+          return m ? <Node key={mn} m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} big final={round === "FINAL"} /> : null;
         })}
       </div>
     </div>
@@ -119,7 +119,7 @@ function Connectors({ count }: { count: number }) {
   );
 }
 
-function Node({ m, hasTicket, highlightCode, big }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string; big?: boolean }) {
+function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string; big?: boolean; final?: boolean }) {
   const hi =
     highlightCode &&
     [m.home, m.away, m.projHome?.[0]?.code, m.projAway?.[0]?.code].includes(highlightCode);
@@ -127,11 +127,17 @@ function Node({ m, hasTicket, highlightCode, big }: { m: MatchInfo; hasTicket: b
     <Link
       href={`/match/${m.match}`}
       className={`bg-card hover:bg-muted/30 block w-full rounded-lg border ${big ? "text-sm" : "text-xs"} ${
-        hi ? "border-primary/60 ring-primary/20 ring-1" : hasTicket ? "border-amber-500/50" : "border-border"
+        hi
+          ? "border-primary/60 ring-primary/20 ring-1"
+          : final
+            ? "border-primary/45 ring-primary/15 bg-primary/[0.04] ring-1"
+            : hasTicket
+              ? "border-amber-500/50"
+              : "border-border"
       }`}
     >
-      <div className={`text-muted-foreground flex items-center justify-between gap-1 px-2.5 ${big ? "pt-1.5 text-[10px]" : "px-2 pt-1 text-[9px]"}`}>
-        <span className="truncate">M{m.match} · {etDay(m.utc)} · {m.city}</span>
+      <div className={`flex items-center justify-between gap-1 px-2.5 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "pt-1.5 text-[10px]" : "px-2 pt-1 text-[9px]"}`}>
+        <span className="truncate">{final ? "🏆 Final" : `M${m.match}`} · {etDay(m.utc)} · {m.city}</span>
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
       </div>
       <Side m={m} side="home" highlightCode={highlightCode} big={big} />

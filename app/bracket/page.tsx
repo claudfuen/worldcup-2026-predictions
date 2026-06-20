@@ -1,5 +1,6 @@
 import { getPredictions } from "@/lib/getPredictions";
 import { Bracket } from "@/components/bracket";
+import { Flag } from "@/components/flag";
 import { getSessionUser, getUserMatchNumbers } from "@/lib/userMatches";
 
 export const runtime = "nodejs";
@@ -30,12 +31,19 @@ export default async function BracketPage() {
   );
 }
 
-function ThirdPlace({ matches }: { matches: { match: number; projHome?: { name: string }[]; projAway?: { name: string }[] }[] }) {
+function ThirdPlace({ matches }: { matches: { match: number; projHome?: { code: string; name: string }[]; projAway?: { code: string; name: string }[] }[] }) {
   const m = matches.find((x) => x.match === 103);
   if (!m) return null;
+  const h = m.projHome?.[0];
+  const a = m.projAway?.[0];
   return (
-    <p className="text-muted-foreground text-sm">
-      {m.projHome?.[0]?.name ?? "TBD"} vs {m.projAway?.[0]?.name ?? "TBD"} · Miami, Jul 18
-    </p>
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      {h && <Flag code={h.code} size={16} />}
+      <span className="text-foreground/90">{h?.name ?? "TBD"}</span>
+      <span className="text-muted-foreground">vs</span>
+      {a && <Flag code={a.code} size={16} />}
+      <span className="text-foreground/90">{a?.name ?? "TBD"}</span>
+      <span className="text-muted-foreground/70">· Miami, Jul 18</span>
+    </div>
   );
 }
