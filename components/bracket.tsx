@@ -88,7 +88,7 @@ function Node({ m, hasTicket, highlightCode }: { m: MatchInfo; hasTicket: boolea
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
       </div>
       <Side m={m} side="home" highlightCode={highlightCode} />
-      <div className="border-border/40 border-t" />
+      <div className="border-white/12 border-t" />
       <Side m={m} side="away" highlightCode={highlightCode} />
     </Link>
   );
