@@ -99,6 +99,10 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
               </div>
             ))}
           </div>
+          <p className="text-muted-foreground/60 mt-2 text-xs">
+            Top {m.topScores.length} of every possible scoreline · all other scorelines{" "}
+            {pct(Math.max(0, 1 - m.topScores.reduce((acc, s) => acc + s.prob, 0)))} combined.
+          </p>
         </section>
       )}
 

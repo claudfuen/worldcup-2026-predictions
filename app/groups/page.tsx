@@ -26,7 +26,9 @@ export default async function GroupsPage() {
       <Legend />
       <p className="text-muted-foreground/70 mt-3 max-w-3xl text-xs">
         Advance % blends each team&apos;s strength with results so far, so early in the group a strong side can show
-        higher odds than a team placed above it - 3 of every 4 advance, and there are still games to play.
+        higher odds than a team placed above it - 3 of every 4 advance, and there are still games to play. A % is always
+        a forecast: even 99% isn&apos;t mathematically safe. Only a <span className="font-bold text-emerald-400">✓</span>{" "}
+        marks a spot that&apos;s locked no matter the remaining results.
       </p>
       <ThirdPlaceRace entries={data.thirdPlaceRace ?? []} />
     </main>

@@ -1,5 +1,5 @@
 // End-to-end: pull live results -> live ratings -> Monte Carlo -> assemble the payload stored in KV / rendered.
-import { fetchResults, liveRatings, buildGroupMatches, type FetchedMatch } from "./espn";
+import { fetchResults, liveRatings, preMatchRatingsByPair, buildGroupMatches, type FetchedMatch } from "./espn";
 import { runMonteCarlo } from "./sim/simulate";
 import { rankGroup } from "./sim/standings";
 import { computeClinch, minThirdPlacePoints, maxThirdPlacePoints, maxReachablePoints } from "./sim/clinch";
@@ -98,6 +98,7 @@ function topCandidates(dist: Record<string, number> | undefined, n = 4): SlotCan
 export async function computePredictions(iterations = 20000, seed = 20260611): Promise<PredictionsPayload> {
   const results = await fetchResults();
   const ratings = liveRatings(results);
+  const preMatch = preMatchRatingsByPair(results); // ratings before each completed match, for honest pre-match reads
   const groupMatches = buildGroupMatches(results);
   const sim = runMonteCarlo(groupMatches, ratings, iterations, seed);
 
@@ -221,8 +222,10 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
     // shown on the detail page reconcile with the tournament odds. Kept for final matches too so the
     // detail page can show the model's pre-match read alongside the actual result.
     if (info.defined && info.home && info.away) {
+      // For a completed match, read ratings as they stood BEFORE it (true pre-match view, no hindsight).
+      const r = info.status === "final" ? (preMatch[[info.home, info.away].sort().join("-")] ?? ratings) : ratings;
       const diff =
-        (ratings[info.home] ?? 1500) - (ratings[info.away] ?? 1500) +
+        (r[info.home] ?? 1500) - (r[info.away] ?? 1500) +
         hostEloBoost(info.home, info.venue) - hostEloBoost(info.away, info.venue);
       const p = wdlProbs(diff);
       info.probs = { home: p.win, draw: p.draw, away: p.loss };

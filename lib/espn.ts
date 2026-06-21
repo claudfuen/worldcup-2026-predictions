@@ -63,6 +63,22 @@ export function liveRatings(results: FetchedMatch[]): Ratings {
   return R;
 }
 
+// Ratings as they stood JUST BEFORE each completed match (results are date-sorted), keyed by sorted
+// team pair. Lets a completed match show the model's genuine PRE-match read instead of a hindsight
+// view computed from ratings that already absorbed the result.
+export function preMatchRatingsByPair(results: FetchedMatch[]): Record<string, Ratings> {
+  const R: Ratings = Object.fromEntries(TEAMS.map((t) => [t.code, t.rating]));
+  const weight = kWeight("FIFA World Cup");
+  const snap: Record<string, Ratings> = {};
+  for (const m of results) {
+    snap[[m.homeCode, m.awayCode].sort().join("-")] = { ...R }; // snapshot before applying this result
+    const [nh, na] = updateElo(R[m.homeCode], R[m.awayCode], m.homeGoals, m.awayGoals, { neutral: true, weight });
+    R[m.homeCode] = nh;
+    R[m.awayCode] = na;
+  }
+  return snap;
+}
+
 // Build the 12 round-robin groups, filling in completed group-stage results.
 export function buildGroupMatches(results: FetchedMatch[]): Record<string, GroupMatch[]> {
   const groups: Record<string, GroupMatch[]> = {};

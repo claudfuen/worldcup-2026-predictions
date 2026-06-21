@@ -18,8 +18,9 @@ export default async function BracketPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Knockout bracket</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Most likely team in each slot, with its probability. Resolved teams shown in bold; 🎟️ marks matches you have
-          tickets to. Scroll horizontally to follow the path to the final.
+          Most likely team in each slot. Each <span className="text-foreground/80">%</span> is how often that team fills
+          the slot across our simulations - not its chance of winning the match. Resolved teams are bold; 🎟️ marks your
+          tickets. Scroll horizontally to follow the path to the final.
         </p>
       </div>
       <Bracket matches={data.matches} myMatchNumbers={myMatchNumbers} />

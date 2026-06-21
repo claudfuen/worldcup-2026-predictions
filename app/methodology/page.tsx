@@ -13,8 +13,10 @@ export default function MethodologyPage() {
         </Section>
         <Section title="Match model - Poisson scorelines">
           The Elo gap between two teams maps to an expected goal supremacy and total, which feed two Poisson goal rates
-          (with a Dixon-Coles low-score correction). This yields both win/draw/loss probabilities and full scorelines -
-          the latter needed to break group ties on goal difference.
+          (with a Dixon-Coles low-score correction). Those two rates are the <b>expected goals (xG)</b> shown on each
+          match - the model&apos;s average goals for each side, which drive the scoreline distribution. This yields both
+          win/draw/loss probabilities and full scorelines - the latter needed to break group ties on goal difference.
+          Knockout ties are decided by extra time and then penalties, which the win probabilities account for.
         </Section>
         <Section title="Simulation - Monte Carlo">
           We simulate every remaining match ~20,000 times. Each run builds the 12 group tables using the{" "}
