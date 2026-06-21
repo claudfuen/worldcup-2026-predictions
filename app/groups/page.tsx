@@ -43,8 +43,9 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
       <h2 className="text-lg font-semibold tracking-tight">Third-place race</h2>
       <p className="text-muted-foreground mt-1 mb-3 text-sm">
         The <span className="text-foreground">8 best</span>{" "}of the 12 third-placed teams also reach the Round of 32,
-        ranked across groups by points → goal difference → goals scored. Each qualifier is slotted to a specific group
-        winner by FIFA&apos;s fixed Annex C table (shown as the R32 match it feeds).
+        ranked across groups by points → goal difference → goals scored. This is the standings race as it stands now;
+        the bracket shows each projected third&apos;s Round-of-32 matchup (which group winner it faces depends on the
+        final mix, per FIFA&apos;s Annex C table).
       </p>
       <div className="border-border bg-card overflow-hidden rounded-2xl border">
         <table className="w-full text-sm">
@@ -55,7 +56,7 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
               <th className="w-8 px-1 text-center font-medium">GF</th>
               <th className="w-8 px-1 text-center font-medium">GD</th>
               <th className="w-8 px-1 text-center font-semibold">Pts</th>
-              <th className="px-2 pr-3 text-right font-medium">Round of 32</th>
+              <th className="px-2 pr-3 text-right font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -73,10 +74,10 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
                 <td className="px-1 text-center font-mono text-xs tabular-nums">{e.gd >= 0 ? "+" : ""}{e.gd}</td>
                 <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{e.pts}</td>
                 <td className="px-2 pr-3 text-right text-xs">
-                  {e.advancing && e.match ? (
-                    <span className="text-amber-400">M{e.match} · vs {e.facesGroup} winner</span>
+                  {e.advancing ? (
+                    <span className="text-amber-400">In (top 8)</span>
                   ) : (
-                    <span className="text-muted-foreground/60">out (9th-12th)</span>
+                    <span className="text-muted-foreground/60">Out (9th-12th)</span>
                   )}
                 </td>
               </tr>

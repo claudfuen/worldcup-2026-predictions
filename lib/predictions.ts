@@ -4,6 +4,7 @@ import { runMonteCarlo } from "./sim/simulate";
 import { rankGroup } from "./sim/standings";
 import { computeClinch, minThirdPlacePoints, maxThirdPlacePoints, maxReachablePoints } from "./sim/clinch";
 import { rankThirds, selectAndAssignThirds, type ThirdTeam } from "./sim/thirdPlace";
+import { THIRD_PLACE_TABLE, TP_SLOT_ORDER } from "./data/thirdPlaceTable";
 import { wdlProbs, eloToLambdas, scorelineDist } from "./sim/poisson";
 import { hostEloBoost } from "./sim/hosts";
 import type { GroupMatch } from "./sim/types";
@@ -346,6 +347,45 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
       slot, match: slot ? thirdHostMatch[slot] : undefined, facesGroup: slot ? slot[1] : undefined,
     };
   });
+
+  // Make the bracket's third-place slots a COHERENT FORECAST. The raw per-slot Monte Carlo marginal is
+  // noisy (surfaces teams unlikely to even qualify) and globally inconsistent (a team can be the modal
+  // occupant of two slots, or appear as both a group winner and a third). Instead: take each group's
+  // most-likely 3rd-placed team, pick the 8 likeliest to advance, and assign them to host slots via the
+  // same Annex C table. A team forecast to win its group is never a forecast third, so no team appears twice.
+  {
+    const byGroup: Record<string, TeamPrediction[]> = {};
+    for (const t of teams) (byGroup[t.group] ??= []).push(t);
+    const forecastThird: Record<string, TeamPrediction> = {};
+    for (const [g, ts] of Object.entries(byGroup)) {
+      const rest = [...ts];
+      const take = (key: "winGroup" | "runnerUp" | "third") => {
+        let bi = 0;
+        for (let i = 1; i < rest.length; i++) if (rest[i][key] > rest[bi][key]) bi = i;
+        return rest.splice(bi, 1)[0];
+      };
+      take("winGroup"); take("runnerUp"); // 1st, 2nd
+      forecastThird[g] = take("third"); // most-likely 3rd of the remaining two
+    }
+    const top8 = Object.values(forecastThird).sort((a, b) => b.advance - a.advance).slice(0, 8);
+    const assignment = THIRD_PLACE_TABLE[top8.map((t) => t.group).sort().join("")];
+    if (assignment) {
+      const matchToThird: Record<number, string> = {};
+      for (let i = 0; i < TP_SLOT_ORDER.length; i++) {
+        const code = forecastThird[assignment[i]]?.code;
+        const mn = thirdHostMatch[TP_SLOT_ORDER[i]];
+        if (code && mn != null) matchToThird[mn] = code;
+      }
+      for (const m of matches) {
+        if (m.round !== "R32") continue;
+        const code = matchToThird[m.match];
+        if (!code) continue;
+        const cand: SlotCandidate = { code, name: TEAM_BY_CODE[code].name, prob: forecastThird[TEAM_BY_CODE[code].group]?.advance ?? 0.5 };
+        if (m.slotAway?.startsWith("3:")) m.projAway = [cand];
+        else if (m.slotHome?.startsWith("3:")) m.projHome = [cand];
+      }
+    }
+  }
 
   return {
     updatedAt: new Date().toISOString(),
