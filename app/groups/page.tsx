@@ -4,10 +4,11 @@ import { getLiveMatches, overlayLive } from "@/lib/live";
 import type { GroupTeamView, ThirdPlaceEntry } from "@/lib/predictions";
 import { provisionalGroup, ratingsFromTeams, type ProvisionalGroup } from "@/lib/liveProjection";
 import { Flag } from "@/components/flag";
-import { Delta } from "@/components/delta";
+import { AdvanceBadge } from "@/components/view/advance-badge";
+import { teamAdvanceDisplay } from "@/lib/view/advance";
+import { isClinched } from "@/lib/view/types";
 import { ProvisionalStandings } from "@/components/provisional-standings";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
-import { pct } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -175,7 +176,8 @@ function GroupCard({ group, teams, decided, prov }: { group: string; teams: Grou
 }
 
 function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | "third" | null }) {
-  const elim = t.status === "eliminated";
+  const d = teamAdvanceDisplay(t, pos - 1);
+  const elim = d.kind === "eliminated";
   const zone = pos <= 2 ? "border-l-win" : pos === 3 ? "border-l-contention" : "border-l-transparent";
   const cutBorder = cut === "qualify" ? "border-b-primary/50 border-b border-dashed" : cut === "third" ? "border-b-border border-b border-dotted" : "";
   return (
@@ -185,8 +187,11 @@ function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | 
           <span className="text-muted-foreground w-3 text-center font-mono text-[11px]">{pos}</span>
           <Flag code={t.code} size={20} />
           <span className={`truncate text-[13px] font-medium ${elim ? "line-through" : ""}`}>{t.name}{elim && <span className="sr-only"> (eliminated)</span>}</span>
-          {t.status === "won_group" && <span title="Won the group" className="text-[10px]">👑<span className="sr-only">Won group</span></span>}
-          {(t.status === "second" || t.status === "advanced") && <span title="Advanced" className="text-win text-[9px] font-bold">✓<span className="sr-only"> advanced</span></span>}
+          {isClinched(d) && d.symbol && (
+            <span title={d.kind === "wonGroup" ? "Won the group" : "Advanced"} className={d.kind === "wonGroup" ? "text-[10px]" : "text-win text-[9px] font-bold"}>
+              {d.symbol}<span className="sr-only"> {d.kind === "wonGroup" ? "Won group" : "advanced"}</span>
+            </span>
+          )}
         </div>
       </td>
       <Cell v={t.played} muted />
@@ -197,20 +202,8 @@ function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | 
       <Cell v={t.ga} muted cls="hidden sm:table-cell" />
       <Cell v={(t.gd >= 0 ? "+" : "") + t.gd} />
       <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{t.pts}</td>
-      <td className="px-1 pr-3 text-right font-mono text-xs font-semibold tabular-nums">
-        {t.status === "won_group" ? (
-          <span className="text-win">✓ 1st</span>
-        ) : t.status === "second" ? (
-          <span className="text-win">✓ 2nd</span>
-        ) : t.status === "advanced" ? (
-          <span className="text-win">✓ in</span>
-        ) : t.status === "eliminated" ? (
-          <span className="text-muted-2">out</span>
-        ) : (
-          <span className={pos <= 2 ? "text-win" : pos === 3 ? "text-contention" : "text-muted-foreground"}>
-            {pct(Math.min(t.advance, 0.99))}<Delta v={t.advanceDelta} />
-          </span>
-        )}
+      <td className="px-1 pr-3 text-right">
+        <AdvanceBadge d={d} showDelta />
       </td>
     </tr>
   );

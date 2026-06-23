@@ -6,6 +6,8 @@ import { teamSlug } from "@/lib/slug";
 import { Flag } from "@/components/flag";
 import { ShareBar } from "@/components/share-bar";
 import { LocalTime } from "@/components/local-time";
+import { AdvanceBadge } from "@/components/view/advance-badge";
+import { teamAdvanceDisplay } from "@/lib/view/advance";
 import { pct } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -92,12 +94,8 @@ export default async function GroupPage({ params }: { params: Promise<{ letter: 
                     <Cell v={t.ga} muted cls="hidden sm:table-cell" />
                     <Cell v={(t.gd >= 0 ? "+" : "") + t.gd} />
                     <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{t.pts}</td>
-                    <td className="px-1 pr-3 text-right font-mono text-xs font-semibold tabular-nums">
-                      {t.status === "won_group" ? <span className="text-win">✓ 1st</span>
-                        : t.status === "second" ? <span className="text-win">✓ 2nd</span>
-                        : t.status === "advanced" ? <span className="text-win">✓ in</span>
-                        : elim ? <span className="text-muted-2">out</span>
-                        : <span className={i <= 1 ? "text-win" : i === 2 ? "text-contention" : "text-muted-foreground"}>{pct(Math.min(t.advance, 0.99))}</span>}
+                    <td className="px-1 pr-3 text-right">
+                      <AdvanceBadge d={teamAdvanceDisplay(t, i)} />
                     </td>
                   </tr>
                 );

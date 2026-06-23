@@ -6,6 +6,9 @@ import { teamSlug, teamFromSlug } from "@/lib/slug";
 import { Flag } from "@/components/flag";
 import { ShareBar } from "@/components/share-bar";
 import { LocalTime } from "@/components/local-time";
+import { AdvanceBadge } from "@/components/view/advance-badge";
+import { teamAdvanceDisplay } from "@/lib/view/advance";
+import { isClinched } from "@/lib/view/types";
 import { forecastPct, pct } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -52,9 +55,11 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
 
   const advancePct = pred ? forecastPct(pred.advance) : "-";
   const titlePct = pred ? forecastPct(pred.title) : "-";
-  // A clinched Round-of-32 place is a FACT (✓), never a capped forecast %. Mirrors the Overview/Groups rule.
-  const advanceClinched = !!row && (row.status === "won_group" || row.status === "second" || row.status === "advanced");
-  const advanceOut = row?.status === "eliminated";
+  // A clinched Round-of-32 place is a FACT (✓), never a capped forecast %. Derived from the SAME
+  // AdvanceDisplay union the standings cell renders, so the funnel/lede can never disagree with the table.
+  const advanceDisp = row ? teamAdvanceDisplay(row, groupRank(groupView, team.code) - 1) : undefined;
+  const advanceClinched = !!advanceDisp && isClinched(advanceDisp);
+  const advanceOut = advanceDisp?.kind === "eliminated";
   const statusWord =
     row?.status === "won_group" ? "have won the group"
       : row?.status === "second" ? "have clinched a top-2 spot"
@@ -77,7 +82,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
             {advanceOut ? (
               <> - out of the 2026 World Cup, finishing outside Group {team.group}&apos;s qualifying places.</>
             ) : advanceClinched ? (
-              <> and into the Round of 32, with a <span className="text-foreground font-medium">{titlePct}</span> chance to
+              <>, with a <span className="text-foreground font-medium">{titlePct}</span> chance to
               win the tournament - the <span className="text-foreground font-medium">{ordinal(rank)}</span>-most-likely champion
               of 48 teams, across {data.iterations.toLocaleString()} simulations.</>
             ) : (
@@ -146,8 +151,8 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
                       <td className="px-1 text-center font-mono text-xs tabular-nums text-muted-foreground">{t.played}</td>
                       <td className="px-1 text-center font-mono text-xs tabular-nums">{t.gd >= 0 ? "+" : ""}{t.gd}</td>
                       <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{t.pts}</td>
-                      <td className="px-2 pr-3 text-right font-mono text-xs font-semibold tabular-nums">
-                        {t.status === "eliminated" ? <span className="text-muted-2">out</span> : t.status === "live" ? <span className={i <= 1 ? "text-win" : i === 2 ? "text-contention" : "text-muted-foreground"}>{pct(Math.min(t.advance, 0.99))}</span> : <span className="text-win">✓</span>}
+                      <td className="px-2 pr-3 text-right">
+                        <AdvanceBadge d={teamAdvanceDisplay(t, i)} />
                       </td>
                     </tr>
                   );

@@ -48,6 +48,8 @@ export function pct(v: number): string {
 
 // A Monte Carlo frequency is a forecast, never a guarantee, so it must never render as "100%" - only a
 // mathematically-clinched state (shown with a ✓ elsewhere) may. Cap displayed sim probabilities at 99%.
-export function forecastPct(v: number): string {
-  return pct(Math.min(v, 0.99));
+// Returns the branded ForecastLabel (this is its ONLY producer), so a raw/uncapped value can't be passed
+// where a capped forecast is expected.
+export function forecastPct(v: number): import("./view/types").ForecastLabel {
+  return pct(Math.min(v, 0.99)) as import("./view/types").ForecastLabel;
 }
