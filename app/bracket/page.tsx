@@ -17,7 +17,7 @@ export const metadata = {
 export default async function BracketPage() {
   const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={live.length > 0} />
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Knockout bracket</h1>

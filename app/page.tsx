@@ -28,7 +28,7 @@ export default async function Page() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={hasLive} />
       <header className="mb-8">
         <div className="text-primary font-mono text-[11px] font-medium tracking-wide uppercase">Live forecast</div>

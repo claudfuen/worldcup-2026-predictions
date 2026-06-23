@@ -24,7 +24,7 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
 
   return (
     <header className="border-border/70 bg-background/80 sticky top-0 z-50 border-b backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center gap-1 px-4 sm:px-6">
+      <div className="mx-auto flex max-w-6xl items-center gap-1 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="mr-3 flex shrink-0 items-center gap-2 py-3">
           <span className="text-base">🏆</span>
           <span className="font-display hidden text-sm font-semibold tracking-tight sm:inline">World Cup 2026 Predictions</span>

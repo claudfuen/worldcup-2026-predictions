@@ -8,9 +8,9 @@ export const metadata = {
 
 export default function MethodologyPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-semibold tracking-tight">How it works</h1>
-      <div className="mt-6 space-y-6 text-sm leading-relaxed">
+      <div className="mt-6 space-y-7 text-sm leading-relaxed">
         <Section title="Ratings - World Football Elo">
           Every team carries an Elo rating seeded from ~49,000 international matches (1872-present) and updated after each
           result. Updates are tournament-weighted (a World Cup match moves ratings more than a friendly), scaled by margin
@@ -61,7 +61,7 @@ export default function MethodologyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="mb-1.5 font-semibold">{title}</h2>
+      <h2 className="mb-1.5 text-base font-semibold">{title}</h2>
       <p className="text-muted-foreground [&_b]:text-foreground [&_i]:text-foreground/90">{children}</p>
     </section>
   );
