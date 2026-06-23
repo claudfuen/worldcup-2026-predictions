@@ -32,8 +32,8 @@ export default async function BracketPage() {
         matches={data.matches}
         champion={data.teams[0] ? { code: data.teams[0].code, name: data.teams[0].name, prob: data.teams[0].title } : undefined}
       />
-      <div className="border-border bg-card mt-6 rounded-xl border p-4">
-        <h2 className="mb-1 text-sm font-semibold">Third-place play-off</h2>
+      <div className="border-border bg-card mt-6 rounded-2xl border p-4">
+        <h2 className="mb-2 text-base font-semibold tracking-tight">Third-place play-off</h2>
         <ThirdPlace matches={data.matches} />
       </div>
     </main>
@@ -52,7 +52,7 @@ function ThirdPlace({ matches }: { matches: { match: number; projHome?: { code: 
       <span className="text-muted-foreground">vs</span>
       {a && <Flag code={a.code} size={16} />}
       <span className="text-foreground/90">{a?.name ?? "TBD"}</span>
-      <span className="text-muted-foreground/70">· Miami, Jul 18</span>
+      <span className="text-muted-2">· Miami, Jul 18</span>
     </div>
   );
 }

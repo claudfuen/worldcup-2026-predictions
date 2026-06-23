@@ -85,7 +85,7 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
         {days.map((d) => (
           <div key={d.key}>
             <h3 className="text-muted-foreground mb-2 font-mono text-xs font-semibold tracking-wide uppercase" suppressHydrationWarning>{d.label}</h3>
-            <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-xl border">
+            <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border">
               {d.items.map((m) => (
                 <Row key={m.match} m={m} zone={zone} />
               ))}
@@ -106,7 +106,7 @@ function Row({ m, zone }: { m: MatchInfo; zone?: import("@/lib/format").Zone }) 
   const live = m.status === "live";
   const showScore = final || live;
   return (
-    <Link href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-3 py-2.5 sm:px-4">
+    <Link href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-3 py-2.5 transition-colors sm:px-4">
       <div className="text-muted-foreground w-16 shrink-0 text-xs">
         <div className="font-mono whitespace-nowrap" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</div>
         <div className="text-[10px]">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>

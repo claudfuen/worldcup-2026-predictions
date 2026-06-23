@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function MethodologyPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-semibold tracking-tight">How it works</h1>
       <div className="mt-6 space-y-7 text-sm leading-relaxed">
         <Section title="Ratings - World Football Elo">
@@ -61,7 +61,7 @@ export default function MethodologyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="mb-1.5 text-base font-semibold">{title}</h2>
+      <h2 className="mb-2 text-base font-semibold tracking-tight">{title}</h2>
       <p className="text-muted-foreground [&_b]:text-foreground [&_i]:text-foreground/90">{children}</p>
     </section>
   );

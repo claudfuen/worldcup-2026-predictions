@@ -54,7 +54,7 @@ export function SignInForm({ next }: { next: string }) {
       >
         {status === "sending" ? "Sending…" : "Email me a sign-in link"}
       </button>
-      {status === "error" && <p className="text-sm text-red-400">{error}</p>}
+      {status === "error" && <p className="text-destructive text-sm">{error}</p>}
     </form>
   );
 }

@@ -67,18 +67,18 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       <div className="text-muted-foreground mt-1 text-sm"><LocalTime utc={m.utc} mode="datetime" /> · {m.venue}, {m.city}</div>
 
       {/* Scoreboard header: teams flank a centered score (no dead center void) */}
-      <div className="bg-surface-raised border-border-strong mt-5 flex items-center justify-center gap-2 rounded-2xl border p-6 sm:gap-5">
+      <div className="bg-surface-raised border-border-strong mt-6 flex items-center justify-center gap-2 rounded-2xl border p-6 sm:gap-5">
         <ScoreTeam m={m} side="home" />
         <div className="flex shrink-0 flex-col items-center gap-1.5 px-1">
           {m.status === "final" || m.status === "live" ? (
             <span className="font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
-              {m.homeScore}<span className="text-muted-foreground/50 mx-1.5">–</span>{m.awayScore}
+              {m.homeScore}<span className="text-muted-2 mx-1.5">–</span>{m.awayScore}
             </span>
           ) : (
             <span className="text-muted-foreground font-display text-2xl">vs</span>
           )}
           {m.status === "final" ? (
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Full time</span>
+            <span className="text-muted-foreground font-mono text-xs font-semibold tracking-wide uppercase">Full time</span>
           ) : m.status === "live" ? (
             <span className="text-live inline-flex items-center gap-1.5 text-xs font-semibold">
               <span className="bg-live size-1.5 animate-pulse rounded-full" />{m.liveDetail}
@@ -91,8 +91,8 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       {/* State-specific body */}
       {state === "final" && (
         <section className="mt-6">
-          <h2 className="text-muted-foreground mb-2.5 font-mono text-xs font-semibold tracking-wide uppercase">Model&apos;s pre-match read</h2>
-          <div className="border-border bg-card rounded-2xl border p-5">
+          <h2 className="text-muted-foreground mb-2 font-mono text-xs font-semibold tracking-wide uppercase">Model&apos;s pre-match read</h2>
+          <div className="border-border bg-card rounded-2xl border p-4">
             {m.probs ? (
               <>
                 <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={m.homeName!} awayName={m.awayName!} />
@@ -115,7 +115,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           <h2 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">
             {state === "live" ? "Pre-match win probability" : "Win probability"}
           </h2>
-          <div className="border-border bg-card rounded-2xl border p-5">
+          <div className="border-border bg-card rounded-2xl border p-4">
             {state === "live" && (
               <p className="text-live mb-3 text-xs font-medium">
                 Live: {m.homeName} {m.homeScore}–{m.awayScore} {m.awayName} · {m.liveDetail}
@@ -181,7 +181,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
               ))}
             </div>
           </section>
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {!m.home && <Candidates title={prettySlot(m.slotHome)} list={m.projHome} />}
             {!m.away && <Candidates title={prettySlot(m.slotAway)} list={m.projAway} />}
           </div>
@@ -228,7 +228,7 @@ function ScoreTeam({ m, side }: { m: MatchInfo; side: "home" | "away" }) {
 function Candidates({ title, list }: { title: string; list?: { code: string; name: string; prob: number }[] }) {
   return (
     <div className="border-border bg-card rounded-2xl border p-4">
-      <div className="text-muted-foreground mb-2 text-[10px] font-mono tracking-wide uppercase">Likely · {title}</div>
+      <div className="text-muted-foreground mb-2 font-mono text-[10px] font-semibold tracking-wide uppercase">Likely · {title}</div>
       <div className="space-y-1.5">
         {(list ?? []).slice(0, 5).map((c) => (
           <div key={c.code} className="flex items-center gap-2 text-sm">

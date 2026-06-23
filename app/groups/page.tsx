@@ -32,7 +32,7 @@ export default async function GroupsPage() {
   }
   const hasLive = overlaid.some((m) => m.status === "live");
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={hasLive} />
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Groups</h1>
@@ -62,7 +62,7 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
   if (!entries.length) return null;
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold tracking-tight">Third-place race</h2>
+      <h2 className="text-base font-semibold tracking-tight">Third-place race</h2>
       <p className="text-muted-foreground mt-1 mb-3 text-sm">
         The <span className="text-foreground">8 best</span>{" "}of the 12 third-placed teams also reach the Round of 32,
         ranked across groups by points → goal difference → goals scored. This is the standings race as it stands now;
@@ -123,7 +123,7 @@ function GroupCard({ group, teams, decided, prov }: { group: string; teams: Grou
             <span className="size-1.5 animate-pulse rounded-full bg-live" />Live
           </span>
         ) : (
-          <span className={`font-mono text-[10px] font-medium tracking-wide uppercase ${decided ? "text-win" : "text-muted-foreground"}`}>
+          <span className={`font-mono text-[10px] font-semibold tracking-wide uppercase ${decided ? "text-win" : "text-muted-foreground"}`}>
             {decided ? "Final" : "In progress"}
           </span>
         )}

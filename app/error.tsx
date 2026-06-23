@@ -8,7 +8,7 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
     <main className="mx-auto flex min-h-[70svh] max-w-md flex-col items-center justify-center px-6 text-center">
       <div className="bg-card border-border w-full rounded-2xl border p-8">
         <div className="text-3xl">⚽</div>
-        <h1 className="mt-3 text-xl font-semibold tracking-tight">Live data is briefly unavailable</h1>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">Live data is briefly unavailable</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           The forecast is refreshed from live results and occasionally hiccups. Give it a moment and try again.
         </p>

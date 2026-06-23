@@ -26,7 +26,7 @@ export function TodaySection({ matches }: { matches: MatchInfo[] }) {
   });
   return (
     <section className="mt-8" suppressHydrationWarning>
-      <h2 className="text-muted-foreground mb-3 font-mono text-xs font-medium tracking-wide uppercase">Today · {label}</h2>
+      <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Today · {label}</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {todayMatches.map((m) => <TodayTile key={m.match} m={m} />)}
       </div>
@@ -44,7 +44,7 @@ function TodayTile({ m }: { m: MatchInfo }) {
   const homeName = m.homeName ?? m.projHome?.[0]?.name ?? m.slotHome ?? "TBD";
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? "TBD";
   return (
-    <Link href={`/match/${m.match}`} className={`bg-card hover:border-primary/40 block rounded-xl border p-3 ${live ? "border-live/40" : "border-border"}`}>
+    <Link href={`/match/${m.match}`} className={`bg-card hover:border-primary/50 hover:bg-surface-raised block rounded-2xl border p-4 transition-colors ${live ? "border-live/40" : "border-border"}`}>
       <div className="text-muted-foreground mb-2 flex items-center justify-between text-[11px]">
         <span className="font-mono" suppressHydrationWarning>{fmtTime(m.utc, zone)}</span>
         <span>

@@ -28,10 +28,10 @@ export default async function Page() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={hasLive} />
       <header className="mb-8">
-        <div className="text-primary font-mono text-[11px] font-medium tracking-wide uppercase">Live forecast</div>
+        <div className="text-primary font-mono text-xs font-semibold tracking-wide uppercase">Live forecast</div>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">World Cup 2026 Predictions</h1>
         <p className="text-muted-foreground mt-2 text-sm text-pretty">
           {data.iterations.toLocaleString()} Monte Carlo simulations · {data.matchesPlayed}/{data.totalGroupMatches} group
@@ -42,10 +42,10 @@ export default async function Page() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Title contenders */}
         <section className="lg:col-span-2">
-          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-medium tracking-wide uppercase">Title odds</h2>
+          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Title odds</h2>
           <div className="border-border-strong bg-surface-raised rounded-2xl border p-2">
             {contenders.map((t, i) => (
-              <Link key={t.code} href="/bracket" className="hover:bg-muted/40 flex items-center gap-3 rounded-xl px-3 py-2.5">
+              <Link key={t.code} href="/bracket" className="hover:bg-muted/30 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors">
                 <span className="text-muted-2 w-4 text-right font-mono text-xs tabular-nums">{i + 1}</span>
                 <Flag code={t.code} size={26} />
                 <span className="w-32 shrink-0 font-medium">{t.name}</span>
@@ -60,22 +60,25 @@ export default async function Page() {
           </div>
         </section>
 
-        {/* Side column */}
-        <section className="space-y-4">
-          <NavCard href="/groups" title="Groups" desc="Standings, qualification odds & cut-offs" />
-          <NavCard href="/bracket" title="Bracket" desc="Projected knockout tree to the final" />
-          <NavCard href="/schedule" title="Schedule" desc="All 104 matches, your local time" />
-          <NavCard href="/methodology" title="Method" desc="How the model works" />
+        {/* Side column - eyebrow mirrors "Title odds" so the card tops align across the two columns */}
+        <section>
+          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Explore</h2>
+          <div className="space-y-4">
+            <NavCard href="/groups" title="Groups" desc="Standings, qualification odds & cut-offs" />
+            <NavCard href="/bracket" title="Bracket" desc="Projected knockout tree to the final" />
+            <NavCard href="/schedule" title="Schedule" desc="All 104 matches, your local time" />
+            <NavCard href="/methodology" title="Method" desc="How the model works" />
+          </div>
         </section>
       </div>
 
       <section className="mt-10">
-        <h2 className="text-muted-foreground mb-1 font-mono text-xs font-medium tracking-wide uppercase">Chance of reaching each round</h2>
-        <p className="text-muted-foreground/70 mb-3 text-xs">How deep each contender is projected to go, across {data.iterations.toLocaleString()} simulations.</p>
+        <h2 className="text-muted-foreground mb-1 font-mono text-xs font-semibold tracking-wide uppercase">Chance of reaching each round</h2>
+        <p className="text-muted-2 mb-3 text-xs">How deep each contender is projected to go, across {data.iterations.toLocaleString()} simulations.</p>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-muted-foreground border-border/60 border-b text-[11px]">
+              <tr className="text-muted-foreground border-border/60 border-b text-[10px] tracking-wide">
                 <th className="py-2 pr-2 text-left font-medium">Team</th>
                 <th className="hidden w-12 px-1 text-right font-medium sm:table-cell">R32</th>
                 <th className="w-12 px-1 text-right font-medium">R16</th>
@@ -109,7 +112,7 @@ export default async function Page() {
 
       <TodaySection matches={matches} />
 
-      <footer className="border-border/60 text-muted-foreground/70 mt-12 border-t pt-6 text-xs text-pretty">
+      <footer className="border-border/60 text-muted-2 mt-12 border-t pt-6 text-xs text-pretty">
         Elo + Poisson scoreline model (backtested RPS ~0.18) with rating uncertainty, host advantage and an extra-time/penalty
         knockout model · 2026 head-to-head-first tiebreakers · verified 495-row third-place table. <Link href="/methodology" className="text-primary">How it works →</Link>
         <div className="mt-2">Live data via ESPN · not affiliated with FIFA.</div>
@@ -127,7 +130,7 @@ function heat(v: number): string {
 function RoundCell({ v, hideMobile, clinched }: { v: number; hideMobile?: boolean; clinched?: boolean }) {
   return (
     <td
-      className={`px-1 text-right font-mono text-xs tabular-nums ${clinched ? "text-win" : "text-foreground/80"} ${hideMobile ? "hidden sm:table-cell" : ""}`}
+      className={`px-1 text-right font-mono text-xs tabular-nums ${clinched ? "text-win" : "text-muted-2"} ${hideMobile ? "hidden sm:table-cell" : ""}`}
       style={{ backgroundColor: clinched ? heat(1) : heat(v) }}
     >
       {clinched ? <span title="Clinched a Round-of-32 place">✓</span> : forecastPct(v)}

@@ -46,7 +46,7 @@ export function Bracket({
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span id="trace-team-label" className="text-muted-foreground font-mono text-[11px] tracking-wide uppercase">Trace a team</span>
+        <span id="trace-team-label" className="text-muted-foreground font-mono text-[10px] font-semibold tracking-wide uppercase">Trace a team</span>
         <select
           aria-labelledby="trace-team-label"
           value={highlight}
@@ -125,7 +125,7 @@ function MobileRounds({
           </button>
         ))}
       </div>
-      <div className="text-muted-foreground mb-2.5 px-0.5 text-xs font-medium font-mono tracking-wide uppercase">
+      <div className="text-muted-foreground mb-2.5 px-0.5 text-[10px] font-semibold font-mono tracking-wide uppercase">
         {ROUND_LABEL[round]}
       </div>
       <div className="space-y-2.5">
@@ -144,7 +144,7 @@ function MobileRounds({
 function ChampionCard({ champion }: { champion: { code: string; name: string; prob: number } }) {
   return (
     <div className="border-primary/40 bg-primary/[0.07] mb-3 rounded-xl border p-3 text-center">
-      <div className="text-primary/80 mb-1.5 font-mono text-[9px] font-semibold tracking-[0.12em] uppercase">🏆 Projected champion</div>
+      <div className="text-primary mb-1.5 font-mono text-[10px] font-semibold tracking-wide uppercase">🏆 Projected champion</div>
       <div className="flex items-center justify-center gap-2">
         <Flag code={champion.code} size={22} />
         <span className="font-semibold">{champion.name}</span>
@@ -183,22 +183,22 @@ function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTi
   return (
     <Link
       href={`/match/${m.match}`}
-      className={`bg-card hover:bg-muted/30 block w-full rounded-lg border ${big ? "text-sm" : "text-xs"} ${
+      className={`bg-card hover:bg-muted/30 block w-full rounded-xl border transition-colors ${big ? "text-sm" : "text-xs"} ${
         hi
           ? "border-primary/60 ring-primary/20 ring-1"
           : final
             ? "border-primary/45 ring-primary/15 bg-primary/[0.04] ring-1"
             : hasTicket
-              ? "border-amber-500/50"
+              ? "border-contention/50"
               : "border-border"
       }`}
     >
-      <div className={`flex items-center justify-between gap-1 px-2.5 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "pt-2 pb-1 text-[10px]" : "px-2 pt-1.5 pb-1 text-[9px]"}`}>
+      <div className={`flex items-center justify-between gap-1 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "px-2.5 pt-2 pb-1 text-[10px]" : "px-2 pt-1.5 pb-1 text-[9px]"}`}>
         <span className="truncate" suppressHydrationWarning>{final ? "🏆 Final" : `M${m.match}`} · {fmtDay(m.utc, zone)} · {m.city}</span>
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
       </div>
       <Side m={m} side="home" highlightCode={highlightCode} big={big} />
-      <div className="border-white/12 border-t" />
+      <div className="border-border border-t" />
       <Side m={m} side="away" highlightCode={highlightCode} big={big} />
     </Link>
   );
@@ -220,7 +220,7 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
       <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}`}>
         {proj ? <Flag code={proj.code} size={big ? 22 : 18} /> : <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-[22px]" : "size-[18px]"}`} aria-hidden />}
         <span className="text-foreground/80 min-w-0 flex-1 truncate">
-          <span className="text-muted-foreground/60 mr-1 font-mono text-[9px] tracking-wide uppercase" title={`Third-placed team from group ${groups}`}>3rd</span>
+          <span className="text-muted-2 mr-1 font-mono text-[9px] font-semibold tracking-wide uppercase" title={`Third-placed team from group ${groups}`}>3rd</span>
           {proj?.name ?? groups}
         </span>
         {proj?.prob != null && <span className={`text-muted-foreground shrink-0 font-mono tabular-nums ${big ? "text-xs" : "text-[10px]"}`}>{pct(Math.min(proj.prob, 0.99))}</span>}
