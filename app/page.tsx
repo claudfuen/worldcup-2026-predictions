@@ -137,8 +137,11 @@ function RoundCell({ v, hideMobile, clinched }: { v: number; hideMobile?: boolea
 
 function NavCard({ href, title, desc }: { href: string; title: string; desc: string }) {
   return (
-    <Link href={href} className="border-border bg-card hover:border-primary/50 block rounded-2xl border p-4">
-      <div className="font-semibold">{title}</div>
+    <Link href={href} className="group border-border bg-card hover:border-primary/50 hover:bg-surface-raised block rounded-2xl border p-4 transition-colors">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-semibold">{title}</span>
+        <span className="text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden>→</span>
+      </div>
       <div className="text-muted-foreground mt-0.5 text-xs">{desc}</div>
     </Link>
   );
