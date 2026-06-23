@@ -16,8 +16,8 @@ export default async function SchedulePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Schedule</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          All 104 matches, times in ET. Undefined knockout slots show the most likely team; defined matches show the
-          model favorite.
+          All 104 matches, shown in your local time. Undefined knockout slots show the most likely team; defined matches
+          show the model favorite.
         </p>
       </div>
       <ScheduleList matches={matches} />

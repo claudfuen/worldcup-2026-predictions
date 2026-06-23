@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
-import { etTimeShort, etDay, etDayKey, pct } from "@/lib/format";
+import { fmtTimeShort, fmtDay, fmtDayKey, pct } from "@/lib/format";
+import { useViewerZone } from "@/lib/useViewerZone";
 
 const ROUND_NAME: Record<string, string> = {
   GROUP: "Group", R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", "3P": "Third place", FINAL: "Final",
@@ -23,23 +24,24 @@ const TIME_FILTERS = [
 export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
   const [filter, setFilter] = useState("all");
   const [time, setTime] = useState("upcoming");
-  const today = etDayKey(new Date().toISOString());
+  const { zone } = useViewerZone();
+  const today = fmtDayKey(new Date().toISOString(), zone);
 
   const shown = matches.filter((m) => {
     if (filter === "GROUP" && m.round !== "GROUP") return false;
     if (filter === "KO" && m.round === "GROUP") return false;
-    const day = etDayKey(m.utc);
+    const day = fmtDayKey(m.utc, zone);
     if (time === "upcoming" && day < today) return false;
     if (time === "past" && day >= today) return false;
     return true;
   });
 
-  // group by ET day
+  // group by the viewer's local day
   const days: { key: string; label: string; items: MatchInfo[] }[] = [];
   for (const m of [...shown].sort((a, b) => a.utc.localeCompare(b.utc))) {
-    const key = etDayKey(m.utc);
+    const key = fmtDayKey(m.utc, zone);
     let d = days.find((x) => x.key === key);
-    if (!d) { d = { key, label: etDay(m.utc), items: [] }; days.push(d); }
+    if (!d) { d = { key, label: fmtDay(m.utc, zone), items: [] }; days.push(d); }
     d.items.push(m);
   }
 
@@ -75,10 +77,10 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
       <div className="space-y-6">
         {days.map((d) => (
           <div key={d.key}>
-            <h3 className="text-muted-foreground mb-2 font-mono text-xs font-semibold tracking-wide uppercase">{d.label}</h3>
+            <h3 className="text-muted-foreground mb-2 font-mono text-xs font-semibold tracking-wide uppercase" suppressHydrationWarning>{d.label}</h3>
             <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-xl border">
               {d.items.map((m) => (
-                <Row key={m.match} m={m} />
+                <Row key={m.match} m={m} zone={zone} />
               ))}
             </div>
           </div>
@@ -88,7 +90,7 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
   );
 }
 
-function Row({ m }: { m: MatchInfo }) {
+function Row({ m, zone }: { m: MatchInfo; zone?: import("@/lib/format").Zone }) {
   const homeCode = m.home ?? m.projHome?.[0]?.code ?? null;
   const awayCode = m.away ?? m.projAway?.[0]?.code ?? null;
   const homeLabel = m.homeName ?? (m.projHome?.[0] ? `${m.projHome[0].name}` : m.slotHome ?? "TBD");
@@ -99,7 +101,7 @@ function Row({ m }: { m: MatchInfo }) {
   return (
     <Link href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-3 py-2.5 sm:px-4">
       <div className="text-muted-foreground w-16 shrink-0 text-xs">
-        <div className="font-mono whitespace-nowrap">{etTimeShort(m.utc)}</div>
+        <div className="font-mono whitespace-nowrap" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</div>
         <div className="text-[10px]">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>
       </div>
       <div className="min-w-0 flex-1">

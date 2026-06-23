@@ -1,30 +1,43 @@
-// All match times render in US Eastern (America/New_York), always.
-const ET = "America/New_York";
+// Match times default to US Eastern (the host region) for server render and no-JS, but every
+// display passes the viewer's resolved zone so times render in their own local time + locale.
+const DEFAULT_TZ = "America/New_York";
+const DEFAULT_LOCALE = "en-US";
 
-export function etDateTime(utc: string): string {
-  const d = new Date(utc);
-  return d.toLocaleString("en-US", {
-    timeZone: ET, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-  }) + " ET";
+export type Zone = { tz?: string; locale?: string };
+
+const tzOf = (z?: Zone) => z?.tz || DEFAULT_TZ;
+const localeOf = (z?: Zone) => z?.locale || DEFAULT_LOCALE;
+
+// Short zone label for the resolved time, e.g. "EDT", "PST", "GMT+1".
+export function zoneLabel(utc: string, z?: Zone): string {
+  const parts = new Intl.DateTimeFormat(localeOf(z), { timeZone: tzOf(z), timeZoneName: "short" }).formatToParts(new Date(utc));
+  return parts.find((p) => p.type === "timeZoneName")?.value ?? "";
 }
 
-export function etTime(utc: string): string {
-  return new Date(utc).toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" }) + " ET";
+export function fmtDateTime(utc: string, z?: Zone): string {
+  const s = new Date(utc).toLocaleString(localeOf(z), {
+    timeZone: tzOf(z), weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
+  return `${s} ${zoneLabel(utc, z)}`;
 }
 
-// Time without the "ET" suffix, for dense lists where the page header already states ET.
-export function etTimeShort(utc: string): string {
-  return new Date(utc).toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" });
+export function fmtTime(utc: string, z?: Zone): string {
+  return new Date(utc).toLocaleString(localeOf(z), { timeZone: tzOf(z), hour: "numeric", minute: "2-digit" }) + ` ${zoneLabel(utc, z)}`;
 }
 
-export function etDay(utc: string): string {
-  return new Date(utc).toLocaleString("en-US", { timeZone: ET, weekday: "short", month: "short", day: "numeric" });
+// Time without the zone suffix, for dense lists where context already implies the zone.
+export function fmtTimeShort(utc: string, z?: Zone): string {
+  return new Date(utc).toLocaleString(localeOf(z), { timeZone: tzOf(z), hour: "numeric", minute: "2-digit" });
 }
 
-// YYYY-MM-DD in ET, for grouping the schedule by day.
-export function etDayKey(utc: string): string {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: ET, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(utc));
-  return parts;
+export function fmtDay(utc: string, z?: Zone): string {
+  return new Date(utc).toLocaleString(localeOf(z), { timeZone: tzOf(z), weekday: "short", month: "short", day: "numeric" });
+}
+
+// YYYY-MM-DD in the given zone, for grouping the schedule by day. Always en-CA so the key
+// is locale-independent numeric; only the timezone varies.
+export function fmtDayKey(utc: string, z?: Zone): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tzOf(z), year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(utc));
 }
 
 export function pct(v: number): string {

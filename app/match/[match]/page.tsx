@@ -4,8 +4,9 @@ import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive } from "@/lib/live";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
-import { etDateTime, pct } from "@/lib/format";
+import { pct } from "@/lib/format";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
+import { LocalTime } from "@/components/local-time";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
         <span className="text-foreground font-semibold">{ROUND_NAME[m.round]}{m.group ? ` · Group ${m.group}` : ""}</span>
         <span className="text-muted-foreground">Match {m.match}</span>
       </div>
-      <div className="text-muted-foreground mt-1 text-sm">{etDateTime(m.utc)} · {m.venue}, {m.city}</div>
+      <div className="text-muted-foreground mt-1 text-sm"><LocalTime utc={m.utc} mode="datetime" /> · {m.venue}, {m.city}</div>
 
       {/* Matchup header */}
       <div className="border-border bg-card mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl border p-6">

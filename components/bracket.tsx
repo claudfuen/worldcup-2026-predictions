@@ -4,7 +4,8 @@ import { Fragment, useState } from "react";
 import Link from "next/link";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
-import { pct, etDay } from "@/lib/format";
+import { pct, fmtDay } from "@/lib/format";
+import { useViewerZone } from "@/lib/useViewerZone";
 
 // Column orderings chosen so each match's two feeders are vertically adjacent (top half, then bottom half).
 const ORDER: Record<string, number[]> = {
@@ -150,6 +151,7 @@ function Connectors({ count }: { count: number }) {
 }
 
 function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTicket: boolean; highlightCode?: string; big?: boolean; final?: boolean }) {
+  const { zone } = useViewerZone();
   const hi =
     !!highlightCode &&
     (m.home === highlightCode ||
@@ -170,7 +172,7 @@ function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTi
       }`}
     >
       <div className={`flex items-center justify-between gap-1 px-2.5 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "pt-2 pb-1 text-[10px]" : "px-2 pt-1.5 pb-1 text-[9px]"}`}>
-        <span className="truncate">{final ? "🏆 Final" : `M${m.match}`} · {etDay(m.utc)} · {m.city}</span>
+        <span className="truncate" suppressHydrationWarning>{final ? "🏆 Final" : `M${m.match}`} · {fmtDay(m.utc, zone)} · {m.city}</span>
         {hasTicket && <span title="You have tickets" className="shrink-0">🎟️</span>}
       </div>
       <Side m={m} side="home" highlightCode={highlightCode} big={big} />

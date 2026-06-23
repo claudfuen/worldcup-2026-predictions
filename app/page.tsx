@@ -1,26 +1,22 @@
 import Link from "next/link";
 import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive } from "@/lib/live";
-import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
 import { Delta } from "@/components/delta";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
-import { etTime, etDayKey, pct } from "@/lib/format";
+import { TodaySection } from "@/components/today-section";
+import { pct } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const ROUND_SHORT: Record<string, string> = { GROUP: "", R32: "R32", R16: "R16", QF: "QF", SF: "SF", "3P": "3rd", FINAL: "Final" };
-
 export default async function Page() {
   const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   const matches = overlayLive(data.matches, live);
   const contenders = data.teams.slice(0, 8);
   const maxTitle = contenders[0]?.title || 1;
-  const today = etDayKey(new Date().toISOString());
-  const todayMatches = matches.filter((m) => etDayKey(m.utc) === today).sort((a, b) => a.utc.localeCompare(b.utc));
   const hasLive = matches.some((m) => m.status === "live");
 
   return (
@@ -60,7 +56,7 @@ export default async function Page() {
         <section className="space-y-4">
           <NavCard href="/groups" title="Groups" desc="Standings, qualification odds & cut-offs" />
           <NavCard href="/bracket" title="Bracket" desc="Projected knockout tree to the final" />
-          <NavCard href="/schedule" title="Schedule" desc="All 104 matches in ET" />
+          <NavCard href="/schedule" title="Schedule" desc="All 104 matches, your local time" />
           <NavCard href="/methodology" title="Method" desc="How the model works" />
         </section>
       </div>
@@ -101,16 +97,7 @@ export default async function Page() {
         </div>
       </section>
 
-      {todayMatches.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-medium tracking-wide uppercase">
-            Today · {new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric" })}
-          </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {todayMatches.map((m) => <TodayTile key={m.match} m={m} />)}
-          </div>
-        </section>
-      )}
+      <TodaySection matches={matches} />
 
       <footer className="border-border/60 text-muted-foreground/70 mt-12 border-t pt-6 text-xs text-pretty">
         Elo + Poisson scoreline model (backtested RPS ~0.18) with rating uncertainty, host advantage and an extra-time/penalty
@@ -118,44 +105,6 @@ export default async function Page() {
         <div className="mt-2">Live data via ESPN · not affiliated with FIFA.</div>
       </footer>
     </main>
-  );
-}
-
-function TodayTile({ m }: { m: MatchInfo }) {
-  const final = m.status === "final";
-  const live = m.status === "live";
-  const showScore = final || live;
-  const homeCode = m.home ?? m.projHome?.[0]?.code ?? null;
-  const awayCode = m.away ?? m.projAway?.[0]?.code ?? null;
-  const homeName = m.homeName ?? m.projHome?.[0]?.name ?? m.slotHome ?? "TBD";
-  const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? "TBD";
-  return (
-    <Link href={`/match/${m.match}`} className={`bg-card hover:border-primary/40 block rounded-xl border p-3 ${live ? "border-red-500/40" : "border-border"}`}>
-      <div className="text-muted-foreground mb-2 flex items-center justify-between text-[11px]">
-        <span className="font-mono">{etTime(m.utc)}</span>
-        <span>
-          {live ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-red-400"><span className="size-1.5 animate-pulse rounded-full bg-red-500" />LIVE {m.liveDetail}</span>
-          ) : final ? (
-            <span className="text-emerald-400">FT</span>
-          ) : (
-            m.group ? `Group ${m.group}` : ROUND_SHORT[m.round]
-          )}
-        </span>
-      </div>
-      <Row code={homeCode} name={homeName} score={showScore ? m.homeScore : undefined} win={final && (m.homeScore ?? 0) > (m.awayScore ?? 0)} projected={!m.home && m.round !== "GROUP"} />
-      <Row code={awayCode} name={awayName} score={showScore ? m.awayScore : undefined} win={final && (m.awayScore ?? 0) > (m.homeScore ?? 0)} projected={!m.away && m.round !== "GROUP"} />
-    </Link>
-  );
-}
-
-function Row({ code, name, score, win, projected }: { code: string | null; name: string; score?: number; win?: boolean; projected?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 py-0.5">
-      <Flag code={code} size={18} />
-      <span className={`min-w-0 flex-1 truncate text-sm ${win ? "font-semibold" : projected ? "text-foreground/70" : ""}`}>{name}</span>
-      {score != null && <span className={`shrink-0 font-mono text-sm tabular-nums ${win ? "font-bold" : "text-muted-foreground"}`}>{score}</span>}
-    </div>
   );
 }
 

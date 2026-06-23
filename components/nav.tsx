@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { etTime, etDateTime } from "@/lib/format";
+import { fmtTime, fmtDateTime } from "@/lib/format";
+import { useViewerZone } from "@/lib/useViewerZone";
 
 const LINKS = [
   { href: "/", label: "Overview" },
@@ -52,6 +53,7 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
 // then switches to a live "Xm ago" relative time without a hydration mismatch.
 function Freshness({ updatedAt }: { updatedAt: string | null }) {
   const [now, setNow] = useState<number | null>(null);
+  const { zone } = useViewerZone();
   useEffect(() => {
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 30_000);
@@ -61,7 +63,7 @@ function Freshness({ updatedAt }: { updatedAt: string | null }) {
   const min = now == null ? null : Math.max(0, (now - new Date(updatedAt).getTime()) / 60000);
   const rel =
     min == null
-      ? etTime(updatedAt)
+      ? fmtTime(updatedAt, zone)
       : min < 1
         ? "just now"
         : min < 60
@@ -73,7 +75,7 @@ function Freshness({ updatedAt }: { updatedAt: string | null }) {
   return (
     <div
       className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"
-      title={`Live data updated ${etDateTime(updatedAt)}`}
+      title={`Live data updated ${fmtDateTime(updatedAt, zone)}`}
     >
       <span className={`size-1.5 shrink-0 rounded-full ${dot}`} aria-hidden />
       <span className="hidden whitespace-nowrap sm:inline">Updated {rel}</span>
