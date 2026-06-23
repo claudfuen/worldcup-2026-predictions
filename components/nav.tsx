@@ -71,7 +71,7 @@ function Freshness({ updatedAt }: { updatedAt: string | null }) {
         className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"
         title={`Final - predictions frozen at ${fmtDateTime(updatedAt, zone)}`}
       >
-        <span className="size-1.5 shrink-0 rounded-full bg-emerald-400" aria-hidden />
+        <span className="size-1.5 shrink-0 rounded-full bg-win" aria-hidden />
         <span className="whitespace-nowrap">Final</span>
       </div>
     );
@@ -87,7 +87,7 @@ function Freshness({ updatedAt }: { updatedAt: string | null }) {
           : min < 1440
             ? `${Math.round(min / 60)}h ago`
             : `${Math.round(min / 1440)}d ago`;
-  const dot = min == null || min < 45 ? "bg-emerald-400" : min < 180 ? "bg-amber-400" : "bg-muted-foreground";
+  const dot = min == null || min < 45 ? "bg-win" : min < 180 ? "bg-contention" : "bg-muted-foreground";
   return (
     <div
       className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"

@@ -7,7 +7,7 @@ export function Delta({ v }: { v?: number }) {
   const up = pp > 0;
   return (
     <span
-      className={`ml-1 font-mono text-[10px] ${up ? "text-emerald-400" : "text-red-400"}`}
+      className={`ml-1 font-mono text-[10px] ${up ? "text-win" : "text-destructive"}`}
       title="Change since the start of today (ET)"
     >
       {up ? "▲" : "▼"}{Math.abs(pp)}

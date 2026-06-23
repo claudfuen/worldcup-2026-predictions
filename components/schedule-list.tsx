@@ -117,19 +117,19 @@ function Row({ m, zone }: { m: MatchInfo; zone?: import("@/lib/format").Zone }) 
       </div>
       <div className="hidden w-32 shrink-0 text-right sm:block">
         {live ? (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-400">
-            <span className="size-1.5 animate-pulse rounded-full bg-red-500" />LIVE {m.liveDetail}
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-live">
+            <span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE {m.liveDetail}
           </span>
         ) : final ? (
-          <span className="text-[11px] font-medium text-emerald-400">FT</span>
+          <span className="text-[11px] font-medium text-win">FT</span>
         ) : m.favorite ? (
           <span className="text-muted-foreground text-[11px]">
             <span className="text-foreground/80">{m.favorite.name}</span> {pct(m.favorite.winProb)}
           </span>
         ) : (
-          <span className="text-muted-foreground/60 text-[11px]">projected</span>
+          <span className="text-muted-2 text-[11px]">projected</span>
         )}
-        <div className="text-muted-foreground/60 truncate text-[10px]">{m.venue}</div>
+        <div className="text-muted-2 truncate text-[10px]">{m.venue}</div>
       </div>
     </Link>
   );
@@ -141,7 +141,7 @@ function TeamRow({ code, label, score, win, projected, prob }: { code: string | 
       <Flag code={code} size={18} />
       <span className={`min-w-0 flex-1 truncate text-sm ${win ? "font-semibold" : projected ? "text-foreground/75" : ""}`}>
         {label}
-        {projected && prob != null && <span className="text-muted-foreground/60 ml-1 font-mono text-[10px]">{pct(Math.min(prob, 0.99))}</span>}
+        {projected && prob != null && <span className="text-muted-2 ml-1 font-mono text-[10px]">{pct(Math.min(prob, 0.99))}</span>}
       </span>
       {score != null && <span className={`shrink-0 font-mono text-sm tabular-nums ${win ? "font-bold" : "text-muted-foreground"}`}>{score}</span>}
     </div>

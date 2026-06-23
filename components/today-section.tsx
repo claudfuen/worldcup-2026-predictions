@@ -44,14 +44,14 @@ function TodayTile({ m }: { m: MatchInfo }) {
   const homeName = m.homeName ?? m.projHome?.[0]?.name ?? m.slotHome ?? "TBD";
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? "TBD";
   return (
-    <Link href={`/match/${m.match}`} className={`bg-card hover:border-primary/40 block rounded-xl border p-3 ${live ? "border-red-500/40" : "border-border"}`}>
+    <Link href={`/match/${m.match}`} className={`bg-card hover:border-primary/40 block rounded-xl border p-3 ${live ? "border-live/40" : "border-border"}`}>
       <div className="text-muted-foreground mb-2 flex items-center justify-between text-[11px]">
         <span className="font-mono" suppressHydrationWarning>{fmtTime(m.utc, zone)}</span>
         <span>
           {live ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-red-400"><span className="size-1.5 animate-pulse rounded-full bg-red-500" />LIVE {m.liveDetail}</span>
+            <span className="inline-flex items-center gap-1 font-semibold text-live"><span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE {m.liveDetail}</span>
           ) : final ? (
-            <span className="text-emerald-400">FT</span>
+            <span className="text-win">FT</span>
           ) : (
             m.group ? `Group ${m.group}` : ROUND_SHORT[m.round]
           )}

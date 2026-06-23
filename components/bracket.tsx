@@ -216,7 +216,7 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
       <Flag code={code} size={big ? 22 : 18} />
       <span className={`min-w-0 flex-1 truncate ${resolved ? "font-semibold" : "text-foreground/80"}`}>{label}</span>
       {resolved ? (
-        <span className={`shrink-0 font-bold text-emerald-400 ${big ? "text-xs" : "text-[10px]"}`} title="Confirmed">✓</span>
+        <span className={`shrink-0 font-bold text-win ${big ? "text-xs" : "text-[10px]"}`} title="Confirmed">✓</span>
       ) : (
         prob != null && <span className={`text-muted-foreground shrink-0 font-mono tabular-nums ${big ? "text-xs" : "text-[10px]"}`}>{pct(Math.min(prob, 0.99))}</span>
       )}

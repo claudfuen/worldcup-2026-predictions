@@ -47,10 +47,10 @@ export default async function GroupsPage() {
         ))}
       </div>
       <Legend />
-      <p className="text-muted-foreground/70 mt-3 max-w-3xl text-xs">
+      <p className="text-muted-2 mt-3 max-w-3xl text-xs">
         Advance % blends each team&apos;s strength with results so far, so early in the group a strong side can show
         higher odds than a team placed above it - 3 of every 4 advance, and there are still games to play. A % is always
-        a forecast: even 99% isn&apos;t mathematically safe. Only a <span className="font-bold text-emerald-400">✓</span>{" "}
+        a forecast: even 99% isn&apos;t mathematically safe. Only a <span className="font-bold text-win">✓</span>{" "}
         marks a spot that&apos;s locked no matter the remaining results.
       </p>
       <ThirdPlaceRace entries={data.thirdPlaceRace ?? []} />
@@ -83,7 +83,7 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
           </thead>
           <tbody>
             {entries.map((e) => (
-              <tr key={e.code} className={`border-l-2 ${e.advancing ? "border-l-amber-500" : "border-l-transparent opacity-50"} ${e.rank === 8 ? "border-b-primary/50 border-b border-dashed" : ""}`}>
+              <tr key={e.code} className={`border-l-2 ${e.advancing ? "border-l-contention" : "border-l-transparent opacity-50"} ${e.rank === 8 ? "border-b-primary/50 border-b border-dashed" : ""}`}>
                 <td className="py-2 pr-1 pl-3 text-muted-foreground font-mono text-[11px]">{e.rank}</td>
                 <td className="py-2">
                   <div className="flex items-center gap-2">
@@ -97,9 +97,9 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
                 <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{e.pts}</td>
                 <td className="px-2 pr-3 text-right text-xs">
                   {e.advancing ? (
-                    <span className="text-amber-400">In (top 8)</span>
+                    <span className="text-contention">In (top 8)</span>
                   ) : (
-                    <span className="text-muted-foreground/60">Out (9th-12th)</span>
+                    <span className="text-muted-2">Out (9th-12th)</span>
                   )}
                 </td>
               </tr>
@@ -107,7 +107,7 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
           </tbody>
         </table>
       </div>
-      <p className="text-muted-foreground/60 mt-2 text-xs">Live order based on current standings; the slot assignment updates as the qualifying set of groups changes (495 possible combinations).</p>
+      <p className="text-muted-2 mt-2 text-xs">Live order based on current standings; the slot assignment updates as the qualifying set of groups changes (495 possible combinations).</p>
     </section>
   );
 }
@@ -115,15 +115,15 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
 function GroupCard({ group, teams, decided, prov }: { group: string; teams: GroupTeamView[]; decided: boolean; prov?: ProvisionalGroup | null }) {
   const live = !!prov;
   return (
-    <div className={`bg-card overflow-hidden rounded-2xl border ${live ? "border-red-500/30" : "border-border"}`}>
+    <div className={`bg-card overflow-hidden rounded-2xl border ${live ? "border-live/40" : "border-border"}`}>
       <div className="border-border/60 flex items-center justify-between border-b px-4 py-2.5">
         <h2 className="font-semibold">Group {group}</h2>
         {live ? (
-          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold tracking-wide text-red-400 uppercase">
-            <span className="size-1.5 animate-pulse rounded-full bg-red-500" />Live
+          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold tracking-wide text-live uppercase">
+            <span className="size-1.5 animate-pulse rounded-full bg-live" />Live
           </span>
         ) : (
-          <span className={`font-mono text-[10px] font-medium tracking-wide uppercase ${decided ? "text-emerald-400" : "text-muted-foreground"}`}>
+          <span className={`font-mono text-[10px] font-medium tracking-wide uppercase ${decided ? "text-win" : "text-muted-foreground"}`}>
             {decided ? "Final" : "In progress"}
           </span>
         )}
@@ -172,7 +172,7 @@ function GroupCard({ group, teams, decided, prov }: { group: string; teams: Grou
 
 function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | "third" | null }) {
   const elim = t.status === "eliminated";
-  const zone = pos <= 2 ? "border-l-emerald-500" : pos === 3 ? "border-l-amber-500" : "border-l-transparent";
+  const zone = pos <= 2 ? "border-l-win" : pos === 3 ? "border-l-contention" : "border-l-transparent";
   const cutBorder = cut === "qualify" ? "border-b-primary/50 border-b border-dashed" : cut === "third" ? "border-b-border border-b border-dotted" : "";
   return (
     <tr className={`border-l-2 ${zone} ${cutBorder} ${elim ? "opacity-45" : ""}`}>
@@ -180,9 +180,9 @@ function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | 
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground w-3 text-center font-mono text-[11px]">{pos}</span>
           <Flag code={t.code} size={20} />
-          <span className={`truncate text-[13px] font-medium ${elim ? "line-through" : ""}`}>{t.name}</span>
-          {t.status === "won_group" && <span title="Won the group" className="text-[10px]">👑</span>}
-          {(t.status === "second" || t.status === "advanced") && <span title="Advanced" className="text-[9px] font-bold text-emerald-400">✓</span>}
+          <span className={`truncate text-[13px] font-medium ${elim ? "line-through" : ""}`}>{t.name}{elim && <span className="sr-only"> (eliminated)</span>}</span>
+          {t.status === "won_group" && <span title="Won the group" className="text-[10px]">👑<span className="sr-only">Won group</span></span>}
+          {(t.status === "second" || t.status === "advanced") && <span title="Advanced" className="text-win text-[9px] font-bold">✓<span className="sr-only"> advanced</span></span>}
         </div>
       </td>
       <Cell v={t.played} muted />
@@ -195,15 +195,15 @@ function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | 
       <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{t.pts}</td>
       <td className="px-1 pr-3 text-right font-mono text-xs font-semibold tabular-nums">
         {t.status === "won_group" ? (
-          <span className="text-emerald-400">✓ 1st</span>
+          <span className="text-win">✓ 1st</span>
         ) : t.status === "second" ? (
-          <span className="text-emerald-400">✓ 2nd</span>
+          <span className="text-win">✓ 2nd</span>
         ) : t.status === "advanced" ? (
-          <span className="text-emerald-400">✓ in</span>
+          <span className="text-win">✓ in</span>
         ) : t.status === "eliminated" ? (
-          <span className="text-muted-foreground/70">out</span>
+          <span className="text-muted-2">out</span>
         ) : (
-          <span className={pos <= 2 ? "text-emerald-400" : pos === 3 ? "text-amber-400" : "text-muted-foreground"}>
+          <span className={pos <= 2 ? "text-win" : pos === 3 ? "text-contention" : "text-muted-foreground"}>
             {pct(Math.min(t.advance, 0.99))}<Delta v={t.advanceDelta} />
           </span>
         )}
@@ -219,9 +219,9 @@ function Cell({ v, muted, cls }: { v: number | string; muted?: boolean; cls?: st
 function Legend() {
   return (
     <div className="text-muted-foreground mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-      <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-1 rounded-sm bg-emerald-500" /> Direct qualification (top 2)</span>
-      <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-1 rounded-sm bg-amber-500" /> Best-third contention (3rd)</span>
-      <span className="flex items-center gap-1.5"><span className="font-bold text-emerald-400">✓</span> Clinched</span>
+      <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-1 rounded-sm bg-win" /> Direct qualification (top 2)</span>
+      <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-1 rounded-sm bg-contention" /> Best-third contention (3rd)</span>
+      <span className="flex items-center gap-1.5"><span className="font-bold text-win">✓</span> Clinched</span>
       <span className="flex items-center gap-1.5"><span className="line-through">Team</span> Eliminated</span>
       <span>Adv = P(reach Round of 32)</span>
     </div>
