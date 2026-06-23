@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Nav } from "@/components/nav"
 import { getPredictions } from "@/lib/getPredictions"
 import { cn } from "@/lib/utils";
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 
 const SITE_NAME = "World Cup 2026 Predictions"
 const SITE_URL = "https://worldcup2026predictions.app"
@@ -43,6 +43,11 @@ export const metadata: Metadata = {
     description:
       "Monte Carlo odds for every team to advance, reach each round, and win the 2026 World Cup. Updated live.",
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#0f1512",
+  colorScheme: "dark",
 }
 
 const JSON_LD = {

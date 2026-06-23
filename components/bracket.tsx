@@ -44,11 +44,12 @@ export function Bracket({
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-muted-foreground font-mono text-[11px] tracking-wide uppercase">Trace a team</span>
+        <span id="trace-team-label" className="text-muted-foreground font-mono text-[11px] tracking-wide uppercase">Trace a team</span>
         <select
+          aria-labelledby="trace-team-label"
           value={highlight}
           onChange={(e) => setHighlight(e.target.value)}
-          className="border-border bg-card focus:border-primary/60 rounded-lg border px-2.5 py-1 text-sm outline-none"
+          className="border-border-strong bg-surface-raised hover:border-primary/40 focus-visible:border-primary/60 focus-visible:ring-primary/50 rounded-lg border px-3 py-1.5 text-sm outline-none focus-visible:ring-2"
         >
           <option value="">Pick a team to light up its path</option>
           {teamOpts.map((t) => (

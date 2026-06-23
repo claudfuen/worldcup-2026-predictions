@@ -9,6 +9,7 @@ import { LiveAutoRefresh } from "@/components/live-auto-refresh";
 import { LocalTime } from "@/components/local-time";
 import { provisionalGroup, ratingsFromTeams } from "@/lib/liveProjection";
 import { ProvisionalStandings } from "@/components/provisional-standings";
+import { WinProbBar } from "@/components/win-prob-bar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,23 @@ export const revalidate = 0;
 const ROUND_NAME: Record<string, string> = {
   GROUP: "Group stage", R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", "3P": "Third-place play-off", FINAL: "Final",
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ match: string }> }) {
+  const { match } = await params;
+  try {
+    const data = await getPredictions();
+    const m = data.matches.find((x) => x.match === Number(match));
+    if (!m) return { title: `Match ${match}` };
+    const home = m.homeName ?? (m.slotHome ? prettySlot(m.slotHome) : "TBD");
+    const away = m.awayName ?? (m.slotAway ? prettySlot(m.slotAway) : "TBD");
+    return {
+      title: `${home} vs ${away} · ${ROUND_NAME[m.round]}`,
+      description: `Win probability, expected goals and likely scorelines for ${home} vs ${away} at the 2026 World Cup.`,
+    };
+  } catch {
+    return { title: `Match ${match}` };
+  }
+}
 
 export default async function MatchPage({ params }: { params: Promise<{ match: string }> }) {
   const { match } = await params;
@@ -38,46 +56,49 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       : null;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={state === "live"} />
       <Link href="/schedule" className="text-muted-foreground hover:text-foreground text-sm">← Schedule</Link>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-foreground font-semibold">{ROUND_NAME[m.round]}{m.group ? ` · Group ${m.group}` : ""}</span>
-        <span className="text-muted-foreground">Match {m.match}</span>
+        <span className="text-muted-2">Match {m.match}</span>
       </div>
       <div className="text-muted-foreground mt-1 text-sm"><LocalTime utc={m.utc} mode="datetime" /> · {m.venue}, {m.city}</div>
 
-      {/* Matchup header */}
-      <div className="border-border bg-card mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl border p-6">
-        <SideHeader m={m} side="home" />
-        <div className="text-center text-xs">
-          {m.status === "final" ? (
-            <span className="text-muted-foreground">FT</span>
-          ) : m.status === "live" ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-red-400">
-              <span className="size-1.5 animate-pulse rounded-full bg-red-500" />{m.liveDetail}
+      {/* Scoreboard header: teams flank a centered score (no dead center void) */}
+      <div className="bg-surface-raised border-border-strong mt-5 flex items-center justify-center gap-2 rounded-2xl border p-6 sm:gap-5">
+        <ScoreTeam m={m} side="home" />
+        <div className="flex shrink-0 flex-col items-center gap-1.5 px-1">
+          {m.status === "final" || m.status === "live" ? (
+            <span className="font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
+              {m.homeScore}<span className="text-muted-foreground/50 mx-1.5">–</span>{m.awayScore}
             </span>
           ) : (
-            <span className="text-muted-foreground">vs</span>
+            <span className="text-muted-foreground font-display text-2xl">vs</span>
           )}
+          {m.status === "final" ? (
+            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Full time</span>
+          ) : m.status === "live" ? (
+            <span className="text-live inline-flex items-center gap-1.5 text-xs font-semibold">
+              <span className="bg-live size-1.5 animate-pulse rounded-full" />{m.liveDetail}
+            </span>
+          ) : null}
         </div>
-        <SideHeader m={m} side="away" right />
+        <ScoreTeam m={m} side="away" />
       </div>
 
       {/* State-specific body */}
       {state === "final" && (
         <section className="mt-6">
-          <h2 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">Model&apos;s pre-match read</h2>
-          <div className="border-border bg-card space-y-3 rounded-2xl border p-5">
+          <h2 className="text-muted-foreground mb-2.5 font-mono text-xs font-semibold tracking-wide uppercase">Model&apos;s pre-match read</h2>
+          <div className="border-border bg-card rounded-2xl border p-5">
             {m.probs ? (
               <>
-                <ProbRow label={m.homeName!} value={m.probs.home} />
-                <ProbRow label="Draw" value={m.probs.draw} tone="muted" />
-                <ProbRow label={m.awayName!} value={m.probs.away} />
-                <p className="text-muted-foreground/70 pt-1 text-xs">
+                <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={m.homeName!} awayName={m.awayName!} />
+                <p className="text-muted-2 mt-4 text-xs">
                   {m.xg && <>Expected goals {m.xg.home.toFixed(1)}–{m.xg.away.toFixed(1)} · </>}
-                  actual result <span className="text-foreground/80">{m.homeScore}–{m.awayScore}</span>.
+                  actual result <span className="text-foreground/80 font-medium">{m.homeScore}–{m.awayScore}</span>.
                 </p>
               </>
             ) : (
@@ -94,19 +115,17 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           <h2 className="text-muted-foreground mb-2 text-xs font-semibold font-mono tracking-wide uppercase">
             {state === "live" ? "Pre-match win probability" : "Win probability"}
           </h2>
-          <div className="border-border bg-card space-y-3 rounded-2xl border p-5">
+          <div className="border-border bg-card rounded-2xl border p-5">
             {state === "live" && (
-              <p className="text-red-400 pb-1 text-xs font-medium">
+              <p className="text-live mb-3 text-xs font-medium">
                 Live: {m.homeName} {m.homeScore}–{m.awayScore} {m.awayName} · {m.liveDetail}
               </p>
             )}
-            <ProbRow label={m.homeName!} value={m.probs.home} />
-            <ProbRow label="Draw" value={m.probs.draw} tone="muted" />
-            <ProbRow label={m.awayName!} value={m.probs.away} />
+            <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={m.homeName!} awayName={m.awayName!} />
             {state === "live" ? (
-              <p className="text-muted-foreground/70 pt-1 text-xs">The full tournament forecast updates once the match is final.</p>
+              <p className="text-muted-2 mt-4 text-xs">The full tournament forecast updates once the match is final.</p>
             ) : m.round !== "GROUP" ? (
-              <p className="text-muted-foreground/70 pt-1 text-xs">Regulation result; knockout ties are decided by extra time and penalties.</p>
+              <p className="text-muted-2 mt-4 text-xs">Regulation result; knockout ties are decided by extra time and penalties.</p>
             ) : null}
           </div>
         </section>
@@ -182,7 +201,7 @@ function prettySlot(s?: string): string {
   return s;
 }
 
-function SideHeader({ m, side, right }: { m: MatchInfo; side: "home" | "away"; right?: boolean }) {
+function ScoreTeam({ m, side }: { m: MatchInfo; side: "home" | "away" }) {
   const resolved = side === "home" ? m.home : m.away;
   const name = side === "home" ? m.homeName : m.awayName;
   const slot = side === "home" ? m.slotHome : m.slotAway;
@@ -192,31 +211,16 @@ function SideHeader({ m, side, right }: { m: MatchInfo; side: "home" | "away"; r
   const other = hasScore ? (side === "home" ? m.awayScore : m.homeScore) : undefined;
   const win = m.status === "final" && score != null && other != null && score > other; // no "winner" while live
   return (
-    <div className={`flex items-center gap-3 ${right ? "flex-row-reverse text-right" : ""}`}>
-      <Flag code={resolved ?? null} size={40} />
-      <div>
-        {resolved ? (
-          <div className={`text-lg font-semibold ${win ? "text-emerald-400" : ""}`}>{name}</div>
-        ) : (
-          <>
-            <div className="text-foreground/70 text-base font-medium">{prettySlot(slot)}</div>
-            {top && <div className="text-muted-foreground text-xs">likely {top.name} {pct(Math.min(top.prob, 0.99))}</div>}
-          </>
-        )}
-        {score != null && <div className="font-mono text-3xl font-bold tabular-nums">{score}</div>}
-      </div>
-    </div>
-  );
-}
-
-function ProbRow({ label, value, tone }: { label: string; value: number; tone?: "muted" }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-32 shrink-0 truncate text-sm font-medium">{label}</span>
-      <div className="bg-muted/40 relative h-2 flex-1 overflow-hidden rounded-full">
-        <div className={`absolute inset-y-0 left-0 rounded-full ${tone === "muted" ? "bg-muted-foreground/50" : "bg-emerald-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
-      </div>
-      <span className="w-10 text-right font-mono text-sm tabular-nums">{pct(value)}</span>
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+      <Flag code={resolved ?? null} size={44} />
+      {resolved ? (
+        <div className={`leading-tight font-semibold ${win ? "text-win" : ""}`}>{name}</div>
+      ) : (
+        <div className="min-w-0">
+          <div className="text-foreground/80 truncate text-sm font-medium">{prettySlot(slot)}</div>
+          {top && <div className="text-muted-2 mt-0.5 truncate text-xs">likely {top.name} {pct(Math.min(top.prob, 0.99))}</div>}
+        </div>
+      )}
     </div>
   );
 }

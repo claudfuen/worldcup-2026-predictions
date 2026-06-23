@@ -1,5 +1,11 @@
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Methodology",
+  description:
+    "How the 2026 World Cup model works: World Football Elo ratings, a Poisson/Dixon-Coles scoreline model, 20,000 Monte Carlo simulations, 2026 tiebreakers, and FIFA Annex C third-place assignment.",
+};
+
 export default function MethodologyPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">

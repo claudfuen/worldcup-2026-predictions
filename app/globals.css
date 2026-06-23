@@ -24,10 +24,12 @@
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
     --color-destructive: var(--destructive);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
+    --color-muted-2: var(--muted-foreground-2);
     --color-muted: var(--muted);
     --color-secondary-foreground: var(--secondary-foreground);
     --color-secondary: var(--secondary);
@@ -37,8 +39,15 @@
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
     --color-card: var(--card);
+    --color-surface-raised: var(--surface-raised);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+    /* Semantic data palette (so green isn't the only accent) -> bg-win, text-live, etc. */
+    --color-win: var(--win);
+    --color-live: var(--live);
+    --color-contention: var(--contention);
+    --color-loss: var(--loss);
+    --color-data-cool: var(--data-cool);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -53,6 +62,7 @@
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
+    --surface-raised: oklch(0.98 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     --primary: oklch(0.488 0.243 264.376);
@@ -61,12 +71,19 @@
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
+    --muted-foreground-2: oklch(0.45 0 0);
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
+    --border-strong: oklch(0.86 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
+    --win: oklch(0.55 0.16 155);
+    --live: oklch(0.58 0.20 18);
+    --contention: oklch(0.62 0.14 78);
+    --loss: oklch(0.55 0.012 165);
+    --data-cool: oklch(0.58 0.13 230);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -84,24 +101,34 @@
 }
 
 .dark {
-    --background: oklch(0.166 0.008 168);
+    --background: oklch(0.155 0.009 168);
     --foreground: oklch(0.968 0.004 160);
-    --card: oklch(0.206 0.009 168);
+    /* Two-step elevation: card sits above the page, surface-raised above the card (no shadows in dark mode) */
+    --card: oklch(0.205 0.009 168);
     --card-foreground: oklch(0.968 0.004 160);
-    --popover: oklch(0.206 0.009 168);
+    --surface-raised: oklch(0.243 0.010 168);
+    --popover: oklch(0.216 0.009 168);
     --popover-foreground: oklch(0.968 0.004 160);
     --primary: oklch(0.75 0.158 157);
     --primary-foreground: oklch(0.18 0.03 165);
     --secondary: oklch(0.27 0.01 168);
     --secondary-foreground: oklch(0.968 0.004 160);
     --muted: oklch(0.255 0.008 168);
-    --muted-foreground: oklch(0.66 0.012 165);
+    --muted-foreground: oklch(0.72 0.012 165);
+    --muted-foreground-2: oklch(0.6 0.012 165);
     --accent: oklch(0.27 0.01 168);
     --accent-foreground: oklch(0.968 0.004 160);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
+    /* Borders carry definition (shadows are removed in dark mode); strong variant for raised/featured edges */
+    --border: oklch(1 0 0 / 9%);
+    --border-strong: oklch(1 0 0 / 16%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --ring: oklch(0.75 0.158 157);
+    --win: oklch(0.80 0.16 155);
+    --live: oklch(0.68 0.20 18);
+    --contention: oklch(0.81 0.14 78);
+    --loss: oklch(0.62 0.012 165);
+    --data-cool: oklch(0.72 0.13 230);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -121,24 +148,49 @@
   * {
     @apply border-border outline-ring/50;
     }
-  /* Refine Inter with OpenType features (single-story a, stylistic sets) per ui.sh */
   html {
+    /* Refine Inter with OpenType features (single-story a, stylistic sets) per ui.sh */
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
-    }
-  /* Distinctive display font on large headings */
-  h1, h2 {
-    font-family: var(--font-display), var(--font-sans);
-    letter-spacing: -0.012em;
+    @apply font-sans;
     }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(58rem 30rem at 50% -10rem, color-mix(in oklab, var(--primary) 9%, transparent), transparent);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    /* Subtle lit backdrop (two faint radials + top sheen) so wide-screen margins read as composed space */
+    background-image:
+      radial-gradient(52rem 26rem at 50% -8rem, color-mix(in oklab, var(--primary) 9%, transparent), transparent),
+      radial-gradient(46rem 30rem at 90% 110%, color-mix(in oklab, var(--data-cool) 5%, transparent), transparent),
+      linear-gradient(180deg, color-mix(in oklab, var(--foreground) 3%, transparent), transparent 12rem);
     background-attachment: fixed;
+    }
+  /* Display headings, single light color (per ui.sh dark-mode rule); fluid h1 */
+  h1 {
+    font-family: var(--font-display), var(--font-sans);
+    font-weight: 600;
+    font-size: clamp(1.875rem, 1.4rem + 1.6vw, 2.5rem);
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    text-wrap: balance;
+    }
+  h2 {
+    font-family: var(--font-display), var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
     }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
     }
-  html {
-    @apply font-sans;
+  /* One global transition for interactive surfaces (none existed before) */
+  a, button, [role="button"], select, summary, input {
+    transition: color, background-color, border-color, box-shadow, transform, opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      }
     }
 }

@@ -12,6 +12,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+export const metadata = {
+  title: "Groups",
+  description:
+    "Live 2026 World Cup group standings with each team's probability of advancing, the 2026 head-to-head tiebreakers, and the best-third-place race for the Round of 32.",
+};
+
 export default async function GroupsPage() {
   const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   const overlaid = overlayLive(data.matches, live);

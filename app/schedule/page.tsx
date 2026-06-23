@@ -7,6 +7,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+export const metadata = {
+  title: "Schedule",
+  description:
+    "All 104 matches of the 2026 World Cup in your local time, with the model favorite and live scores - group stage through the final.",
+};
+
 export default async function SchedulePage() {
   const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   const matches = overlayLive(data.matches, live);

@@ -8,6 +8,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+export const metadata = {
+  title: "Bracket",
+  description:
+    "Projected 2026 World Cup knockout bracket: the most likely team in every Round-of-32 to Final slot, with full FIFA Annex C third-place modelling, updated live.",
+};
+
 export default async function BracketPage() {
   const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   return (
