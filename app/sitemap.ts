@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SCHEDULE } from "@/lib/data/schedule";
+import { TEAMS, GROUPS } from "@/lib/data/teams";
+import { teamSlug } from "@/lib/slug";
 import { getPredictions } from "@/lib/getPredictions";
 
 const SITE_URL = "https://worldcup2026predictions.app";
@@ -37,5 +39,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...core, ...matches];
+  const teams: MetadataRoute.Sitemap = TEAMS.map((t) => ({
+    url: `${SITE_URL}/team/${teamSlug(t.name)}`,
+    lastModified,
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+  const groups: MetadataRoute.Sitemap = GROUPS.map((g) => ({
+    url: `${SITE_URL}/group/${g.toLowerCase()}`,
+    lastModified,
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
+  return [...core, ...teams, ...groups, ...matches];
 }

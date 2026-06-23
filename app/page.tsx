@@ -6,6 +6,7 @@ import { Delta } from "@/components/delta";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
 import { TodaySection } from "@/components/today-section";
 import { ShareBar } from "@/components/share-bar";
+import { teamSlug } from "@/lib/slug";
 import { forecastPct } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -74,7 +75,7 @@ export default async function Page() {
           <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Title odds</h2>
           <div className="border-border-strong bg-surface-raised rounded-2xl border p-2">
             {contenders.map((t, i) => (
-              <Link key={t.code} href="/bracket" className="hover:bg-muted/30 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors">
+              <Link key={t.code} href={`/team/${teamSlug(t.name)}`} className="hover:bg-muted/30 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors">
                 <span className="text-muted-2 w-4 text-right font-mono text-xs tabular-nums">{i + 1}</span>
                 <Flag code={t.code} size={26} />
                 <span className="w-32 shrink-0 font-medium">{t.name}</span>

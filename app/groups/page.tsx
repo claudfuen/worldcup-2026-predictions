@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive } from "@/lib/live";
 import type { GroupTeamView, ThirdPlaceEntry } from "@/lib/predictions";
@@ -120,7 +121,7 @@ function GroupCard({ group, teams, decided, prov }: { group: string; teams: Grou
   return (
     <div className={`bg-card overflow-hidden rounded-2xl border ${live ? "border-live/40" : "border-border"}`}>
       <div className="border-border/60 flex items-center justify-between border-b px-4 py-2.5">
-        <h2 className="font-semibold">Group {group}</h2>
+        <h2 className="font-semibold"><Link href={`/group/${group.toLowerCase()}`} className="hover:text-primary transition-colors">Group {group}</Link></h2>
         {live ? (
           <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold tracking-wide text-live uppercase">
             <span className="size-1.5 animate-pulse rounded-full bg-live" />Live
