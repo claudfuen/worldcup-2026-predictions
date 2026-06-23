@@ -188,16 +188,20 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
   const slot = side === "home" ? m.slotHome : m.slotAway;
   const proj = (side === "home" ? m.projHome : m.projAway)?.[0];
 
-  // Third-place slots: which best-third lands here depends on the final cross-group mix, so we show the
-  // candidate groups rather than a single (often implausible) projected team.
+  // Third-place slots: a best-third can come from any of several groups (FIFA Annex C). We show the Monte
+  // Carlo's most-likely qualifier with its fill probability, tagged "3rd" so the slot's nature stays clear.
+  // The slot resolves to a bold, confirmed team (the `resolved` path below) once the group stage ends.
   if (!resolved && slot?.startsWith("3:")) {
     const groups = slot.slice(2).split(",").join("/");
+    const isHi = highlightCode && proj?.code === highlightCode;
     return (
-      <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"}`}>
-        <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-[22px]" : "size-[18px]"}`} aria-hidden />
-        <span className="text-foreground/55 min-w-0 flex-1 truncate">
-          <span className="text-muted-foreground/70 mr-1 font-mono text-[10px] tracking-wide uppercase">3rd</span>{groups}
+      <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}`}>
+        {proj ? <Flag code={proj.code} size={big ? 22 : 18} /> : <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-[22px]" : "size-[18px]"}`} aria-hidden />}
+        <span className="text-foreground/80 min-w-0 flex-1 truncate">
+          <span className="text-muted-foreground/60 mr-1 font-mono text-[9px] tracking-wide uppercase" title={`Third-placed team from group ${groups}`}>3rd</span>
+          {proj?.name ?? groups}
         </span>
+        {proj?.prob != null && <span className={`text-muted-foreground shrink-0 font-mono tabular-nums ${big ? "text-xs" : "text-[10px]"}`}>{pct(Math.min(proj.prob, 0.99))}</span>}
       </div>
     );
   }

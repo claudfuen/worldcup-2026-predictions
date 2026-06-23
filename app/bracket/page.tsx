@@ -1,22 +1,25 @@
 import { getPredictions } from "@/lib/getPredictions";
+import { getLiveMatches } from "@/lib/live";
 import { Bracket } from "@/components/bracket";
 import { Flag } from "@/components/flag";
+import { LiveAutoRefresh } from "@/components/live-auto-refresh";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function BracketPage() {
-  const data = await getPredictions();
+  const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <LiveAutoRefresh enabled={live.length > 0} />
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Knockout bracket</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Most likely team in each slot. Each <span className="text-foreground/80">%</span> is how often that team fills
-          the slot across our simulations - not its chance of winning the match. Third-place slots show the candidate
-          groups (which best-third lands there depends on the final mix). Resolved teams are bold. Scroll horizontally
-          to follow the path to the final.
+          the slot across our simulations - not its chance of winning the match. Third-place slots show the most likely
+          qualifier (a best-third can come from any of several groups, per FIFA&apos;s Annex C table) and lock to the
+          exact team once the group stage ends. Resolved teams are bold. Scroll horizontally to follow the path to the final.
         </p>
       </div>
       <Bracket matches={data.matches} />

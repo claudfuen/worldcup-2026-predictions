@@ -327,8 +327,10 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
   const rankedThirds = rankThirds(thirdRows, ratings);
   const advancingGroups = new Set(rankedThirds.slice(0, 8).map((t) => t.group));
   const teamSlot: Record<string, string> = {};
+  let slotToTeamMap: Record<string, string> = {};
   try {
     const { slotToTeam } = selectAndAssignThirds(thirdRows, ratings);
+    slotToTeamMap = slotToTeam;
     for (const [slot, code] of Object.entries(slotToTeam)) teamSlot[code] = slot;
   } catch {
     /* needs >=8 distinct group thirds; always true with 12 groups */
@@ -350,13 +352,24 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
     };
   });
 
-  // NOTE: we intentionally do NOT project a single team into the R32 third-place slots. Which team is each
-  // best-third (and which winner it faces, per Annex C) depends on the final cross-group standings and is too
-  // uncertain this early to pin down without looking wrong (a strong side currently 3rd is forecast to climb;
-  // a weak 0-point side can be its group's modal 3rd at an implausible probability). The bracket shows these
-  // slots as their candidate-group description ("3rd · C/E/F/H/I"); the match page lists the candidates; and
-  // the Groups third-place race shows the current standings race. (projHome/projAway keep the sim marginal
-  // for the match-page candidate list.)
+  // Third-place R32 slots carry the Monte Carlo forecast in projHome/projAway (the full Annex C assignment is
+  // modelled in EVERY iteration, so this distribution is rule-correct and sharpens as groups finalize). Once the
+  // group stage is COMPLETE, the best-eight thirds and their Annex C slots are final and deterministic, so we
+  // resolve each third-place slot to its exact team (rendered as a locked participant, not a forecast).
+  const groupStageComplete = groups.every((g) => g.decided);
+  if (groupStageComplete) {
+    for (const mi of matches) {
+      if (mi.round !== "R32") continue;
+      const thirdSide = mi.slotHome?.startsWith("3:") ? "home" : mi.slotAway?.startsWith("3:") ? "away" : null;
+      if (!thirdSide) continue;
+      const hostSlot = thirdSide === "home" ? mi.slotAway : mi.slotHome; // winner-slot facing the third, e.g. "1D"
+      const code = hostSlot ? slotToTeamMap[hostSlot] : undefined;
+      if (!code) continue;
+      if (thirdSide === "home") { mi.home = code; mi.homeName = TEAM_BY_CODE[code].name; }
+      else { mi.away = code; mi.awayName = TEAM_BY_CODE[code].name; }
+      mi.defined = Boolean(mi.home && mi.away);
+    }
+  }
 
   return {
     updatedAt: new Date().toISOString(),
