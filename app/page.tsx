@@ -43,14 +43,14 @@ export default async function Page() {
         {/* Title contenders */}
         <section className="lg:col-span-2">
           <h2 className="text-muted-foreground mb-3 font-mono text-xs font-medium tracking-wide uppercase">Title odds</h2>
-          <div className="border-border bg-card rounded-2xl border p-2">
+          <div className="border-border-strong bg-surface-raised rounded-2xl border p-2">
             {contenders.map((t, i) => (
               <Link key={t.code} href="/bracket" className="hover:bg-muted/40 flex items-center gap-3 rounded-xl px-3 py-2.5">
-                <span className="text-muted-foreground w-4 text-right font-mono text-xs">{i + 1}</span>
+                <span className="text-muted-2 w-4 text-right font-mono text-xs tabular-nums">{i + 1}</span>
                 <Flag code={t.code} size={26} />
                 <span className="w-32 shrink-0 font-medium">{t.name}</span>
                 <div className="bg-muted/40 relative h-2 flex-1 overflow-hidden rounded-full">
-                  <div className="bg-primary absolute inset-y-0 left-0 rounded-full" style={{ width: `${(t.title / maxTitle) * 100}%` }} />
+                  <div className="from-primary to-primary/70 absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-[width] duration-700 ease-out" style={{ width: `${(t.title / maxTitle) * 100}%` }} />
                 </div>
                 <span className="flex w-16 shrink-0 items-center justify-end font-mono text-sm font-semibold tabular-nums">
                   {forecastPct(t.title)}<Delta v={t.titleDelta} />
@@ -99,7 +99,7 @@ export default async function Page() {
                   <RoundCell v={t.qf} hideMobile />
                   <RoundCell v={t.sf} hideMobile />
                   <RoundCell v={t.final} />
-                  <td className="text-primary px-1 pr-2 text-right font-mono text-sm font-semibold tabular-nums">{forecastPct(t.title)}</td>
+                  <td className="text-primary px-1 pr-2 text-right font-mono text-sm font-semibold tabular-nums" style={{ backgroundColor: heat(t.title) }}>{forecastPct(t.title)}</td>
                 </tr>
               ))}
             </tbody>
@@ -118,9 +118,18 @@ export default async function Page() {
   );
 }
 
+// Heatmap tint: a faint primary wash whose strength scales with the probability, so the funnel reads
+// as signal (deep at R32, fading toward Champion) rather than a flat grid of grey numbers.
+function heat(v: number): string {
+  return `color-mix(in oklab, var(--primary) ${Math.round(Math.min(v, 1) * 22)}%, transparent)`;
+}
+
 function RoundCell({ v, hideMobile, clinched }: { v: number; hideMobile?: boolean; clinched?: boolean }) {
   return (
-    <td className={`px-1 text-right font-mono text-xs tabular-nums ${clinched ? "text-emerald-400" : "text-muted-foreground"} ${hideMobile ? "hidden sm:table-cell" : ""}`}>
+    <td
+      className={`px-1 text-right font-mono text-xs tabular-nums ${clinched ? "text-win" : "text-foreground/80"} ${hideMobile ? "hidden sm:table-cell" : ""}`}
+      style={{ backgroundColor: clinched ? heat(1) : heat(v) }}
+    >
       {clinched ? <span title="Clinched a Round-of-32 place">✓</span> : forecastPct(v)}
     </td>
   );
