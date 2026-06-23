@@ -49,13 +49,13 @@ export default async function Page() {
           <>
             <h2 className="mt-5 text-lg font-semibold tracking-tight">Who will win the 2026 World Cup?</h2>
             <p className="text-muted-foreground mt-1.5 text-sm text-pretty">
-              The model&apos;s favorite is <span className="text-foreground font-medium">{c1.name} ({forecastPct(c1.title)})</span>
-              {c2 && <>, ahead of {c2.name} ({forecastPct(c2.title)})</>}
-              {c3 && <> and {c3.name} ({forecastPct(c3.title)})</>}, across {data.iterations.toLocaleString()} simulations
+              The model&apos;s favorite is <Link href={`/team/${teamSlug(c1.name)}`} className="text-foreground font-medium hover:underline">{c1.name}</Link> ({forecastPct(c1.title)})
+              {c2 && <>, ahead of <Link href={`/team/${teamSlug(c2.name)}`} className="hover:underline">{c2.name}</Link> ({forecastPct(c2.title)})</>}
+              {c3 && <> and <Link href={`/team/${teamSlug(c3.name)}`} className="hover:underline">{c3.name}</Link> ({forecastPct(c3.title)})</>}, across {data.iterations.toLocaleString()} simulations
               updated live from real results.
               {mover && (
                 <>
-                  {" "}Biggest move today: <span className="text-foreground font-medium">{mover.name}</span>{" "}
+                  {" "}Biggest move today: <Link href={`/team/${teamSlug(mover.name)}`} className="text-foreground font-medium hover:underline">{mover.name}</Link>{" "}
                   <span className={mover.titleDelta! > 0 ? "text-win" : "text-destructive"}>
                     {mover.titleDelta! > 0 ? "▲" : "▼"}{Math.abs(Math.round(mover.titleDelta! * 100))}
                   </span>{" "}
@@ -127,10 +127,10 @@ export default async function Page() {
               {data.teams.slice(0, 12).map((t) => (
                 <tr key={t.code} className="border-border/40 border-b last:border-0">
                   <td className="py-2 pr-2">
-                    <div className="flex items-center gap-2">
+                    <Link href={`/team/${teamSlug(t.name)}`} className="flex items-center gap-2 hover:underline">
                       <Flag code={t.code} size={18} />
                       <span className="truncate font-medium">{t.name}</span>
-                    </div>
+                    </Link>
                   </td>
                   <RoundCell v={t.advance} hideMobile clinched={advanceClinched.has(t.code)} />
                   <RoundCell v={t.r16} />

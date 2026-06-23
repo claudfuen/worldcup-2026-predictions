@@ -4,6 +4,7 @@ import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive, liveActivity } from "@/lib/live";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
+import { teamSlug } from "@/lib/slug";
 import { pct } from "@/lib/format";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
 import { LocalTime } from "@/components/local-time";
@@ -92,7 +93,12 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       <Link href="/schedule" className="text-muted-foreground hover:text-foreground text-sm">← Schedule</Link>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-foreground font-semibold">{ROUND_NAME[m.round]}{m.group ? ` · Group ${m.group}` : ""}</span>
+        <span className="text-foreground font-semibold">{ROUND_NAME[m.round]}</span>
+        {m.group && (
+          <Link href={`/group/${m.group.toLowerCase()}`} className="text-foreground hover:text-primary font-semibold hover:underline">
+            Group {m.group}
+          </Link>
+        )}
         <span className="text-muted-2">Match {m.match}</span>
       </div>
       <div className="text-muted-foreground mt-1 text-sm"><LocalTime utc={m.utc} mode="datetime" /> · {m.venue}, {m.city}</div>
@@ -221,9 +227,9 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
             <div className="border-border bg-card divide-border/50 divide-y rounded-2xl border">
               {(m.topMatchups ?? []).map((mu) => (
                 <div key={`${mu.home}|${mu.away}`} className="flex items-center gap-2 px-4 py-2.5 text-sm">
-                  <Flag code={mu.home} size={18} /><span className="truncate">{mu.homeName}</span>
+                  <Link href={`/team/${teamSlug(mu.homeName)}`} className="flex items-center gap-2 hover:underline"><Flag code={mu.home} size={18} /><span className="truncate">{mu.homeName}</span></Link>
                   <span className="text-muted-foreground text-xs">v</span>
-                  <Flag code={mu.away} size={18} /><span className="flex-1 truncate">{mu.awayName}</span>
+                  <Link href={`/team/${teamSlug(mu.awayName)}`} className="flex flex-1 items-center gap-2 hover:underline"><Flag code={mu.away} size={18} /><span className="truncate">{mu.awayName}</span></Link>
                   <span className="text-muted-foreground font-mono text-xs tabular-nums">{pct(mu.prob)}</span>
                 </div>
               ))}
@@ -277,14 +283,19 @@ function ScoreTeam({ m, side }: { m: MatchInfo; side: "home" | "away" }) {
   const win = m.status === "final" && score != null && other != null && score > other; // no "winner" while live
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
-      <Flag code={resolved ?? null} size={44} />
-      {resolved ? (
-        <div className={`leading-tight font-semibold ${win ? "text-win" : ""}`}>{name}</div>
+      {resolved && name ? (
+        <Link href={`/team/${teamSlug(name)}`} className="flex flex-col items-center gap-2 hover:underline">
+          <Flag code={resolved} size={44} />
+          <div className={`leading-tight font-semibold ${win ? "text-win" : ""}`}>{name}</div>
+        </Link>
       ) : (
-        <div className="min-w-0">
-          <div className="text-foreground/80 truncate text-sm font-medium">{prettySlot(slot)}</div>
-          {top && <div className="text-muted-2 mt-0.5 truncate text-xs">likely {top.name} {pct(Math.min(top.prob, 0.99))}</div>}
-        </div>
+        <>
+          <Flag code={resolved ?? null} size={44} />
+          <div className="min-w-0">
+            <div className="text-foreground/80 truncate text-sm font-medium">{prettySlot(slot)}</div>
+            {top && <div className="text-muted-2 mt-0.5 truncate text-xs">likely {top.name} {pct(Math.min(top.prob, 0.99))}</div>}
+          </div>
+        </>
       )}
     </div>
   );
@@ -297,7 +308,7 @@ function Candidates({ title, list }: { title: string; list?: { code: string; nam
       <div className="space-y-1.5">
         {(list ?? []).slice(0, 5).map((c) => (
           <div key={c.code} className="flex items-center gap-2 text-sm">
-            <Flag code={c.code} size={16} /><span className="flex-1 truncate">{c.name}</span>
+            <Link href={`/team/${teamSlug(c.name)}`} className="flex flex-1 items-center gap-2 hover:underline"><Flag code={c.code} size={16} /><span className="truncate">{c.name}</span></Link>
             <span className="text-muted-foreground font-mono text-xs tabular-nums">{pct(Math.min(c.prob, 0.99))}</span>
           </div>
         ))}

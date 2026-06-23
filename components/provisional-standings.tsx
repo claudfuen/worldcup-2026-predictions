@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { TEAM_BY_CODE } from "@/lib/data/teams";
+import { teamSlug } from "@/lib/slug";
 import type { ProvisionalGroup } from "@/lib/liveProjection";
 
 // "If the live score holds" standings for one group. Deterministic (frozen current scoreline);
@@ -14,11 +16,15 @@ export function ProvisionalStandings({ proj, bare }: { proj: ProvisionalGroup; b
             <span className="inline-flex items-center gap-1 font-semibold text-live">
               <span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE
             </span>
-            <Flag code={l.home} size={14} />
-            <span className="font-medium">{TEAM_BY_CODE[l.home]?.name ?? l.home}</span>
+            <Link href={`/team/${teamSlug(TEAM_BY_CODE[l.home]?.name ?? l.home)}`} className="flex items-center gap-1.5 hover:underline">
+              <Flag code={l.home} size={14} />
+              <span className="font-medium">{TEAM_BY_CODE[l.home]?.name ?? l.home}</span>
+            </Link>
             <span className="font-mono font-bold tabular-nums">{l.homeGoals}&ndash;{l.awayGoals}</span>
-            <span className="font-medium">{TEAM_BY_CODE[l.away]?.name ?? l.away}</span>
-            <Flag code={l.away} size={14} />
+            <Link href={`/team/${teamSlug(TEAM_BY_CODE[l.away]?.name ?? l.away)}`} className="flex items-center gap-1.5 hover:underline">
+              <span className="font-medium">{TEAM_BY_CODE[l.away]?.name ?? l.away}</span>
+              <Flag code={l.away} size={14} />
+            </Link>
           </div>
         ))}
       </div>
@@ -42,11 +48,11 @@ export function ProvisionalStandings({ proj, bare }: { proj: ProvisionalGroup; b
             return (
               <tr key={r.code} className={`border-l-2 ${zone} ${out ? "opacity-45" : ""} ${isLive ? "bg-live/[0.06]" : ""}`}>
                 <td className="py-2 pr-1 pl-2.5">
-                  <div className="flex items-center gap-2">
+                  <Link href={`/team/${teamSlug(TEAM_BY_CODE[r.code]?.name ?? r.code)}`} className="flex items-center gap-2 hover:underline">
                     <span className="text-muted-foreground w-3 text-center font-mono text-[11px]">{pos}</span>
                     <Flag code={r.code} size={18} />
                     <span className={`truncate text-[13px] font-medium ${out ? "line-through" : ""}`}>{TEAM_BY_CODE[r.code]?.name ?? r.code}</span>
-                  </div>
+                  </Link>
                 </td>
                 <td className="text-muted-foreground px-1 text-center font-mono text-xs tabular-nums">{r.played}</td>
                 <td className="px-1 text-center font-mono text-xs tabular-nums">{r.gd >= 0 ? "+" : ""}{r.gd}</td>

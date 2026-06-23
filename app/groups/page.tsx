@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive, liveActivity } from "@/lib/live";
+import { teamSlug } from "@/lib/slug";
 import type { GroupTeamView, ThirdPlaceEntry } from "@/lib/predictions";
 import { provisionalGroup, ratingsFromTeams, type ProvisionalGroup } from "@/lib/liveProjection";
 import { Flag } from "@/components/flag";
@@ -96,9 +97,11 @@ function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
                 <td className="py-2 pr-1 pl-3 text-muted-foreground font-mono text-[11px]">{e.rank}</td>
                 <td className="py-2">
                   <div className="flex items-center gap-2">
-                    <Flag code={e.code} size={20} />
-                    <span className="text-[13px] font-medium">{e.name}</span>
-                    <span className="text-muted-foreground text-[11px]">Grp {e.group}</span>
+                    <Link href={`/team/${teamSlug(e.name)}`} className="flex items-center gap-2 hover:underline">
+                      <Flag code={e.code} size={20} />
+                      <span className="text-[13px] font-medium">{e.name}</span>
+                    </Link>
+                    <Link href={`/group/${e.group.toLowerCase()}`} className="text-muted-foreground hover:text-primary text-[11px] hover:underline">Grp {e.group}</Link>
                   </div>
                 </td>
                 <td className="px-1 text-center font-mono text-xs tabular-nums text-muted-foreground">{e.gf}</td>
@@ -162,10 +165,11 @@ function GroupCard({ group, teams, decided, prov }: { group: string; teams: Grou
         <div className="border-border/60 space-y-1.5 border-t px-4 py-3">
           {teams.filter((t) => t.need).map((t) => (
             <div key={t.code} className="flex items-center gap-2 text-xs">
-              <Flag code={t.code} size={14} />
-              <span className="text-muted-foreground">
-                <span className="text-foreground/80 font-medium">{t.name}:</span> {t.need}
-              </span>
+              <Link href={`/team/${teamSlug(t.name)}`} className="flex shrink-0 items-center gap-1.5 hover:underline">
+                <Flag code={t.code} size={14} />
+                <span className="text-foreground/80 font-medium">{t.name}</span>
+              </Link>
+              <span className="text-muted-foreground">{t.need}</span>
             </div>
           ))}
         </div>
@@ -187,7 +191,7 @@ function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | 
   return (
     <tr className={`border-l-2 ${zone} ${cutBorder} ${elim ? "opacity-45" : ""}`}>
       <td className="py-2 pr-1 pl-2.5">
-        <div className="flex items-center gap-2">
+        <Link href={`/team/${teamSlug(t.name)}`} className="flex items-center gap-2 hover:underline">
           <span className="text-muted-foreground w-3 text-center font-mono text-[11px]">{pos}</span>
           <Flag code={t.code} size={20} />
           <span className={`truncate text-[13px] font-medium ${elim ? "line-through" : ""}`}>{t.name}{elim && <span className="sr-only"> (eliminated)</span>}</span>
@@ -196,7 +200,7 @@ function Row({ t, pos, cut }: { t: GroupTeamView; pos: number; cut: "qualify" | 
               {d.symbol}<span className="sr-only"> {d.kind === "wonGroup" ? "Won group" : "advanced"}</span>
             </span>
           )}
-        </div>
+        </Link>
       </td>
       <Cell v={t.played} muted />
       <Cell v={t.w} muted />

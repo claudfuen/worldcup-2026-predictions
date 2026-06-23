@@ -79,7 +79,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
       <LiveAutoRefresh enabled={liveActivity(data.matches, live)} />
       <Link href="/groups" className="text-muted-foreground hover:text-foreground text-sm">← Groups</Link>
       <header className="mt-3">
-        <div className="text-primary font-mono text-xs font-semibold tracking-wide uppercase">World Cup 2026 · Group {team.group}</div>
+        <div className="text-primary font-mono text-xs font-semibold tracking-wide uppercase">World Cup 2026 · <Link href={`/group/${team.group.toLowerCase()}`} className="hover:underline">Group {team.group}</Link></div>
         <div className="mt-1.5 flex items-center gap-3">
           <Flag code={team.code} size={40} />
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{team.name} at the World Cup 2026</h1>
@@ -172,7 +172,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
           </div>
           {opp && !advanceOut && (
             <p className="text-muted-2 mt-3 text-xs">
-              Most likely Round-of-32 opponent: <span className="text-foreground/80">{opp.name}</span> ({forecastPct(opp.prob)}).
+              Most likely Round-of-32 opponent: <Link href={`/team/${teamSlug(opp.name)}`} className="text-foreground/80 hover:text-primary hover:underline">{opp.name}</Link> ({forecastPct(opp.prob)}).
             </p>
           )}
         </section>
