@@ -22,9 +22,11 @@ const ROUND_SHORT: Record<string, string> = { R32: "R32", R16: "R16", QF: "QF", 
 export function Bracket({
   matches,
   myMatchNumbers = [],
+  champion,
 }: {
   matches: MatchInfo[];
   myMatchNumbers?: number[];
+  champion?: { code: string; name: string; prob: number };
 }) {
   const byMatch = new Map(matches.map((m) => [m.match, m]));
   const tickets = new Set(myMatchNumbers);
@@ -64,7 +66,7 @@ export function Bracket({
       </div>
 
       {/* Mobile: a full tree doesn't fit a phone, so show one round at a time as a readable list. */}
-      <MobileRounds byMatch={byMatch} tickets={tickets} highlightCode={hl} />
+      <MobileRounds byMatch={byMatch} tickets={tickets} highlightCode={hl} champion={champion} />
 
       {/* Desktop: the full connected tree. */}
       <div className="hidden overflow-x-auto pb-4 md:block">
@@ -75,6 +77,7 @@ export function Bracket({
                 <div className="text-muted-foreground mb-3 h-4 px-1 text-[10px] font-semibold font-mono tracking-wide uppercase">
                   {ROUND_LABEL[round]}
                 </div>
+                {round === "FINAL" && champion && <ChampionCard champion={champion} />}
                 <div className="flex flex-1 flex-col">
                   {ORDER[round].map((mn) => {
                     const m = byMatch.get(mn);
@@ -99,10 +102,12 @@ function MobileRounds({
   byMatch,
   tickets,
   highlightCode,
+  champion,
 }: {
   byMatch: Map<number, MatchInfo>;
   tickets: Set<number>;
   highlightCode?: string;
+  champion?: { code: string; name: string; prob: number };
 }) {
   const [round, setRound] = useState<(typeof ROUNDS)[number]>("R32");
   return (
@@ -124,11 +129,27 @@ function MobileRounds({
         {ROUND_LABEL[round]}
       </div>
       <div className="space-y-2.5">
+        {round === "FINAL" && champion && <ChampionCard champion={champion} />}
         {ORDER[round].map((mn) => {
           const m = byMatch.get(mn);
           return m ? <Node key={mn} m={m} hasTicket={tickets.has(mn)} highlightCode={highlightCode} big final={round === "FINAL"} /> : null;
         })}
       </div>
+    </div>
+  );
+}
+
+// The climax of the FINAL column: the model's projected champion, so the right edge of the bracket
+// resolves to a clear terminus instead of an empty column under the "Final" header.
+function ChampionCard({ champion }: { champion: { code: string; name: string; prob: number } }) {
+  return (
+    <div className="border-primary/40 bg-primary/[0.07] mb-3 rounded-xl border p-3 text-center">
+      <div className="text-primary/80 mb-1.5 font-mono text-[9px] font-semibold tracking-[0.12em] uppercase">🏆 Projected champion</div>
+      <div className="flex items-center justify-center gap-2">
+        <Flag code={champion.code} size={22} />
+        <span className="font-semibold">{champion.name}</span>
+      </div>
+      <div className="text-primary mt-1 font-mono text-sm font-bold tabular-nums">{pct(Math.min(champion.prob, 0.99))}</div>
     </div>
   );
 }

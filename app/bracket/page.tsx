@@ -28,7 +28,10 @@ export default async function BracketPage() {
           exact team once the group stage ends. Resolved teams are bold. Scroll horizontally to follow the path to the final.
         </p>
       </div>
-      <Bracket matches={data.matches} />
+      <Bracket
+        matches={data.matches}
+        champion={data.teams[0] ? { code: data.teams[0].code, name: data.teams[0].name, prob: data.teams[0].title } : undefined}
+      />
       <div className="border-border bg-card mt-6 rounded-xl border p-4">
         <h2 className="mb-1 text-sm font-semibold">Third-place play-off</h2>
         <ThirdPlace matches={data.matches} />
