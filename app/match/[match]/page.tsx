@@ -51,6 +51,27 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   const state: "final" | "live" | "defined" | "undefined" =
     m.status === "final" ? "final" : m.status === "live" ? "live" : m.defined ? "defined" : "undefined";
 
+  // SportsEvent structured data - only for a real, named matchup (slot placeholders aren't teams).
+  const eventLd =
+    m.defined && m.homeName && m.awayName
+      ? {
+          "@context": "https://schema.org",
+          "@type": "SportsEvent",
+          name: `${m.homeName} vs ${m.awayName} - World Cup 2026 ${ROUND_NAME[m.round]}${m.group ? ` (Group ${m.group})` : ""}`,
+          sport: "Association football",
+          startDate: m.utc,
+          eventStatus: "https://schema.org/EventScheduled",
+          location: { "@type": "Place", name: m.venue, address: m.city },
+          competitor: [
+            { "@type": "SportsTeam", name: m.homeName },
+            { "@type": "SportsTeam", name: m.awayName },
+          ],
+          organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com" },
+          superEvent: { "@type": "SportsEvent", name: "FIFA World Cup 2026" },
+          url: `https://worldcup2026predictions.app/match/${m.match}`,
+        }
+      : null;
+
   // "If the live score holds" provisional group standings, for an in-progress group-stage match.
   const proj =
     state === "live" && m.group
@@ -63,6 +84,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      {eventLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }} />}
       <LiveAutoRefresh enabled={state === "live"} />
       <h1 className="sr-only">
         {(m.homeName ?? prettySlot(m.slotHome))} vs {(m.awayName ?? prettySlot(m.slotAway))} prediction - World Cup 2026 {ROUND_NAME[m.round]}
@@ -109,6 +131,10 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           path={`/match/${m.match}`}
         />
       </div>
+
+      {state === "defined" && m.probs && (
+        <p className="text-muted-foreground mt-6 text-sm text-pretty">{predictionProse(m)}</p>
+      )}
 
       {/* State-specific body */}
       {state === "final" && (
@@ -211,6 +237,23 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       )}
     </main>
   );
+}
+
+// Natural-language model read for an upcoming, fully-defined match: unique per-page prose that answers
+// "who does the model favour and how" - the snippet a search result wants. Percentages cap at 99% (a
+// single match is a forecast, never a certainty), matching the rest of the site.
+function predictionProse(m: MatchInfo): string {
+  const { home, draw, away } = m.probs!;
+  const cap = (v: number) => Math.max(1, Math.round(Math.min(v, 0.99) * 100));
+  const favHome = home >= away;
+  const favName = favHome ? m.homeName : m.awayName;
+  const dogName = favHome ? m.awayName : m.homeName;
+  const favPct = cap(favHome ? home : away);
+  const top = m.topScores?.[0];
+  const scoreStr = top
+    ? ` The most likely scoreline is ${m.homeName} ${top.h}-${top.a} ${m.awayName}${m.xg ? ` (expected goals ${m.xg.home.toFixed(1)}-${m.xg.away.toFixed(1)})` : ""}.`
+    : "";
+  return `The model makes ${favName} the ${favPct}% favorite to beat ${dogName}, with a ${cap(draw)}% chance of a draw, across 20,000 simulations.${scoreStr}`;
 }
 
 function prettySlot(s?: string): string {

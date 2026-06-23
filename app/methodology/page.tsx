@@ -7,9 +7,45 @@ export const metadata = {
   alternates: { canonical: "/methodology" },
 };
 
+// One source for the FAQ: rendered visibly below AND emitted as FAQPage JSON-LD, so the rich-result
+// markup can never drift from what the page actually shows (a Google requirement for FAQ rich results).
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: "How are the World Cup 2026 predictions calculated?",
+    a: "Each team carries a World Football Elo rating built from roughly 49,000 international matches since 1872. The Elo gap between two sides sets their expected goals, which feed a Poisson scoreline model with a Dixon-Coles low-score correction. We then simulate every remaining match about 20,000 times and report how often each outcome occurs.",
+  },
+  {
+    q: "How accurate is the World Cup 2026 prediction model?",
+    a: "It backtests at a ranked probability score of about 0.178 overall and 0.199 on World Cup matches, which is competitive with betting markets. No model predicts football with certainty - every figure is a probability, not a guarantee.",
+  },
+  {
+    q: "How do the eight best third-placed teams qualify for the Round of 32?",
+    a: "With 12 groups, the top two of each (24 teams) advance automatically. To fill the 32-team Round of 32, the eight best of the twelve third-placed teams also go through, ranked across groups by points, then goal difference, then goals scored. FIFA's fixed Annex C table (495 combinations) then assigns each qualifying third-placed team to a specific group winner.",
+  },
+  {
+    q: "What are the 2026 World Cup group tiebreakers?",
+    a: "Teams level on points are separated first by head-to-head record - a 2026 rule change that applies head-to-head before overall goal difference - then by overall goal difference, then goals scored, and finally FIFA ranking.",
+  },
+  {
+    q: "When is a team mathematically guaranteed to advance?",
+    a: "Only when no combination of remaining results could overturn it. Because goals are unbounded, anything resting on goal difference can always be flipped by a large enough scoreline, so only points and head-to-head results can lock a place. A clinched outcome is shown with a checkmark, never as 100 percent.",
+  },
+];
+
+const FAQ_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+
 export default function MethodologyPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
       <h1 className="text-2xl font-semibold tracking-tight">How it works</h1>
       <div className="mt-6 space-y-7 text-sm leading-relaxed">
         <Section title="Ratings - World Football Elo">
@@ -55,6 +91,18 @@ export default function MethodologyPage() {
           were verified against FIFA regulations and Wikipedia. Recomputed periodically. Not affiliated with FIFA.
         </Section>
       </div>
+
+      <section className="mt-12">
+        <h2 className="text-xl font-semibold tracking-tight">Common questions</h2>
+        <dl className="mt-5 space-y-6 text-sm leading-relaxed">
+          {FAQ.map((f) => (
+            <div key={f.q}>
+              <dt className="text-foreground font-semibold">{f.q}</dt>
+              <dd className="text-muted-foreground mt-1.5">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </main>
   );
 }
