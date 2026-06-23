@@ -52,6 +52,9 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
 
   const advancePct = pred ? forecastPct(pred.advance) : "-";
   const titlePct = pred ? forecastPct(pred.title) : "-";
+  // A clinched Round-of-32 place is a FACT (✓), never a capped forecast %. Mirrors the Overview/Groups rule.
+  const advanceClinched = !!row && (row.status === "won_group" || row.status === "second" || row.status === "advanced");
+  const advanceOut = row?.status === "eliminated";
   const statusWord =
     row?.status === "won_group" ? "have won the group"
       : row?.status === "second" ? "have clinched a top-2 spot"
@@ -70,14 +73,32 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         </div>
         {pred && (
           <p className="text-muted-foreground mt-3 text-sm text-pretty">
-            {team.name} {statusWord}, with a <span className="text-foreground font-medium">{advancePct}</span> chance to
-            reach the Round of 32 and a <span className="text-foreground font-medium">{titlePct}</span> chance to win the
-            tournament - the <span className="text-foreground font-medium">{ordinal(rank)}</span>-most-likely champion of 48
-            teams, across {data.iterations.toLocaleString()} simulations.
+            {team.name} {statusWord}
+            {advanceOut ? (
+              <> - out of the 2026 World Cup, finishing outside Group {team.group}&apos;s qualifying places.</>
+            ) : advanceClinched ? (
+              <> and into the Round of 32, with a <span className="text-foreground font-medium">{titlePct}</span> chance to
+              win the tournament - the <span className="text-foreground font-medium">{ordinal(rank)}</span>-most-likely champion
+              of 48 teams, across {data.iterations.toLocaleString()} simulations.</>
+            ) : (
+              <>, with a <span className="text-foreground font-medium">{advancePct}</span> chance to reach the Round of 32 and
+              a <span className="text-foreground font-medium">{titlePct}</span> chance to win the tournament - the{" "}
+              <span className="text-foreground font-medium">{ordinal(rank)}</span>-most-likely champion of 48 teams, across{" "}
+              {data.iterations.toLocaleString()} simulations.</>
+            )}
           </p>
         )}
         <div className="mt-4">
-          <ShareBar text={`${team.name}: ${advancePct} to reach the World Cup 2026 knockouts, ${titlePct} to win it (model).`} path={`/team/${slug}`} />
+          <ShareBar
+            text={
+              advanceClinched
+                ? `${team.name} are through to the World Cup 2026 knockouts, with a ${titlePct} chance to win it (model).`
+                : advanceOut
+                  ? `${team.name} are out of the 2026 World Cup.`
+                  : `${team.name}: ${advancePct} to reach the World Cup 2026 knockouts, ${titlePct} to win it (model).`
+            }
+            path={`/team/${slug}`}
+          />
         </div>
       </header>
 
@@ -85,12 +106,19 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         <section className="mt-8">
           <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Chance of reaching each round</h2>
           <div className="border-border bg-card grid grid-cols-3 gap-px overflow-hidden rounded-2xl border sm:grid-cols-6">
-            {ROUND_LABELS.map(([key, label]) => (
-              <div key={key} className="bg-card flex flex-col items-center gap-1 px-2 py-4" style={{ backgroundColor: heat((pred as unknown as RoundVals)[key]) }}>
-                <span className="text-muted-2 text-[10px] font-medium tracking-wide uppercase">{label}</span>
-                <span className={`font-mono text-lg font-bold tabular-nums ${key === "title" ? "text-primary" : ""}`}>{forecastPct((pred as unknown as RoundVals)[key])}</span>
-              </div>
-            ))}
+            {ROUND_LABELS.map(([key, label]) => {
+              const v = (pred as unknown as RoundVals)[key];
+              const r32Clinched = key === "advance" && advanceClinched;
+              const r32Out = key === "advance" && advanceOut;
+              return (
+                <div key={key} className="bg-card flex flex-col items-center gap-1 px-2 py-4" style={{ backgroundColor: heat(r32Clinched ? 1 : v) }}>
+                  <span className="text-muted-2 text-[10px] font-medium tracking-wide uppercase">{label}</span>
+                  <span className={`font-mono text-lg font-bold tabular-nums ${r32Clinched ? "text-win" : key === "title" ? "text-primary" : ""}`}>
+                    {r32Clinched ? <span title="Clinched a Round-of-32 place">✓</span> : r32Out ? "out" : forecastPct(v)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
