@@ -183,7 +183,23 @@ function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTi
 function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "away"; highlightCode?: string; big?: boolean }) {
   const resolved = side === "home" ? m.home : m.away;
   const name = side === "home" ? m.homeName : m.awayName;
+  const slot = side === "home" ? m.slotHome : m.slotAway;
   const proj = (side === "home" ? m.projHome : m.projAway)?.[0];
+
+  // Third-place slots: which best-third lands here depends on the final cross-group mix, so we show the
+  // candidate groups rather than a single (often implausible) projected team.
+  if (!resolved && slot?.startsWith("3:")) {
+    const groups = slot.slice(2).split(",").join("/");
+    return (
+      <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"}`}>
+        <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-[22px]" : "size-[18px]"}`} aria-hidden />
+        <span className="text-foreground/55 min-w-0 flex-1 truncate">
+          <span className="text-muted-foreground/70 mr-1 font-mono text-[10px] tracking-wide uppercase">3rd</span>{groups}
+        </span>
+      </div>
+    );
+  }
+
   const code = resolved ?? proj?.code ?? null;
   const label = name ?? proj?.name ?? "TBD";
   const prob = resolved ? null : proj?.prob;

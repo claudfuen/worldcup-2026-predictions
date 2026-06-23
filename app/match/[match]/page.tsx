@@ -5,9 +5,7 @@ import { getLiveMatches, overlayLive } from "@/lib/live";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
 import { etDateTime, pct } from "@/lib/format";
-import { MatchFlagButton } from "@/components/match-flag-button";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
-import { getSessionUser, getUserMatchNumbers } from "@/lib/userMatches";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,8 +21,6 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   const base = data.matches.find((x) => x.match === Number(match));
   if (!base) notFound();
   const m = overlayLive([base], live)[0];
-  const user = await getSessionUser();
-  const hasTicket = user ? (await getUserMatchNumbers(user.id)).includes(m.match) : false;
   const state: "final" | "live" | "defined" | "undefined" =
     m.status === "final" ? "final" : m.status === "live" ? "live" : m.defined ? "defined" : "undefined";
 
@@ -36,7 +32,6 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-foreground font-semibold">{ROUND_NAME[m.round]}{m.group ? ` · Group ${m.group}` : ""}</span>
         <span className="text-muted-foreground">Match {m.match}</span>
-        <MatchFlagButton matchNo={m.match} initialOn={hasTicket} isAuthed={Boolean(user)} variant="button" />
       </div>
       <div className="text-muted-foreground mt-1 text-sm">{etDateTime(m.utc)} · {m.venue}, {m.city}</div>
 

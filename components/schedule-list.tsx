@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
-import { MatchFlagButton } from "./match-flag-button";
 import { etTimeShort, etDay, etDayKey, pct } from "@/lib/format";
 
 const ROUND_NAME: Record<string, string> = {
@@ -14,7 +13,6 @@ const FILTERS = [
   { key: "all", label: "All" },
   { key: "GROUP", label: "Groups" },
   { key: "KO", label: "Knockout" },
-  { key: "mine", label: "🎟️ Mine" },
 ];
 const TIME_FILTERS = [
   { key: "upcoming", label: "Today & later" },
@@ -22,24 +20,14 @@ const TIME_FILTERS = [
   { key: "all", label: "All dates" },
 ];
 
-export function ScheduleList({
-  matches,
-  myMatchNumbers,
-  isAuthed,
-}: {
-  matches: MatchInfo[];
-  myMatchNumbers: number[];
-  isAuthed: boolean;
-}) {
+export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
   const [filter, setFilter] = useState("all");
   const [time, setTime] = useState("upcoming");
-  const tickets = new Set(myMatchNumbers);
   const today = etDayKey(new Date().toISOString());
 
   const shown = matches.filter((m) => {
     if (filter === "GROUP" && m.round !== "GROUP") return false;
     if (filter === "KO" && m.round === "GROUP") return false;
-    if (filter === "mine" && !tickets.has(m.match)) return false;
     const day = etDayKey(m.utc);
     if (time === "upcoming" && day < today) return false;
     if (time === "past" && day >= today) return false;
@@ -83,14 +71,6 @@ export function ScheduleList({
           </button>
         ))}
       </div>
-      {filter === "mine" && !isAuthed && (
-        <p className="text-muted-foreground mb-4 text-sm">
-          <Link href="/signin?next=/schedule" className="text-primary underline">
-            Sign in
-          </Link>{" "}
-          to save and see your matches.
-        </p>
-      )}
       {days.length === 0 && <p className="text-muted-foreground text-sm">No matches for this filter.</p>}
       <div className="space-y-6">
         {days.map((d) => (
@@ -98,7 +78,7 @@ export function ScheduleList({
             <h3 className="text-muted-foreground mb-2 font-mono text-xs font-semibold tracking-wide uppercase">{d.label}</h3>
             <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-xl border">
               {d.items.map((m) => (
-                <Row key={m.match} m={m} hasTicket={tickets.has(m.match)} isAuthed={isAuthed} />
+                <Row key={m.match} m={m} />
               ))}
             </div>
           </div>
@@ -108,7 +88,7 @@ export function ScheduleList({
   );
 }
 
-function Row({ m, hasTicket, isAuthed }: { m: MatchInfo; hasTicket: boolean; isAuthed: boolean }) {
+function Row({ m }: { m: MatchInfo }) {
   const homeCode = m.home ?? m.projHome?.[0]?.code ?? null;
   const awayCode = m.away ?? m.projAway?.[0]?.code ?? null;
   const homeLabel = m.homeName ?? (m.projHome?.[0] ? `${m.projHome[0].name}` : m.slotHome ?? "TBD");
@@ -142,7 +122,6 @@ function Row({ m, hasTicket, isAuthed }: { m: MatchInfo; hasTicket: boolean; isA
         )}
         <div className="text-muted-foreground/60 truncate text-[10px]">{m.venue}</div>
       </div>
-      <MatchFlagButton matchNo={m.match} initialOn={hasTicket} isAuthed={isAuthed} />
     </Link>
   );
 }

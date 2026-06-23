@@ -5,8 +5,7 @@ import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
 import { Delta } from "@/components/delta";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
-import { etDateTime, etTime, etDayKey, pct } from "@/lib/format";
-import { getSessionUser, getUserMatchNumbers } from "@/lib/userMatches";
+import { etTime, etDayKey, pct } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -20,12 +19,6 @@ export default async function Page() {
   const matches = overlayLive(data.matches, live);
   const contenders = data.teams.slice(0, 8);
   const maxTitle = contenders[0]?.title || 1;
-  const user = await getSessionUser();
-  const myNums = user ? new Set(await getUserMatchNumbers(user.id)) : new Set<number>();
-  const now = new Date().getTime();
-  const nextMine = matches
-    .filter((m) => myNums.has(m.match) && new Date(m.utc).getTime() > now)
-    .sort((a, b) => a.utc.localeCompare(b.utc))[0];
   const today = etDayKey(new Date().toISOString());
   const todayMatches = matches.filter((m) => etDayKey(m.utc) === today).sort((a, b) => a.utc.localeCompare(b.utc));
   const hasLive = matches.some((m) => m.status === "live");
@@ -65,26 +58,10 @@ export default async function Page() {
 
         {/* Side column */}
         <section className="space-y-4">
-          {nextMine && (
-            <div className="border-amber-500/40 bg-amber-500/5 rounded-2xl border p-4">
-              <div className="mb-2 font-mono text-[11px] font-semibold tracking-wide text-amber-400 uppercase">🎟️ Your next match</div>
-              <div className="text-sm font-semibold">
-                {nextMine.homeName ?? nextMine.projHome?.[0]?.name ?? nextMine.slotHome}
-                <span className="text-muted-foreground mx-1 font-normal">vs</span>
-                {nextMine.awayName ?? nextMine.projAway?.[0]?.name ?? nextMine.slotAway}
-              </div>
-              <div className="text-muted-foreground mt-1 text-xs">{etDateTime(nextMine.utc)} · {nextMine.venue}</div>
-              <Link href="/matches" className="text-primary mt-2 inline-block text-xs font-medium">All my matches →</Link>
-            </div>
-          )}
           <NavCard href="/groups" title="Groups" desc="Standings, qualification odds & cut-offs" />
           <NavCard href="/bracket" title="Bracket" desc="Projected knockout tree to the final" />
           <NavCard href="/schedule" title="Schedule" desc="All 104 matches in ET" />
-          <NavCard
-            href={user ? "/matches" : "/signin?next=/matches"}
-            title="My Matches"
-            desc={user ? "The games you're tracking" : "Sign in to save the games you're going to"}
-          />
+          <NavCard href="/methodology" title="Method" desc="How the model works" />
         </section>
       </div>
 

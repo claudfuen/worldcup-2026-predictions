@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useSession, signOut } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
 import { etTime, etDateTime } from "@/lib/format";
 
 const LINKS = [
@@ -11,14 +10,11 @@ const LINKS = [
   { href: "/groups", label: "Groups" },
   { href: "/bracket", label: "Bracket" },
   { href: "/schedule", label: "Schedule" },
-  { href: "/matches", label: "My Matches" },
   { href: "/methodology", label: "Method" },
 ];
 
 export function Nav({ updatedAt }: { updatedAt: string | null }) {
   const path = usePathname();
-  const router = useRouter();
-  const { data: session, isPending } = useSession();
 
   return (
     <header className="border-border/70 bg-background/80 sticky top-0 z-50 border-b backdrop-blur-xl">
@@ -43,34 +39,8 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
             );
           })}
         </nav>
-        <Freshness updatedAt={updatedAt} />
-        <div className="ml-2 flex shrink-0 items-center gap-2">
-          {isPending ? null : session ? (
-            <>
-              <span
-                className="text-muted-foreground hidden max-w-[14ch] truncate text-xs sm:inline"
-                title={session.user.email}
-              >
-                {session.user.email}
-              </span>
-              <button
-                onClick={async () => {
-                  await signOut();
-                  router.refresh();
-                }}
-                className="text-muted-foreground hover:text-foreground rounded-full px-2 py-1 text-xs whitespace-nowrap"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/signin"
-              className="text-primary hover:bg-primary/10 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap"
-            >
-              Sign in
-            </Link>
-          )}
+        <div className="ml-2 shrink-0">
+          <Freshness updatedAt={updatedAt} />
         </div>
       </div>
     </header>
