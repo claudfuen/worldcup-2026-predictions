@@ -12,6 +12,7 @@ import { provisionalGroup, ratingsFromTeams, finalizeGroups, finalizeBracket } f
 import { ProvisionalStandings } from "@/components/provisional-standings";
 import { WinProbBar } from "@/components/win-prob-bar";
 import { MatchOutlook } from "@/components/match-outlook";
+import { BracketPath } from "@/components/bracket-path";
 import { ProbMeter } from "@/components/prob-meter";
 import { ShareBar } from "@/components/share-bar";
 
@@ -148,7 +149,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       </div>
 
       {state === "defined" && m.probs && (
-        <p className="text-muted-foreground mt-6 text-sm text-pretty">{predictionProse(m)}</p>
+        <p className="text-muted-foreground mt-6 text-sm text-pretty">{predictionProse(m, homePred?.rating, awayPred?.rating)}</p>
       )}
 
       {/* State-specific body */}
@@ -195,6 +196,8 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       )}
 
       {homePred && awayPred && <MatchOutlook round={m.round} home={homePred} away={awayPred} />}
+
+      <BracketPath m={m} all={allMatches} />
 
       {proj && (
         <section className="mt-6">
@@ -259,7 +262,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
 // Natural-language model read for an upcoming, fully-defined match: unique per-page prose that answers
 // "who does the model favour and how" - the snippet a search result wants. Percentages cap at 99% (a
 // single match is a forecast, never a certainty), matching the rest of the site.
-function predictionProse(m: MatchInfo): string {
+function predictionProse(m: MatchInfo, homeRating?: number, awayRating?: number): string {
   const { home, draw, away } = m.probs!;
   const cap = (v: number) => Math.max(1, Math.round(Math.min(v, 0.99) * 100));
   const favHome = home >= away;
@@ -270,7 +273,15 @@ function predictionProse(m: MatchInfo): string {
   const scoreStr = top
     ? ` The most likely scoreline is ${m.homeName} ${top.h}-${top.a} ${m.awayName}${m.xg ? ` (expected goals ${m.xg.home.toFixed(1)}-${m.xg.away.toFixed(1)})` : ""}.`
     : "";
-  return `The model makes ${favName} the ${favPct}% favorite to beat ${dogName}, with a ${cap(draw)}% chance of a draw, across 20,000 simulations.${scoreStr}`;
+  let whyStr = "";
+  if (homeRating != null && awayRating != null) {
+    const gap = Math.round(homeRating - awayRating);
+    const abs = Math.abs(gap);
+    whyStr = abs >= 25
+      ? ` That edge comes from the ratings: ${gap >= 0 ? m.homeName : m.awayName} are about ${abs} Elo points stronger.`
+      : ` The two sides are within ${abs} Elo points, so the model sees a tight game.`;
+  }
+  return `The model makes ${favName} the ${favPct}% favorite to beat ${dogName}, with a ${cap(draw)}% chance of a draw, across 20,000 simulations.${scoreStr}${whyStr}`;
 }
 
 function prettySlot(s?: string): string {

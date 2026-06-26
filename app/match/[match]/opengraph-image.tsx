@@ -40,6 +40,9 @@ export default async function Image({ params }: { params: Promise<{ match: strin
   const group = m?.group ? ` · Group ${m.group}` : "";
   const final = m?.status === "final";
   const probs = m?.probs;
+  const topScore = m?.topScores?.[0];
+  // A one-line hook under the bar: the model's single likeliest scoreline for an upcoming match.
+  const hook = !final && topScore ? `Most likely scoreline ${topScore.h}–${topScore.a}` : null;
   // A single-match win probability is a forecast, never a certainty - cap at 99% (mirrors forecastPct).
   const pc = (v: number) => `${Math.max(1, Math.round(Math.min(v, 0.99) * 100))}%`;
 
@@ -86,6 +89,7 @@ export default async function Image({ params }: { params: Promise<{ match: strin
               <div style={{ display: "flex", color: MUTED }}>Draw {pc(probs.draw)}</div>
               <div style={{ display: "flex" }}><span style={{ color: MUTED, marginRight: 10 }}>{awayName}</span><span style={{ color: COOL, fontWeight: 700 }}>{pc(probs.away)}</span></div>
             </div>
+            {hook && <div style={{ display: "flex", marginTop: 18, fontSize: 24, color: MUTED }}>{hook}</div>}
           </div>
         ) : (
           <div style={{ display: "flex", fontSize: 28, color: MUTED }}>worldcup2026predictions.app</div>
