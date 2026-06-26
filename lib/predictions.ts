@@ -1,7 +1,7 @@
 // End-to-end: pull live results -> live ratings -> Monte Carlo -> assemble the payload stored in KV / rendered.
 import { fetchResults, liveRatings, preMatchRatingsByPair, buildGroupMatches, type FetchedMatch } from "./espn";
 import { runMonteCarlo } from "./sim/simulate";
-import { rankThirds, selectAndAssignThirds } from "./sim/thirdPlace";
+import { rankThirds, selectAndAssignThirds, lockedThirdSlots } from "./sim/thirdPlace";
 import { wdlProbs, eloToLambdas, scorelineDist } from "./sim/poisson";
 import { hostEloBoost } from "./sim/hosts";
 import { buildGroupViews, lockedSlotsFromGroups } from "./groupView";
@@ -77,9 +77,13 @@ export interface ThirdPlaceEntry {
   advancing: boolean; // CURRENT-standings snapshot: among the best 8 right now (a race-order marker, NOT a forecast)
   advanceProb: number; // Monte Carlo P(this team reaches the Round of 32) — the calibrated forecast, not the snapshot
   status: GroupTeamView["status"]; // clinch state, so a mathematically locked/eliminated third shows ✓/out not a %
-  slot?: string; // winner-slot it is assigned to (e.g. "1A"), if advancing
+  slot?: string; // winner-slot it is assigned to (e.g. "1A"), if advancing (or its current projection)
   match?: number; // R32 match number
   facesGroup?: string; // the group whose winner it would face
+  slotLocked?: boolean; // the bracket slot is mathematically fixed (same Annex C slot across every reachable qualifying set)
+  opponent?: { code: string; name: string }; // the certain R32 opponent — set only when slot is locked AND that group's winner is clinched (i.e. the whole match is decided)
+  city?: string; // host city of the R32 match (when a slot is known)
+  opponents?: OpponentProb[]; // top-3 likely R32 opponents, probability conditional on this team advancing
 }
 
 export interface PredictionsPayload {
@@ -270,15 +274,35 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
   }
   const statusByCode: Record<string, GroupTeamView["status"]> = {};
   for (const g of groups) for (const tm of g.teams) statusByCode[tm.code] = tm.status;
+  // A third whose group is guaranteed to advance can have a LOCKED bracket slot (the Annex C slot is the
+  // same across every still-reachable qualifying set); if the group winner that slot faces is also clinched,
+  // the whole R32 match is decided. lockedThirdSlots scans the Annex C table for that invariance.
+  const guaranteedThirdGroups = groups.filter((g) => g.teams[2]?.status === "advanced").map((g) => g.group);
+  const lockedThird = lockedThirdSlots(guaranteedThirdGroups);
+  const winnerByGroup: Record<string, string> = {};
+  for (const g of groups) { const w = g.teams.find((t) => t.status === "won_group"); if (w) winnerByGroup[g.group] = w.code; }
+  const cityByMatch = new Map(matches.map((m) => [m.match, m.city]));
   const thirdPlaceRace: ThirdPlaceEntry[] = rankedThirds.map((t, i) => {
     const code = t.row.code;
     const advancing = advancingGroups.has(t.group);
-    const slot = advancing ? teamSlot[code] : undefined;
+    const lockedSlotFor = lockedThird[t.group]; // present => slot is mathematically fixed
+    const slot = lockedSlotFor ?? (advancing ? teamSlot[code] : undefined);
+    const match = slot ? thirdHostMatch[slot] : undefined;
+    const oppGroup = slot ? slot[1] : undefined;
+    const oppCode = lockedSlotFor && oppGroup ? winnerByGroup[oppGroup] : undefined; // certain only if winner clinched
+    const advProb = sim.teams[code].advance;
+    const opp = (r32Opponents[code] ?? [])
+      .slice(0, 3)
+      .map((o) => ({ ...o, prob: advProb > 0 ? Math.min(o.prob / advProb, 1) : o.prob })); // conditional on advancing
     return {
       rank: i + 1, group: t.group, code, name: TEAM_BY_CODE[code].name,
       pts: t.row.pts, gd: t.row.gd, gf: t.row.gf, advancing,
-      advanceProb: sim.teams[code].advance, status: statusByCode[code] ?? "live",
-      slot, match: slot ? thirdHostMatch[slot] : undefined, facesGroup: slot ? slot[1] : undefined,
+      advanceProb: advProb, status: statusByCode[code] ?? "live",
+      slot, match, facesGroup: oppGroup,
+      slotLocked: lockedSlotFor ? true : undefined,
+      opponent: oppCode ? { code: oppCode, name: TEAM_BY_CODE[oppCode].name } : undefined,
+      city: match ? cityByMatch.get(match) : undefined,
+      opponents: opp.length ? opp : undefined,
     };
   });
 

@@ -2,11 +2,12 @@
 
 import { Fragment, useState } from "react";
 import Link from "next/link";
-import type { MatchInfo } from "@/lib/predictions";
+import type { MatchInfo, SlotCandidate } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { teamSlug } from "@/lib/slug";
 import { pct, fmtDay } from "@/lib/format";
 import { useViewerZone } from "@/lib/useViewerZone";
+import { useHoverTip, HoverTipPanel } from "./hover-tip";
 
 // Column orderings chosen so each match's two feeders are vertically adjacent (top half, then bottom half).
 const ORDER: Record<string, number[]> = {
@@ -206,11 +207,35 @@ function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTi
   );
 }
 
+// Hover panel listing the top candidates that could still fill an unresolved slot, with fill %.
+function CandidateTip({ cands, third }: { cands: SlotCandidate[]; third?: boolean }) {
+  return (
+    <>
+      <div className="text-muted-2 mb-1 font-mono text-[9px] font-semibold tracking-wide uppercase">
+        {third ? "Likely 3rd to fill this slot" : "Likely to fill this slot"}
+      </div>
+      <ul className="space-y-1">
+        {cands.slice(0, 3).map((c) => (
+          <li key={c.code} className="flex items-center gap-1.5">
+            <Flag code={c.code} size={15} />
+            <span className="text-foreground/80 min-w-0 flex-1 truncate">{c.name}</span>
+            <span className="text-muted-foreground shrink-0 font-mono tabular-nums">{pct(Math.min(c.prob, 0.99))}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "away"; highlightCode?: string; big?: boolean }) {
   const resolved = side === "home" ? m.home : m.away;
   const name = side === "home" ? m.homeName : m.awayName;
   const slot = side === "home" ? m.slotHome : m.slotAway;
-  const proj = (side === "home" ? m.projHome : m.projAway)?.[0];
+  const cands = (side === "home" ? m.projHome : m.projAway) ?? [];
+  const proj = cands[0];
+  const tip = useHoverTip();
+  // An unresolved slot offers a candidate hover; a confirmed (resolved) team does not.
+  const tipProps = !resolved && cands.length > 0 ? tip.triggerProps : {};
 
   // Third-place slots: a best-third can come from any of several groups (FIFA Annex C). We show the Monte
   // Carlo's most-likely qualifier with its fill probability, tagged "3rd" so the slot's nature stays clear.
@@ -219,13 +244,14 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
     const groups = slot.slice(2).split(",").join("/");
     const isHi = highlightCode && proj?.code === highlightCode;
     return (
-      <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}`}>
+      <div {...tipProps} className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}`}>
         {proj ? <Flag code={proj.code} size={big ? 22 : 18} /> : <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-[22px]" : "size-[18px]"}`} aria-hidden />}
         <span className="text-foreground/80 min-w-0 flex-1 truncate">
           <span className="text-muted-2 mr-1 font-mono text-[9px] font-semibold tracking-wide uppercase" title={`Third-placed team from group ${groups}`}>3rd</span>
           {proj?.name ?? groups}
         </span>
         {proj?.prob != null && <span className={`text-muted-foreground shrink-0 font-mono tabular-nums ${big ? "text-xs" : "text-[10px]"}`}>{pct(Math.min(proj.prob, 0.99))}</span>}
+        {tip.open && <HoverTipPanel pos={tip.pos}><CandidateTip cands={cands} third /></HoverTipPanel>}
       </div>
     );
   }
@@ -235,7 +261,7 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
   const prob = resolved ? null : proj?.prob;
   const isHi = highlightCode && code === highlightCode;
   return (
-    <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}`}>
+    <div {...tipProps} className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}`}>
       <Flag code={code} size={big ? 22 : 18} />
       <span className={`min-w-0 flex-1 truncate ${resolved ? "font-semibold" : "text-foreground/80"}`}>{label}</span>
       {resolved ? (
@@ -243,6 +269,7 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
       ) : (
         prob != null && <span className={`text-muted-foreground shrink-0 font-mono tabular-nums ${big ? "text-xs" : "text-[10px]"}`}>{pct(Math.min(prob, 0.99))}</span>
       )}
+      {!resolved && tip.open && <HoverTipPanel pos={tip.pos}><CandidateTip cands={cands} /></HoverTipPanel>}
     </div>
   );
 }

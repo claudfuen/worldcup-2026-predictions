@@ -44,3 +44,25 @@ export function selectAndAssignThirds(thirds: ThirdTeam[], ratings: Ratings): Th
   }
   return { advancingByGroup, slotToTeam };
 }
+
+// A third's Round-of-32 bracket slot is a pure function of WHICH 8 groups' thirds advance (the Annex C
+// key is just those 8 group letters sorted), NOT of the internal ranking. So once a group's third is
+// GUARANTEED to advance, its slot is locked the moment that group maps to the same slot in every Annex C
+// row that could still apply. We scan every row whose key contains all `guaranteedGroups` (a superset of
+// the still-reachable qualifying sets); a guaranteed group that lands on a single slot across all of them
+// has a slot that can no longer change. Scanning the superset keeps this sound — it can only ever
+// UNDER-claim a lock, never assert one the reachable subset would contradict. Returns group letter -> the
+// locked winner-slot (e.g. "D" -> "1D"); groups whose slot still varies are omitted.
+export function lockedThirdSlots(guaranteedGroups: string[]): Record<string, string> {
+  const slotsSeen: Record<string, Set<string>> = {};
+  for (const g of guaranteedGroups) slotsSeen[g] = new Set();
+  for (const [key, assignment] of Object.entries(THIRD_PLACE_TABLE)) {
+    if (!guaranteedGroups.every((g) => key.includes(g))) continue;
+    for (const g of guaranteedGroups) slotsSeen[g].add(TP_SLOT_ORDER[assignment.indexOf(g)]);
+  }
+  const locked: Record<string, string> = {};
+  for (const g of guaranteedGroups) {
+    if (slotsSeen[g].size === 1) locked[g] = [...slotsSeen[g]][0];
+  }
+  return locked;
+}

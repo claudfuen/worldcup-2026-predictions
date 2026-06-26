@@ -3,11 +3,13 @@
 // real 2026 tiebreakers. Deterministic and exact; does NOT touch the official (completed-only) table.
 import { rankGroup } from "./sim/standings";
 import { computeClinch, type GroupClinch } from "./sim/clinch";
-import { rankThirds, selectAndAssignThirds, type ThirdTeam } from "./sim/thirdPlace";
+import { rankThirds, selectAndAssignThirds, lockedThirdSlots, type ThirdTeam } from "./sim/thirdPlace";
 import { buildGroupViews, lockedSlotsFromGroups, type GroupProb } from "./groupView";
 import type { GroupMatch, Ratings, TeamRow } from "./sim/types";
 import type { GroupView, MatchInfo, ThirdPlaceEntry } from "./predictions";
 import { TEAMS, TEAM_BY_CODE } from "./data/teams";
+import { KNOCKOUT } from "./data/bracket";
+import { SCHEDULE } from "./data/schedule";
 
 export interface ProvisionalGroup {
   group: string;
@@ -145,17 +147,20 @@ export function finalizeBracket(matches: MatchInfo[], groups: GroupView[], ratin
 // live group cards above it. For any group with an in-progress match we take its PROVISIONAL 3rd-placed
 // team (live score frozen); every other group keeps its official (cron) 3rd. The 12 thirds are then
 // re-ranked (points -> GD -> GF -> FIFA-ranking proxy) and the top 8 marked as advancing — exactly the
-// model the cron uses, just over the frozen-live snapshot. Slot/Annex-C fields are intentionally omitted
-// (the race table doesn't show them; the bracket owns projected matchups).
+// model the cron uses, just over the frozen-live snapshot. Lock state is recomputed here from the
+// finalized groups (a lock can only ever GROW as groups finish, so this stays sound); the sim-derived
+// likely-opponent list can't be recomputed live, so it's carried by code from the cron entries.
 export function liveThirdPlaceRace(
   groups: GroupView[],
   provByGroup: Record<string, ProvisionalGroup | null>,
   ratings: Ratings,
+  cronEntries: ThirdPlaceEntry[] = [],
 ): ThirdPlaceEntry[] {
-  // Per-team Monte Carlo advance prob + clinch status come from the (cron) group views — they can't be
-  // re-simulated at render time, so we carry them by code, same as the calibrated number on the group cards.
-  const meta = new Map<string, { advance: number; status: GroupView["teams"][number]["status"] }>();
+  // Per-team Monte Carlo advance prob + clinch status + likely opponents come from the (cron) data — they
+  // can't be re-simulated at render time, so we carry them by code, same as the group-card numbers.
+  const meta = new Map<string, { advance: number; status: GroupView["teams"][number]["status"]; opponents?: ThirdPlaceEntry["opponents"] }>();
   for (const g of groups) for (const t of g.teams) meta.set(t.code, { advance: t.advance, status: t.status });
+  for (const e of cronEntries) { const m = meta.get(e.code); if (m) m.opponents = e.opponents; }
 
   const thirds: ThirdTeam[] = groups.map((g) => {
     const prov = provByGroup[g.group];
@@ -168,8 +173,31 @@ export function liveThirdPlaceRace(
   });
   const ranked = rankThirds(thirds, ratings);
   const advancing = new Set(ranked.slice(0, 8).map((t) => t.group));
+
+  // Bracket-slot certainty over the live snapshot, mirroring the cron builder.
+  const guaranteedThirdGroups = groups.filter((g) => g.teams[2]?.status === "advanced").map((g) => g.group);
+  const lockedThird = lockedThirdSlots(guaranteedThirdGroups);
+  let teamSlot: Record<string, string> = {};
+  try {
+    for (const [slot, code] of Object.entries(selectAndAssignThirds(thirds, ratings).slotToTeam)) teamSlot[code] = slot;
+  } catch { teamSlot = {}; }
+  const thirdHostMatch: Record<string, number> = {};
+  for (const m of KNOCKOUT) {
+    if (m.round !== "R32") continue;
+    if (m.away.startsWith("3:")) thirdHostMatch[m.home] = m.match;
+    else if (m.home.startsWith("3:")) thirdHostMatch[m.away] = m.match;
+  }
+  const cityByMatch = new Map(SCHEDULE.map((s) => [s.match, s.city]));
+  const winnerByGroup: Record<string, string> = {};
+  for (const g of groups) { const w = g.teams.find((t) => t.status === "won_group"); if (w) winnerByGroup[g.group] = w.code; }
+
   return ranked.map((t, i) => {
     const m = meta.get(t.row.code);
+    const lockedSlotFor = lockedThird[t.group];
+    const slot = lockedSlotFor ?? (advancing.has(t.group) ? teamSlot[t.row.code] : undefined);
+    const match = slot ? thirdHostMatch[slot] : undefined;
+    const oppGroup = slot ? slot[1] : undefined;
+    const oppCode = lockedSlotFor && oppGroup ? winnerByGroup[oppGroup] : undefined;
     return {
       rank: i + 1,
       group: t.group,
@@ -181,6 +209,11 @@ export function liveThirdPlaceRace(
       advancing: advancing.has(t.group),
       advanceProb: m?.advance ?? 0,
       status: m?.status ?? "live",
+      slot, match, facesGroup: oppGroup,
+      slotLocked: lockedSlotFor ? true : undefined,
+      opponent: oppCode ? { code: oppCode, name: TEAM_BY_CODE[oppCode]?.name ?? oppCode } : undefined,
+      city: match ? cityByMatch.get(match) : undefined,
+      opponents: m?.opponents,
     };
   });
 }
