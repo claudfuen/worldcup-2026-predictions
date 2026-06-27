@@ -91,6 +91,15 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   // Current win probability for an in-progress match, conditioned on the live score + minute AND the in-game
   // state (red cards, shot/possession dominance). Instant/analytic; null if the minute is unknown.
   const liveProbs = liveMatchProbs(m, ratings, summary);
+  // The factual "what happened" block (goals/cards + stats). Placement is state-aware: for a COMPLETED match
+  // it LEADS (the result is the story; the pre-match read is retrospective), while for a LIVE match the
+  // dynamic win-probability leads and this follows.
+  const matchFacts = (
+    <>
+      {m.home && m.away && <MatchTimeline events={summary.events} homeCode={m.home} awayCode={m.away} />}
+      <MatchStats stats={summary.stats} />
+    </>
+  );
   // Is this one of the current watch-plan picks? (same scorer as the homepage "matches to watch")
   const heat = computeWatchability(allMatches, data.teams, data.groups).byMatch.get(m.match);
   // Both teams' path-to-the-final odds, for the tournament-outlook comparison (only when both are known).
@@ -277,6 +286,9 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
         <p className="text-muted-foreground mt-8 max-w-3xl text-sm text-pretty">{predictionProse(t, m, homePred?.rating, awayPred?.rating)}</p>
       )}
 
+      {/* Completed match: the goals/cards + stats lead, then the model's retrospective pre-match read. */}
+      {state === "final" && matchFacts}
+
       {/* State-specific body */}
       {state === "final" && (
         <section className="mt-8">
@@ -332,9 +344,8 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
         </section>
       )}
 
-      {/* What actually happened: goals/cards timeline + head-to-head stats (live + completed matches). */}
-      {m.home && m.away && <MatchTimeline events={summary.events} homeCode={m.home} awayCode={m.away} />}
-      <MatchStats stats={summary.stats} />
+      {/* Live match: the dynamic win-probability led; now the goals/cards + stats detail follows. */}
+      {state === "live" && matchFacts}
 
       {homePred && awayPred && <MatchOutlook round={m.round} home={homePred} away={awayPred} />}
 
