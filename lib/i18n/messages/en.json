@@ -349,6 +349,8 @@
     "assist": "assist: {name}",
     "subOff": "off: {name}",
     "subLabel": "Substitution",
+    "showSubs": "Show subs",
+    "hideSubs": "Hide subs",
     "penaltyTag": "pen.",
     "ownGoalTag": "o.g.",
     "yellowCardLabel": "Yellow card",
