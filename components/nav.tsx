@@ -24,28 +24,31 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
 
   return (
     <header className="border-border/70 bg-background/80 sticky top-0 z-50 border-b backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center gap-1 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="mr-3 flex shrink-0 items-center gap-2 py-3">
-          <span className="text-base">🏆</span>
-          <span className="font-display hidden text-sm font-semibold tracking-tight sm:inline">World Cup 2026 Predictions</span>
+      <div className="mx-auto flex h-14 max-w-6xl items-stretch gap-1 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="mr-4 flex shrink-0 items-center gap-2" aria-label="World Cup 2026 Predictions — home">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="text-primary" aria-hidden>
+            <path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" /><path d="M17 5h3v1a4 4 0 0 1-4 4" /><path d="M7 5H4v1a4 4 0 0 0 4 4" />
+          </svg>
+          <span className="font-display hidden text-sm font-semibold tracking-tight sm:inline">World Cup 2026</span>
         </Link>
-        <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto [mask-image:linear-gradient(to_right,#000_86%,transparent)] sm:[mask-image:none]">
+        <nav className="flex flex-1 items-stretch gap-1 overflow-x-auto [mask-image:linear-gradient(to_right,#000_86%,transparent)] sm:[mask-image:none]">
           {LINKS.map((l) => {
             const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`rounded-full px-3 py-1.5 text-sm whitespace-nowrap ${
-                  active ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                className={`relative flex items-center px-3 text-sm whitespace-nowrap ${
+                  active ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {l.label}
+                {active && <span className="bg-primary absolute inset-x-3 bottom-0 h-0.5 rounded-full" />}
               </Link>
             );
           })}
         </nav>
-        <div className="ml-2 shrink-0">
+        <div className="ml-2 flex shrink-0 items-center">
           <Freshness updatedAt={updatedAt} />
         </div>
       </div>
