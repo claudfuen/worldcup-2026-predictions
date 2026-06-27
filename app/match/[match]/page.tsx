@@ -275,7 +275,13 @@ function predictionProse(m: MatchInfo, homeRating?: number, awayRating?: number)
       ? ` That edge comes from the ratings: ${gap >= 0 ? m.homeName : m.awayName} are about ${abs} Elo points stronger.`
       : ` The two sides are within ${abs} Elo points, so the model sees a tight game.`;
   }
-  return `The model makes ${favName} the ${favPct}% favorite to beat ${dogName}, with a ${cap(draw)}% chance of a draw, across 20,000 simulations.${scoreStr}${whyStr}`;
+  return `The model makes ${favName} the ${favPct}% favorite to beat ${dogName}, with ${artForPct(cap(draw))} ${cap(draw)}% chance of a draw, across 20,000 simulations.${scoreStr}${whyStr}`;
+}
+
+// "a" vs "an" before a spoken percentage: 8, 11, 18 and 80-89 ("eight", "eleven", "eighteen", "eighty…")
+// begin with a vowel sound, so they take "an"; every other 1-99 value takes "a".
+function artForPct(n: number): string {
+  return n === 8 || n === 11 || n === 18 || (n >= 80 && n <= 89) ? "an" : "a";
 }
 
 function prettySlot(s?: string): string {
