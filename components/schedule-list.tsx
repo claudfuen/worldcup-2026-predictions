@@ -54,31 +54,9 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`rounded-full px-3 py-1.5 text-sm ${
-              filter === f.key ? "bg-primary text-primary-foreground font-medium" : "bg-muted/50 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-      <div className="mb-5 flex flex-wrap gap-1.5">
-        {TIME_FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setTime(f.key)}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              time === f.key ? "border-primary/60 text-primary bg-primary/10 font-medium" : "border-border text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <Segmented options={FILTERS} value={filter} onChange={setFilter} />
+        <Segmented options={TIME_FILTERS} value={time} onChange={setTime} />
       </div>
       {days.length === 0 && <p className="text-muted-foreground text-sm">No matches for this filter.</p>}
       <div className="space-y-6">
@@ -144,6 +122,27 @@ function TeamRow({ code, label, score, win, projected, prob }: { code: string | 
         {projected && prob != null && <span className="text-muted-2 ml-1 font-mono text-[10px]">{pct(Math.min(prob, 0.99))}</span>}
       </span>
       {score != null && <span className={`shrink-0 font-mono text-sm tabular-nums ${win ? "font-bold" : "text-muted-foreground"}`}>{score}</span>}
+    </div>
+  );
+}
+
+// A compact segmented control (a single track with a raised active segment) — reads more intentional than
+// a row of separate pills.
+function Segmented({ options, value, onChange }: { options: { key: string; label: string }[]; value: string; onChange: (k: string) => void }) {
+  return (
+    <div className="border-border bg-muted/30 inline-flex shrink-0 rounded-lg border p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.key}
+          onClick={() => onChange(o.key)}
+          aria-pressed={value === o.key}
+          className={`rounded-[0.3rem] px-3 py-1 text-sm whitespace-nowrap ${
+            value === o.key ? "bg-surface-raised text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }
