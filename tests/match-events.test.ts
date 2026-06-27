@@ -78,4 +78,26 @@ describe("liveEloAdjustment", () => {
     expect(earlyLowData).toBeGreaterThan(0);
     expect(lateHighData).toBeGreaterThan(earlyLowData);
   });
+
+  it("multiple red cards have diminishing returns (2nd card costs less than the 1st)", () => {
+    const one = Math.abs(liveEloAdjustment({ redHome: 1 }, 0.6));
+    const two = Math.abs(liveEloAdjustment({ redHome: 2 }, 0.6));
+    expect(two).toBeGreaterThan(one); // still worse
+    expect(two).toBeLessThan(2 * one); // but not twice as bad
+  });
+
+  it("dominance is kept orthogonal to the scoreline: damped when it agrees with the lead, kept when behind", () => {
+    const dom = { sotHome: 6, sotAway: 1, shotsHome: 16, shotsAway: 4 };
+    const level = liveEloAdjustment({ ...dom, goalDiff: 0 }, 0.5);
+    const leading = liveEloAdjustment({ ...dom, goalDiff: 1 }, 0.5); // home dominating AND ahead
+    const trailing = liveEloAdjustment({ ...dom, goalDiff: -1 }, 0.5); // home dominating but behind
+    expect(leading).toBeLessThan(level); // already priced into the lead -> damped
+    expect(trailing).toBeGreaterThan(leading); // behind + dominating is genuine new info
+    expect(trailing).toBeCloseTo(level, 0); // (and ~= the level case)
+  });
+
+  it("the joint nudge is bounded even when everything stacks", () => {
+    const huge = liveEloAdjustment({ redAway: 3, sotHome: 25, sotAway: 0, shotsHome: 40, shotsAway: 1, possHome: 80, possAway: 20 }, 0.9);
+    expect(Math.abs(huge)).toBeLessThanOrEqual(350);
+  });
 });

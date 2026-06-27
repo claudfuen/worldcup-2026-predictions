@@ -74,6 +74,7 @@ export async function withLiveAdjustments(live: LiveMatch[]): Promise<LiveMatch[
         possHome: s.stats?.home.possession ?? undefined, possAway: s.stats?.away.possession ?? undefined,
         shotsHome: s.stats?.home.shots ?? undefined, shotsAway: s.stats?.away.shots ?? undefined,
         sotHome: s.stats?.home.shotsOnTarget ?? undefined, sotAway: s.stats?.away.shotsOnTarget ?? undefined,
+        goalDiff: l.homeGoals - l.awayGoals,
       },
       fracRemaining(l.minute!),
     );
@@ -122,6 +123,7 @@ export function liveMatchProbs(m: MatchInfo, ratings: Ratings, summary?: MatchSu
         possHome: summary.stats?.home.possession ?? undefined, possAway: summary.stats?.away.possession ?? undefined,
         shotsHome: summary.stats?.home.shots ?? undefined, shotsAway: summary.stats?.away.shots ?? undefined,
         sotHome: summary.stats?.home.shotsOnTarget ?? undefined, sotAway: summary.stats?.away.shotsOnTarget ?? undefined,
+        goalDiff: m.homeScore - m.awayScore,
       },
       frac,
     );
