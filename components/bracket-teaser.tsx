@@ -18,20 +18,23 @@ export function BracketTeaser({ matches, teams, className = "" }: { matches: Mat
   const setCount = r32.filter((m) => m.defined).length;
 
   return (
-    <section className={className}>
-      <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Projected final</h2>
-      <Link href="/bracket" className="group border-border bg-card hover:border-primary/50 hover:bg-surface-raised block rounded-2xl border p-4 transition-colors">
-        <div className="flex items-center gap-3">
-          <FinalSide code={homeCode} name={homeName} reach={reachOf.get(homeCode ?? "")} />
-          <span className="text-muted-2 shrink-0 text-xs font-medium">vs</span>
-          <FinalSide code={awayCode} name={awayName} reach={reachOf.get(awayCode ?? "")} align="right" />
-          <span className="text-muted-2 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden>→</span>
-        </div>
-        <div className="border-border/50 text-muted-2 mt-3 border-t pt-2.5 text-xs">
-          {setCount} of {r32.length} Round-of-32 ties confirmed · See the full bracket
-        </div>
-      </Link>
-    </section>
+    <Link
+      href="/bracket"
+      className={`group border-border bg-card hover:border-primary/50 hover:bg-surface-raised flex flex-col rounded-2xl border p-4 transition-colors ${className}`}
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-muted-foreground font-mono text-xs font-semibold tracking-wide uppercase">Projected final</h2>
+        <span className="text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden>→</span>
+      </div>
+      <div className="flex flex-1 items-center gap-3">
+        <FinalSide code={homeCode} name={homeName} reach={reachOf.get(homeCode ?? "")} />
+        <span className="text-muted-2 shrink-0 text-xs font-medium">vs</span>
+        <FinalSide code={awayCode} name={awayName} reach={reachOf.get(awayCode ?? "")} align="right" />
+      </div>
+      <div className="border-border/50 text-muted-2 mt-3 border-t pt-2.5 text-xs">
+        {setCount} of {r32.length} Round-of-32 ties confirmed · full bracket
+      </div>
+    </Link>
   );
 }
 
