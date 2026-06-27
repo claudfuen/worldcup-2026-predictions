@@ -10,6 +10,7 @@
     "groups": "Groups",
     "bracket": "Bracket",
     "schedule": "Schedule",
+    "calendar": "Calendar",
     "method": "Method",
     "addToHome": "Add to home screen",
     "openMenu": "Open menu",
@@ -578,5 +579,14 @@
     "GHA": "Ghana",
     "PAN": "Panama",
     "CRO": "Croatia"
+  },
+  "calendar": {
+    "eyebrow": "Full tournament calendar",
+    "heading": "World Cup 2026 calendar",
+    "lede": "Every match across June and July 2026 — past results and upcoming fixtures with the model's pick, day by day.",
+    "metaTitle": "World Cup 2026 Calendar — Full Match Schedule & Results by Date",
+    "metaDesc": "The complete 2026 FIFA World Cup calendar: all 104 matches across June and July with live results and model predictions, organized by date.",
+    "today": "Today",
+    "empty": "No matches scheduled."
   }
 }

@@ -21,6 +21,7 @@ const ROUTES = [
   { key: "nav.groups", href: "/groups" },
   { key: "nav.bracket", href: "/bracket" },
   { key: "nav.schedule", href: "/schedule" },
+  { key: "nav.calendar", href: "/calendar" },
   { key: "nav.method", href: "/methodology" },
 ] as const;
 

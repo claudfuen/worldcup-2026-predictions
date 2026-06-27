@@ -42,6 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/bracket", changeFrequency: "hourly", priority: 0.9 },
     { path: "/groups", changeFrequency: "hourly", priority: 0.9 },
     { path: "/schedule", changeFrequency: "hourly", priority: 0.8 },
+    { path: "/calendar", changeFrequency: "hourly", priority: 0.8 },
     { path: "/methodology", changeFrequency: "weekly", priority: 0.5 },
     ...TEAMS.map((t) => ({ path: `/team/${teamSlug(t.name)}`, changeFrequency: "daily" as Freq, priority: 0.7 })),
     ...GROUPS.map((g) => ({ path: `/group/${g.toLowerCase()}`, changeFrequency: "daily" as Freq, priority: 0.7 })),

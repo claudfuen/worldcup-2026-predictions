@@ -10,6 +10,7 @@
     "groups": "Grup",
     "bracket": "Bagan",
     "schedule": "Jadwal",
+    "calendar": "Kalender",
     "method": "Metode",
     "addToHome": "Tambahkan ke layar utama",
     "openMenu": "Buka menu",
@@ -578,5 +579,14 @@
     "GHA": "Ghana",
     "PAN": "Panama",
     "CRO": "Kroasia"
+  },
+  "calendar": {
+    "eyebrow": "Kalender lengkap turnamen",
+    "heading": "Kalender Piala Dunia 2026",
+    "metaTitle": "Kalender Piala Dunia 2026 — Jadwal & Hasil Pertandingan Lengkap per Tanggal",
+    "metaDesc": "Kalender lengkap Piala Dunia FIFA 2026: seluruh 104 pertandingan sepanjang Juni dan Juli dengan hasil langsung dan prediksi model, disusun per tanggal.",
+    "lede": "Setiap pertandingan sepanjang Juni dan Juli 2026 — hasil yang telah berlalu dan laga mendatang lengkap dengan pilihan model, hari demi hari.",
+    "today": "Hari ini",
+    "empty": "Tidak ada pertandingan terjadwal."
   }
 }

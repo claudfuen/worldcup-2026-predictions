@@ -10,6 +10,7 @@
     "groups": "Grupos",
     "bracket": "Cuadro",
     "schedule": "Calendario",
+    "calendar": "Agenda",
     "method": "Método",
     "addToHome": "Añadir a la pantalla de inicio",
     "openMenu": "Abrir menú",
@@ -578,5 +579,14 @@
     "GHA": "Ghana",
     "PAN": "Panamá",
     "CRO": "Croacia"
+  },
+  "calendar": {
+    "eyebrow": "Calendario completo del torneo",
+    "heading": "Agenda del Mundial 2026",
+    "metaTitle": "Agenda del Mundial 2026 — Calendario completo de partidos y resultados por fecha",
+    "metaDesc": "El calendario completo del Mundial 2026: los 104 partidos de junio y julio con resultados en directo y predicciones del modelo, organizados por fecha.",
+    "lede": "Todos los partidos de junio y julio de 2026 — resultados pasados y partidos por venir con el pronóstico del modelo, día a día.",
+    "today": "Hoy",
+    "empty": "No hay partidos programados."
   }
 }

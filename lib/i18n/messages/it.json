@@ -10,6 +10,7 @@
     "groups": "Gironi",
     "bracket": "Tabellone",
     "schedule": "Calendario",
+    "calendar": "Agenda",
     "method": "Metodo",
     "addToHome": "Aggiungi alla schermata Home",
     "openMenu": "Apri menu",
@@ -578,5 +579,14 @@
     "GHA": "Ghana",
     "PAN": "Panama",
     "CRO": "Croazia"
+  },
+  "calendar": {
+    "eyebrow": "Calendario completo del torneo",
+    "heading": "Agenda del Mondiale 2026",
+    "metaTitle": "Agenda del Mondiale 2026 — Calendario completo delle partite e risultati per data",
+    "metaDesc": "Il calendario completo del Mondiale FIFA 2026: tutte le 104 partite tra giugno e luglio con risultati live e previsioni del modello, organizzate per data.",
+    "lede": "Tutte le partite tra giugno e luglio 2026 — risultati passati e prossime partite con il pronostico del modello, giorno per giorno.",
+    "today": "Oggi",
+    "empty": "Nessuna partita in programma."
   }
 }

@@ -10,6 +10,7 @@
     "groups": "Groupes",
     "bracket": "Tableau final",
     "schedule": "Calendrier",
+    "calendar": "Programme",
     "method": "Méthode",
     "addToHome": "Ajouter à l'écran d'accueil",
     "openMenu": "Ouvrir le menu",
@@ -578,5 +579,14 @@
     "GHA": "Ghana",
     "PAN": "Panama",
     "CRO": "Croatie"
+  },
+  "calendar": {
+    "eyebrow": "Programme complet du tournoi",
+    "heading": "Programme de la Coupe du monde 2026",
+    "metaTitle": "Programme de la Coupe du monde 2026 — Calendrier complet des matchs et résultats par date",
+    "metaDesc": "Le programme complet de la Coupe du monde 2026 : les 104 matchs de juin et juillet avec les résultats en direct et les pronostics du modèle, classés par date.",
+    "lede": "Tous les matchs de juin et juillet 2026 — résultats passés et rencontres à venir avec le favori du modèle, jour après jour.",
+    "today": "Aujourd'hui",
+    "empty": "Aucun match programmé."
   }
 }

@@ -10,6 +10,7 @@
     "groups": "Gruppen",
     "bracket": "Turnierbaum",
     "schedule": "Spielplan",
+    "calendar": "Kalender",
     "method": "Methode",
     "addToHome": "Zum Startbildschirm hinzufügen",
     "openMenu": "Menü öffnen",
@@ -578,5 +579,14 @@
     "GHA": "Ghana",
     "PAN": "Panama",
     "CRO": "Kroatien"
+  },
+  "calendar": {
+    "eyebrow": "Kompletter Turnierkalender",
+    "heading": "WM-2026-Spielkalender",
+    "lede": "Alle Spiele im Juni und Juli 2026 — vergangene Ergebnisse und anstehende Partien mit dem Modell-Favoriten, Tag für Tag.",
+    "metaTitle": "WM-2026-Spielkalender — Kompletter Spielplan & Ergebnisse nach Datum",
+    "metaDesc": "Der komplette Spielkalender der FIFA Fußball-Weltmeisterschaft 2026: alle 104 Spiele im Juni und Juli mit Live-Ergebnissen und Modell-Prognosen, nach Datum geordnet.",
+    "today": "Heute",
+    "empty": "Keine Spiele angesetzt."
   }
 }

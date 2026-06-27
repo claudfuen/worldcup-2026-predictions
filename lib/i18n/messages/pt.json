@@ -10,6 +10,7 @@
     "groups": "Grupos",
     "bracket": "Chaveamento",
     "schedule": "Tabela",
+    "calendar": "Calendário",
     "method": "Método",
     "addToHome": "Adicionar à tela inicial",
     "openMenu": "Abrir menu",
@@ -578,5 +579,14 @@
     "GHA": "Gana",
     "PAN": "Panamá",
     "CRO": "Croácia"
+  },
+  "calendar": {
+    "eyebrow": "Calendário completo do torneio",
+    "heading": "Calendário da Copa do Mundo 2026",
+    "metaTitle": "Calendário da Copa do Mundo 2026 — Tabela Completa de Jogos e Resultados por Data",
+    "metaDesc": "O calendário completo da Copa do Mundo FIFA 2026: todos os 104 jogos ao longo de junho e julho, com resultados ao vivo e previsões do modelo, organizados por data.",
+    "lede": "Todos os jogos ao longo de junho e julho de 2026 — resultados passados e próximos confrontos com o palpite do modelo, dia a dia.",
+    "today": "Hoje",
+    "empty": "Nenhum jogo agendado."
   }
 }
