@@ -190,6 +190,7 @@ export function liveThirdPlaceRace(
   const cityByMatch = new Map(SCHEDULE.map((s) => [s.match, s.city]));
   const winnerByGroup: Record<string, string> = {};
   for (const g of groups) { const w = g.teams.find((t) => t.status === "won_group"); if (w) winnerByGroup[g.group] = w.code; }
+  const groupDecided = new Map(groups.map((gg) => [gg.group, gg.decided]));
 
   return ranked.map((t, i) => {
     const m = meta.get(t.row.code);
@@ -214,6 +215,7 @@ export function liveThirdPlaceRace(
       opponent: oppCode ? { code: oppCode, name: TEAM_BY_CODE[oppCode]?.name ?? oppCode } : undefined,
       city: match ? cityByMatch.get(match) : undefined,
       opponents: m?.opponents,
+      decided: groupDecided.get(t.group) ?? false,
     };
   });
 }

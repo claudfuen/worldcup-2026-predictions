@@ -84,6 +84,7 @@ export interface ThirdPlaceEntry {
   opponent?: { code: string; name: string }; // the certain R32 opponent — set only when slot is locked AND that group's winner is clinched (i.e. the whole match is decided)
   city?: string; // host city of the R32 match (when a slot is known)
   opponents?: OpponentProb[]; // top-3 likely R32 opponents, probability conditional on this team advancing
+  decided: boolean; // whether this team's group is fully played (so its 3rd-place line is final) — drives the survival math in the UI
 }
 
 export interface PredictionsPayload {
@@ -281,6 +282,7 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
   const lockedThird = lockedThirdSlots(guaranteedThirdGroups);
   const winnerByGroup: Record<string, string> = {};
   for (const g of groups) { const w = g.teams.find((t) => t.status === "won_group"); if (w) winnerByGroup[g.group] = w.code; }
+  const groupDecided = new Map(groups.map((gg) => [gg.group, gg.decided]));
   const cityByMatch = new Map(matches.map((m) => [m.match, m.city]));
   const thirdPlaceRace: ThirdPlaceEntry[] = rankedThirds.map((t, i) => {
     const code = t.row.code;
@@ -303,6 +305,7 @@ export async function computePredictions(iterations = 20000, seed = 20260611): P
       opponent: oppCode ? { code: oppCode, name: TEAM_BY_CODE[oppCode].name } : undefined,
       city: match ? cityByMatch.get(match) : undefined,
       opponents: opp.length ? opp : undefined,
+      decided: groupDecided.get(t.group) ?? false,
     };
   });
 

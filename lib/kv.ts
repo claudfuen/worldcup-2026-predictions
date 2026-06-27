@@ -36,7 +36,8 @@ export const KV_CONFIGURED = Boolean(URL && TOKEN);
 // v7: teams gained ratingExact (full-precision Elo) so render-time live finalization reproduces the cron
 //     standings/third-place tiebreaks exactly; live standings now reflect in-progress goal difference.
 // v8: thirdPlaceRace entries gained slotLocked/opponent/city + top-3 likely opponents for the hover detail.
-export const PRED_KEY = "predictions:v8";
+// v9: thirdPlaceRace entries gained `decided` (group fully played) so the hover can compute the survival math.
+export const PRED_KEY = "predictions:v9";
 
 // Start-of-day snapshot of title/advance odds, for "moved since yesterday" deltas. Rolled once per ET day.
 export const BASELINE_KEY = "predictions:baseline:v1";

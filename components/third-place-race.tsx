@@ -8,9 +8,29 @@ import { forecastPct } from "@/lib/format";
 import { ProbMeter } from "@/components/prob-meter";
 import { useHoverTip, HoverTipPanel } from "@/components/hover-tip";
 
+const ordinal = (n: number) => {
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+};
+
+// What still has to happen for a not-yet-settled third, computed from the full 12-row race. Six-or-fewer
+// teams are mathematically locked above it (the DECIDED groups' thirds that outrank it); every still-playing
+// group is a swing that could finish above OR below it. It reaches the top 8 iff at most 7 thirds end above
+// it — i.e. at least `needBelow` of the swing groups must finish with a weaker 3rd. The likeliest of those
+// swings (by advance %) are the hardest to clear.
+function survival(e: ThirdPlaceEntry, all: ThirdPlaceEntry[]) {
+  const above = (x: ThirdPlaceEntry) => (x.pts !== e.pts ? x.pts > e.pts : x.gd !== e.gd ? x.gd > e.gd : x.gf > e.gf);
+  const others = all.filter((x) => x.code !== e.code);
+  const lockedAbove = others.filter((x) => x.decided && above(x)).length;
+  const swing = others.filter((x) => !x.decided);
+  const needBelow = swing.length - (7 - lockedAbove);
+  const dangers = [...swing].sort((a, b) => b.advanceProb - a.advanceProb).slice(0, 2).map((x) => `${x.name} ${forecastPct(x.advanceProb)}`);
+  return { needBelow, swingCount: swing.length, letters: swing.map((x) => x.group).sort().join("/"), dangers };
+}
+
 // One row's hover detail: what (if anything) would still change the team's Round-of-32 fate, plus the
 // model's top-3 likely opponents (probability conditional on the team actually advancing).
-function RowTip({ e }: { e: ThirdPlaceEntry }) {
+function RowTip({ e, all }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[] }) {
   const through = e.status === "won_group" || e.status === "second" || e.status === "advanced";
   const matchLine = e.match ? `Match ${e.match}${e.city ? ` · ${e.city}` : ""}` : undefined;
 
@@ -23,10 +43,16 @@ function RowTip({ e }: { e: ThirdPlaceEntry }) {
     headline = `Through. Plays ${matchLine ?? "the R32"} vs the Group ${e.facesGroup} winner — decided once Group ${e.facesGroup} finishes.`;
   } else if (through) {
     headline = "Through to the R32 — but the bracket slot isn't fixed yet: it depends on which other groups' thirds qualify.";
-  } else if (e.advancing) {
-    headline = `Projected to go through (${forecastPct(e.advanceProb)}) — could be overtaken if an undecided group's third gains points.`;
   } else {
-    headline = `Below the cut for now — ${forecastPct(e.advanceProb)} to sneak in as a top-8 third.`;
+    const s = survival(e, all);
+    const frac = s.needBelow >= s.swingCount ? `all ${s.swingCount}` : `≥${s.needBelow} of the ${s.swingCount}`;
+    if (s.needBelow <= 0) {
+      headline = `${ordinal(e.rank)} now (${forecastPct(e.advanceProb)}) — but mathematically safe: no run of remaining results can knock it out.`;
+    } else if (e.advancing) {
+      headline = `Holding ${ordinal(e.rank)} (${forecastPct(e.advanceProb)}). Stays in unless overtaken — needs ${frac} still-playing groups (${s.letters}) to finish with a weaker 3rd.`;
+    } else {
+      headline = `${ordinal(e.rank)} now, below the cut (${forecastPct(e.advanceProb)}). Climbs in only if ${frac} still-playing groups (${s.letters}) finish with a 3rd weaker than this one${s.dangers.length ? ` — toughest to clear: ${s.dangers.join(", ")}` : ""}.`;
+    }
   }
 
   // Likely opponents are the group winners this third would face. Redundant when the opponent is already
@@ -56,7 +82,7 @@ function RowTip({ e }: { e: ThirdPlaceEntry }) {
   );
 }
 
-function Row({ e }: { e: ThirdPlaceEntry }) {
+function Row({ e, all }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[] }) {
   const tip = useHoverTip();
   const elim = e.status === "eliminated";
   const through = e.status === "won_group" || e.status === "second" || e.status === "advanced";
@@ -91,7 +117,7 @@ function Row({ e }: { e: ThirdPlaceEntry }) {
           <ProbMeter p={e.advanceProb} className={`justify-end ${e.advancing ? "text-contention" : "text-muted-foreground"}`} />
         )}
       </td>
-      {tip.open && <HoverTipPanel pos={tip.pos}><RowTip e={e} /></HoverTipPanel>}
+      {tip.open && <HoverTipPanel pos={tip.pos}><RowTip e={e} all={all} /></HoverTipPanel>}
     </tr>
   );
 }
@@ -121,7 +147,7 @@ export function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
             </tr>
           </thead>
           <tbody>
-            {entries.map((e) => <Row key={e.code} e={e} />)}
+            {entries.map((e) => <Row key={e.code} e={e} all={entries} />)}
           </tbody>
         </table>
       </div>
