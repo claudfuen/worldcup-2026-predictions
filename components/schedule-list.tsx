@@ -16,7 +16,7 @@ const FILTERS = [
   { key: "KO", label: "Knockout" },
 ];
 const TIME_FILTERS = [
-  { key: "upcoming", label: "Today & later" },
+  { key: "upcoming", label: "Recent & upcoming" },
   { key: "past", label: "Past" },
   { key: "all", label: "All dates" },
 ];
@@ -31,13 +31,16 @@ export function ScheduleList({ matches }: { matches: MatchInfo[] }) {
   const [nowIso, setNowIso] = useState<string | null>(null);
   useEffect(() => setNowIso(new Date().toISOString()), []);
   const today = nowIso ? fmtDayKey(nowIso, zone) : null;
+  // A one-day look-back so just-finished and yesterday's matches don't vanish the moment the day rolls over
+  // (you can still see yesterday's scores when you check in the next morning).
+  const yesterday = nowIso ? fmtDayKey(new Date(Date.parse(nowIso) - 86400000).toISOString(), zone) : null;
 
   const shown = matches.filter((m) => {
     if (filter === "GROUP" && m.round !== "GROUP") return false;
     if (filter === "KO" && m.round === "GROUP") return false;
     if (today != null) {
       const day = fmtDayKey(m.utc, zone);
-      if (time === "upcoming" && day < today) return false;
+      if (time === "upcoming" && yesterday != null && day < yesterday) return false;
       if (time === "past" && day >= today) return false;
     }
     return true;

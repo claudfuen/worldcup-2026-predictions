@@ -16,26 +16,28 @@ export function TodaySection({ matches }: { matches: MatchInfo[] }) {
   // server and swap it after mount. Render nothing until the zone resolves, then the first painted set
   // is already correct (and immune to the near-midnight hydration mismatch).
   if (!ready) return null;
-  const today = fmtDayKey(new Date().toISOString(), zone);
-  const todayMatches = matches
-    .filter((m) => fmtDayKey(m.utc, zone) === today)
+  const nowIso = new Date().toISOString();
+  const today = fmtDayKey(nowIso, zone);
+  // A one-day look-back so yesterday's results (and just-finished late games) are still here when you check
+  // in — they don't disappear the instant the local day rolls over.
+  const yesterday = fmtDayKey(new Date(Date.parse(nowIso) - 86400000).toISOString(), zone);
+  const recent = matches
+    .filter((m) => { const d = fmtDayKey(m.utc, zone); return d === today || d === yesterday; })
     .sort((a, b) => a.utc.localeCompare(b.utc));
-  if (todayMatches.length === 0) return null;
-  const label = new Date().toLocaleDateString(zone?.locale || "en-US", {
-    timeZone: zone?.tz || "America/New_York", weekday: "long", month: "short", day: "numeric",
-  });
+  if (recent.length === 0) return null;
   return (
     <section className="mt-8" suppressHydrationWarning>
-      <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Today · {label}</h2>
+      <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Latest &amp; today</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {todayMatches.map((m) => <TodayTile key={m.match} m={m} />)}
+        {recent.map((m) => <TodayTile key={m.match} m={m} today={today} />)}
       </div>
     </section>
   );
 }
 
-function TodayTile({ m }: { m: MatchInfo }) {
+function TodayTile({ m, today }: { m: MatchInfo; today?: string }) {
   const { zone } = useViewerZone();
+  const isYesterday = !!today && fmtDayKey(m.utc, zone) !== today;
   const final = m.status === "final";
   const live = m.status === "live";
   const showScore = final || live;
@@ -46,7 +48,7 @@ function TodayTile({ m }: { m: MatchInfo }) {
   return (
     <Link href={`/match/${m.match}`} className={`bg-card hover:border-primary/50 hover:bg-surface-raised block rounded-2xl border p-4 transition-colors ${live ? "border-live/40" : "border-border"}`}>
       <div className="text-muted-foreground mb-2 flex items-center justify-between text-[11px]">
-        <span className="font-mono" suppressHydrationWarning>{fmtTime(m.utc, zone)}</span>
+        <span className="font-mono" suppressHydrationWarning>{isYesterday && <span className="text-muted-2">Yesterday · </span>}{fmtTime(m.utc, zone)}</span>
         <span>
           {live ? (
             <span className="inline-flex items-center gap-1 font-semibold text-live"><span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE {m.liveDetail}</span>
