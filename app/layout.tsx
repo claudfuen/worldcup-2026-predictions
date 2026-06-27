@@ -3,6 +3,7 @@ import { Space_Grotesk, Geist_Mono, Inter } from "next/font/google"
 import "./globals.css"
 import "flag-icons/css/flag-icons.min.css"
 import { Analytics } from "@vercel/analytics/next"
+import { GoogleAnalytics } from "@next/third-parties/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Nav } from "@/components/nav"
 import { ScoreTicker } from "@/components/score-ticker"
@@ -116,6 +117,7 @@ export default async function RootLayout({
         </ThemeProvider>
         <Analytics />
       </body>
+      <GoogleAnalytics gaId="G-8JXT39L2S9" />
     </html>
   )
 }
