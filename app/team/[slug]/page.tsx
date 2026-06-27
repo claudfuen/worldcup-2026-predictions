@@ -92,8 +92,8 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Groups", href: "/groups" }, { label: `Group ${team.group}`, href: `/group/${team.group.toLowerCase()}` }, { label: team.name }]} />
       <header className="mt-3 max-w-3xl">
         <div className="text-primary font-mono text-xs font-semibold tracking-wide uppercase">World Cup 2026 · <Link href={`/group/${team.group.toLowerCase()}`} className="hover:underline">Group {team.group}</Link></div>
-        <div className="mt-1.5 flex items-center gap-3">
-          <Flag code={team.code} size={40} />
+        <div className="mt-1.5 flex items-start gap-3">
+          <span className="shrink-0"><Flag code={team.code} size={40} /></span>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{team.name} at the World Cup 2026</h1>
         </div>
         {pred && (
@@ -199,7 +199,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
               const oppCode = m.home === team.code ? m.away : m.home;
               return (
                 <Link key={m.match} href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-4 py-2.5 transition-colors">
-                  <span className="text-muted-2 w-24 shrink-0 font-mono text-[11px]"><LocalTime utc={m.utc} mode="day" /></span>
+                  <span className="text-muted-2 w-14 shrink-0 font-mono text-[11px] sm:w-24"><LocalTime utc={m.utc} mode="day" /></span>
                   <span className="text-muted-foreground text-xs">vs</span>
                   <Flag code={oppCode} size={18} />
                   <span className="min-w-0 flex-1 truncate text-sm">{oppName}</span>

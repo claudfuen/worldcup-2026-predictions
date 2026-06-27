@@ -137,17 +137,17 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           {ROUND_NAME[m.round]}{m.group ? ` · Group ${m.group}` : ""} <span className="text-muted-2">· Match {m.match}</span>
         </div>
         {state === "undefined" ? (
-          <div className="flex items-start justify-center gap-5 sm:gap-12">
+          <div className="flex items-start justify-center gap-3 sm:gap-12">
             <HeroSlot m={m} side="home" />
             <span className="text-muted-2 flex size-11 shrink-0 items-center justify-center self-center rounded-full bg-background/40 font-mono text-[11px] font-semibold tracking-[0.12em] uppercase ring-1 ring-white/5 ring-inset dark:bg-black/15" aria-hidden>vs</span>
             <HeroSlot m={m} side="away" />
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-5 sm:gap-12">
+          <div className="flex items-center justify-center gap-3 sm:gap-12">
             <ScoreTeam m={m} side="home" />
             <div className="flex shrink-0 flex-col items-center gap-2.5 rounded-xl bg-background/40 px-4 py-3 ring-1 ring-white/5 ring-inset dark:bg-black/15">
               {state === "final" || state === "live" ? (
-                <span className="font-mono text-5xl font-semibold tracking-[-0.03em] tabular-nums sm:text-6xl">
+                <span className="font-mono text-4xl font-semibold tracking-[-0.03em] tabular-nums sm:text-6xl">
                   {m.homeScore}<span className="text-muted-2 mx-2 align-middle text-[0.7em] font-normal">–</span>{m.awayScore}
                 </span>
               ) : (
@@ -373,7 +373,7 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   // Divided KPI ribbon: a vertical hairline before every cell except the first of each row (2-up mobile,
   // 4-up desktop), so the facts read as one instrument cluster rather than four floating pairs.
   return (
-    <div className="border-border/60 min-w-0 [&:not(:nth-child(2n+1))]:border-l [&:not(:nth-child(2n+1))]:pl-6 sm:[&:not(:nth-child(4n+1))]:border-l sm:[&:not(:nth-child(4n+1))]:pl-6 sm:[&:nth-child(4n+1)]:border-l-0 sm:[&:nth-child(4n+1)]:pl-0">
+    <div className="border-border/60 min-w-0 [&:not(:nth-child(2n+1))]:border-l [&:not(:nth-child(2n+1))]:pl-4 sm:[&:not(:nth-child(4n+1))]:border-l sm:[&:not(:nth-child(4n+1))]:pl-6 sm:[&:nth-child(4n+1)]:border-l-0 sm:[&:nth-child(4n+1)]:pl-0">
       <div className="text-muted-2 mb-1.5 font-mono text-[11px] font-semibold tracking-[0.1em] uppercase">{label}</div>
       <div className="text-foreground/90 text-sm leading-snug">{value}</div>
     </div>
@@ -457,7 +457,7 @@ function HeroSlot({ m, side }: { m: MatchInfo; side: "home" | "away" }) {
           <div className="bg-primary h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: `${Math.round(Math.min(top.prob, 0.99) * 100)}%` }} />
         </div>
         <div className="mt-2.5">
-          <div className="text-primary font-mono text-3xl font-semibold tracking-[-0.02em] tabular-nums">{forecastPct(top.prob)}</div>
+          <div className="text-primary font-mono text-2xl font-semibold tracking-[-0.02em] tabular-nums sm:text-3xl">{forecastPct(top.prob)}</div>
           <div className="text-muted-2 mt-0.5 font-mono text-[11px] font-semibold tracking-[0.1em] uppercase">to reach this match</div>
         </div>
       </div>

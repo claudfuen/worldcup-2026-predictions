@@ -34,7 +34,7 @@ export function MastheadVerdict({ teams, iterations }: { teams: TeamPrediction[]
             <Link href={`/team/${teamSlug(c1.name)}`} className="decoration-primary/40 underline-offset-4 hover:underline">{c1.name}</Link>{" "}
             <span className="text-muted-foreground font-normal">to win it all.</span>
           </h1>
-          <div className="mt-3 flex items-center gap-2.5">
+          <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <Flag code={c1.code} size={22} />
             <span className="text-primary font-mono text-2xl font-semibold tabular-nums sm:text-3xl">{forecastPct(c1.title)}</span>
             <span className="text-muted-foreground text-sm">to lift the trophy</span>

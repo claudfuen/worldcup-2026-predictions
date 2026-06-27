@@ -40,7 +40,7 @@ function TickerItem({ m }: { m: MatchInfo }) {
   return (
     <Link
       href={`/match/${m.match}`}
-      className="hover:bg-muted/30 border-border/40 flex shrink-0 items-center gap-1.5 border-r px-4 py-1.5 text-xs whitespace-nowrap"
+      className="hover:bg-muted/30 border-border/40 flex min-h-[40px] shrink-0 items-center gap-1.5 border-r px-4 py-2.5 text-xs whitespace-nowrap sm:min-h-0 sm:py-1.5"
     >
       {live && <span className="bg-live size-1.5 shrink-0 animate-pulse rounded-full" aria-hidden />}
       <Flag code={m.home} size={13} />

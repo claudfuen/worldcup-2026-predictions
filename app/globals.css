@@ -153,11 +153,16 @@
     /* Refine Inter with OpenType features (single-story a, stylistic sets) per ui.sh */
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
     @apply font-sans;
+    /* Mobile safety net: a single over-wide element can never scroll the whole page sideways. `clip`
+       (not `hidden`) preserves position: sticky on the nav + score ticker. */
+    overflow-x: clip;
     }
   body {
     @apply bg-background text-foreground;
     font-size: 0.875rem;
     line-height: 1.6;
+    overflow-x: clip;
+    overflow-wrap: break-word;
     /* A single, very faint top sheen — enough to give wide margins depth, without a "glowy demo" wash. */
     background-image:
       radial-gradient(60rem 28rem at 50% -12rem, color-mix(in oklab, var(--primary) 4%, transparent), transparent 70%),

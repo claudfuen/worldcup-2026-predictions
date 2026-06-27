@@ -25,7 +25,7 @@ export function ExploreSection({
             <Link
               key={i}
               href={l.href}
-              className="border-border bg-card hover:border-primary/45 hover:bg-muted/40 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
+              className="border-border bg-card hover:border-primary/45 hover:bg-muted/40 inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-colors sm:py-1.5"
             >
               {l.code && <Flag code={l.code} size={16} />}
               <span className="font-medium">{l.label}</span>

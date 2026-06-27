@@ -33,7 +33,7 @@ export function MatchOutlook({ round, home, away }: { round: string; home: TeamP
         cols.map(([k]) => (
           <div
             key={k}
-            className={`bg-card flex items-center justify-center py-2.5 font-mono text-xs font-bold tabular-nums ${k === "title" ? "text-primary" : ""}`}
+            className={`bg-card flex items-center justify-center py-2.5 font-mono text-[11px] font-bold tabular-nums sm:text-xs ${k === "title" ? "text-primary" : ""}`}
             style={{ backgroundColor: heat(r[k]) }}
           >
             {forecastPct(r[k])}
@@ -48,7 +48,7 @@ export function MatchOutlook({ round, home, away }: { round: string; home: TeamP
     <section className="mt-8">
       <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-[0.1em] uppercase">Tournament outlook</h2>
       <div className="border-border overflow-x-auto rounded-2xl border dark:inset-ring dark:inset-ring-white/5">
-        <div className="grid min-w-[420px] gap-px" style={{ gridTemplateColumns: `minmax(120px,1.4fr) repeat(${cols.length}, 1fr)` }}>
+        <div className="grid min-w-[340px] gap-px sm:min-w-[420px]" style={{ gridTemplateColumns: `minmax(92px,1.3fr) repeat(${cols.length}, 1fr)` }}>
           <div className="bg-card px-3 py-2" />
           {cols.map(([k, label]) => (
             <div key={k} className={`bg-card text-muted-2 flex items-center justify-center py-2 text-[10px] font-semibold tracking-wide uppercase ${k === "title" ? "text-primary" : ""}`}>{label}</div>

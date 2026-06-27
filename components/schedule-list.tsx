@@ -59,7 +59,7 @@ export function ScheduleList({ matches, hotReasons = {} }: { matches: MatchInfo[
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-center gap-2">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <Segmented options={FILTERS} value={filter} onChange={setFilter} />
         <Segmented options={TIME_FILTERS} value={time} onChange={setTime} />
       </div>
@@ -92,19 +92,19 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
   // Full-row link as an overlay so we can also place a real ticket <a> in the row (anchors can't nest).
   // Interactive exceptions (the ticket link) sit above the overlay via relative z-10.
   return (
-    <div className="hover:bg-muted/30 relative flex items-center gap-3 px-3 py-2.5 transition-colors sm:px-4">
+    <div className="hover:bg-muted/30 relative flex items-center gap-2 px-3 py-2.5 transition-colors sm:gap-3 sm:px-4">
       <Link href={`/match/${m.match}`} className="absolute inset-0" aria-label={`${homeLabel} v ${awayLabel} — match details`} />
       <div className="text-muted-foreground w-16 shrink-0 text-xs">
         <div className="font-mono whitespace-nowrap" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</div>
-        <div className="text-[10px]">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>
+        <div className="text-[10px] leading-tight">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>
       </div>
       <div className="min-w-0 flex-1">
         <TeamRow code={homeCode} label={homeLabel} score={showScore ? m.homeScore : undefined} win={final && (m.homeScore ?? 0) > (m.awayScore ?? 0)} projected={!m.home} prob={!m.home ? m.projHome?.[0]?.prob : undefined} />
         <TeamRow code={awayCode} label={awayLabel} score={showScore ? m.awayScore : undefined} win={final && (m.awayScore ?? 0) > (m.homeScore ?? 0)} projected={!m.away} prob={!m.away ? m.projAway?.[0]?.prob : undefined} />
       </div>
-      <div className="ml-auto flex shrink-0 items-center gap-2.5">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2.5">
         {hotReason != null && <HotBadge reason={hotReason} />}
-        <div className="hidden max-w-44 text-right sm:block">
+        <div className="max-w-28 text-right sm:max-w-44">
           {live ? (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-live">
               <span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE {m.liveDetail}
@@ -118,9 +118,9 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
           ) : (
             <span className="text-muted-2 text-[11px]">projected</span>
           )}
-          <div className="text-muted-2 truncate text-[10px]">{m.venue}</div>
+          <div className="text-muted-2 hidden truncate text-[10px] sm:block">{m.venue}</div>
         </div>
-        {upcoming && <TicketLink matchNo={m.match} placement="schedule_row" variant="inline" className="relative" />}
+        {upcoming && <TicketLink matchNo={m.match} placement="schedule_row" variant="inline" className="relative -my-2 px-1 py-2" />}
       </div>
     </div>
   );
@@ -143,13 +143,13 @@ function TeamRow({ code, label, score, win, projected, prob }: { code: string | 
 // a row of separate pills.
 function Segmented({ options, value, onChange }: { options: { key: string; label: string }[]; value: string; onChange: (k: string) => void }) {
   return (
-    <div className="border-border bg-muted/30 inline-flex shrink-0 rounded-lg border p-0.5">
+    <div className="border-border bg-muted/30 flex w-full shrink-0 rounded-lg border p-0.5 sm:inline-flex sm:w-auto">
       {options.map((o) => (
         <button
           key={o.key}
           onClick={() => onChange(o.key)}
           aria-pressed={value === o.key}
-          className={`rounded-[0.3rem] px-3 py-1 text-sm whitespace-nowrap ${
+          className={`flex-1 rounded-[0.3rem] px-3 py-2 text-sm whitespace-nowrap sm:flex-none sm:py-1 ${
             value === o.key ? "bg-surface-raised text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
           }`}
         >

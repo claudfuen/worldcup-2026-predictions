@@ -124,7 +124,7 @@ function GroupCard({ group, teams, decided, prov }: { group: string; teams: Grou
             <th className="hidden w-7 px-1 text-center font-medium sm:table-cell" title="Goals against">GA</th>
             <th className="w-7 px-1 text-center font-medium" title="Goal difference">GD</th>
             <th className="w-7 px-1 text-center font-semibold" title="Points">Pts</th>
-            <th className="w-12 px-1 pr-3 text-right font-medium" title="Probability of advancing">Adv</th>
+            <th className="w-14 px-1 pr-3 text-right font-medium" title="Probability of advancing">Adv</th>
           </tr>
         </thead>
         <tbody>

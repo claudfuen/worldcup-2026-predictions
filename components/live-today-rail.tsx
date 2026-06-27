@@ -82,17 +82,17 @@ export function LiveTodayRail({ matches, hotReasons = {}, className = "" }: { ma
 function LiveRow({ m }: { m: MatchInfo }) {
   return (
     <Link href={`/match/${m.match}`} className="hover:bg-live/[0.08] bg-live/[0.04] block px-4 py-3.5">
-      <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
         <Flag code={m.home} size={20} />
         <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{m.homeName}</span>
         <span className="shrink-0 px-1.5 font-mono text-lg font-bold tabular-nums">{m.homeScore}<span className="text-muted-2">–</span>{m.awayScore}</span>
         <Flag code={m.away} size={20} />
         <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{m.awayName}</span>
-        <span className="text-live ml-auto inline-flex shrink-0 items-center gap-1.5 font-mono text-xs font-bold tracking-wide">
+        <span className="text-live ml-auto inline-flex shrink-0 basis-full items-center justify-end gap-1.5 font-mono text-xs font-bold tracking-wide sm:basis-auto">
           <span className="bg-live size-2 animate-pulse rounded-full" />{m.liveDetail ?? "LIVE"}
         </span>
       </div>
-      {m.favorite && <div className="text-muted-2 mt-1.5 text-[11px]">pre-match: {m.favorite.name} {pct(m.favorite.winProb)}</div>}
+      {m.favorite && <div className="text-muted-2 mt-1.5 truncate text-[11px]">pre-match: {m.favorite.name} {pct(m.favorite.winProb)}</div>}
     </Link>
   );
 }
@@ -105,8 +105,8 @@ function SlateRow({ m, zone, today, hotReason }: { m: MatchInfo; zone?: import("
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? "TBD";
   const isYesterday = final && fmtDayKey(m.utc, zone) !== today;
   return (
-    <Link href={`/match/${m.match}`} className="hover:bg-muted/20 flex items-center gap-3 px-4 py-2.5">
-      <span className="text-muted-2 w-16 shrink-0 font-mono text-[11px]" suppressHydrationWarning>
+    <Link href={`/match/${m.match}`} className="hover:bg-muted/20 flex items-center gap-2 px-4 py-2.5 sm:gap-3">
+      <span className="text-muted-2 w-12 shrink-0 font-mono text-[11px] sm:w-16" suppressHydrationWarning>
         {isYesterday ? "Last night" : fmtTime(m.utc, zone)}
       </span>
       <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">

@@ -20,7 +20,7 @@ export function ShareBar({ text, path }: { text: string; path: string }) {
     }
   };
 
-  const btn = "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border";
+  const btn = "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground inline-flex size-10 items-center justify-center rounded-md border sm:size-8";
 
   return (
     <div className="flex items-center gap-1.5">

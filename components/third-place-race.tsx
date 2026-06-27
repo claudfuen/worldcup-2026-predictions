@@ -95,12 +95,12 @@ function Row({ e, all }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[] }) {
     >
       <td className="text-muted-foreground py-2 pr-1 pl-3 font-mono text-[11px]">{e.rank}</td>
       <td className="py-2">
-        <div className="flex items-center gap-2">
-          <Link href={`/team/${teamSlug(e.name)}`} className="flex items-center gap-2 hover:underline">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link href={`/team/${teamSlug(e.name)}`} className="flex min-w-0 items-center gap-2 hover:underline">
             <Flag code={e.code} size={20} />
-            <span className={`text-[13px] font-medium ${elim ? "line-through" : ""}`}>{e.name}</span>
+            <span className={`min-w-0 flex-1 truncate text-[13px] font-medium ${elim ? "line-through" : ""}`}>{e.name}</span>
           </Link>
-          <Link href={`/group/${e.group.toLowerCase()}`} className="text-muted-foreground hover:text-primary text-[11px] hover:underline">Grp {e.group}</Link>
+          <Link href={`/group/${e.group.toLowerCase()}`} className="text-muted-foreground hover:text-primary shrink-0 text-[11px] hover:underline">Grp {e.group}</Link>
         </div>
       </td>
       <td className="text-muted-foreground px-1 text-center font-mono text-xs tabular-nums">{e.gf}</td>

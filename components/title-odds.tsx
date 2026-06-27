@@ -19,7 +19,7 @@ export function TitleOdds({ teams, className = "" }: { teams: TeamPrediction[]; 
             <span className="text-muted-2 w-3 text-right font-mono text-[11px] tabular-nums">{i + 1}</span>
             <Flag code={t.code} size={18} />
             <span className="min-w-0 flex-1 truncate text-sm font-medium">{t.name}</span>
-            <div className="bg-muted/40 relative hidden h-1.5 w-12 shrink-0 overflow-hidden rounded-full sm:block dark:inset-ring dark:inset-ring-white/5">
+            <div className="bg-muted/40 relative h-1.5 w-10 shrink-0 overflow-hidden rounded-full sm:w-12 dark:inset-ring dark:inset-ring-white/5">
               <div className="bg-primary/85 absolute inset-y-0 left-0 rounded-full" style={{ width: `${(t.title / maxTitle) * 100}%` }} />
             </div>
             <span className="flex shrink-0 items-center justify-end font-mono text-sm font-semibold tabular-nums">

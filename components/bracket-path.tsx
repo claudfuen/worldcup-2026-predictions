@@ -13,7 +13,7 @@ const ROUND: Record<string, string> = {
 // a feeder reads "Germany v Paraguay" rather than "TBD v TBD".
 function Side({ code, name, proj }: { code: string | null; name: string | null; proj?: boolean }) {
   if (!name) return <span className="text-muted-2">TBD</span>;
-  return <span className={`inline-flex items-center gap-1 ${proj ? "text-muted-foreground" : ""}`}><Flag code={code} size={14} />{name}</span>;
+  return <span className={`inline-flex min-w-0 items-center gap-1 ${proj ? "text-muted-foreground" : ""}`}><Flag code={code} size={14} /><span className="truncate">{name}</span></span>;
 }
 
 function Matchup({ m }: { m?: MatchInfo }) {
@@ -21,7 +21,7 @@ function Matchup({ m }: { m?: MatchInfo }) {
   const home = m.homeName ? { code: m.home, name: m.homeName } : m.projHome?.[0] ? { code: m.projHome[0].code, name: m.projHome[0].name, proj: true } : { code: null, name: null };
   const away = m.awayName ? { code: m.away, name: m.awayName } : m.projAway?.[0] ? { code: m.projAway[0].code, name: m.projAway[0].name, proj: true } : { code: null, name: null };
   return (
-    <span className="inline-flex items-center gap-1.5 truncate">
+    <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
       <Side code={home.code} name={home.name} proj={home.proj} /><span className="text-muted-2">v</span><Side code={away.code} name={away.name} proj={away.proj} />
     </span>
   );

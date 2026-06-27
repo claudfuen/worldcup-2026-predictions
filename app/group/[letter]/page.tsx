@@ -116,7 +116,7 @@ export default async function GroupPage({ params }: { params: Promise<{ letter: 
                 <th className="hidden w-7 px-1 text-center font-medium sm:table-cell" title="Goals against">GA</th>
                 <th className="w-7 px-1 text-center font-medium" title="Goal difference">GD</th>
                 <th className="w-7 px-1 text-center font-semibold" title="Points">Pts</th>
-                <th className="w-12 px-1 pr-3 text-right font-medium" title="Probability of advancing">Adv</th>
+                <th className="w-16 px-1 pr-3 text-right font-medium" title="Probability of advancing">Adv</th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +140,7 @@ export default async function GroupPage({ params }: { params: Promise<{ letter: 
                     <Cell v={t.ga} muted cls="hidden sm:table-cell" />
                     <Cell v={(t.gd >= 0 ? "+" : "") + t.gd} />
                     <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{t.pts}</td>
-                    <td className="px-1 pr-3 text-right">
+                    <td className="px-1 pr-3 text-right whitespace-nowrap">
                       {t.status === "live" ? (
                         <span className="inline-flex justify-end"><ProbMeter p={t.advance} width={18} className="text-muted-foreground text-[11px]" /></span>
                       ) : (
@@ -163,7 +163,7 @@ export default async function GroupPage({ params }: { params: Promise<{ letter: 
             const live = m.status === "live";
             return (
               <Link key={m.match} href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-4 py-2.5 transition-colors">
-                <span className="text-muted-2 w-24 shrink-0 font-mono text-[11px]"><LocalTime utc={m.utc} mode="day" /></span>
+                <span className="text-muted-2 w-14 shrink-0 font-mono text-[11px] sm:w-24"><LocalTime utc={m.utc} mode="day" /></span>
                 <Flag code={m.home} size={16} />
                 <span className="min-w-0 flex-1 truncate text-sm">{m.homeName} <span className="text-muted-foreground">v</span> {m.awayName}</span>
                 {hotByMatch.get(m.match)?.hot && <HotBadge className="shrink-0" />}
