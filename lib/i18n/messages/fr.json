@@ -587,6 +587,7 @@
     "metaDesc": "Le programme complet de la Coupe du monde 2026 : les 104 matchs de juin et juillet avec les résultats en direct et les pronostics du modèle, classés par date.",
     "lede": "Tous les matchs de juin et juillet 2026 — résultats passés et rencontres à venir avec le favori du modèle, jour après jour.",
     "today": "Aujourd'hui",
-    "empty": "Aucun match programmé."
+    "empty": "Aucun match programmé.",
+    "showEarlier": "Voir les précédents"
   }
 }

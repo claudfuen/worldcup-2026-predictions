@@ -587,6 +587,7 @@
     "metaTitle": "World Cup 2026 Calendar — Full Match Schedule & Results by Date",
     "metaDesc": "The complete 2026 FIFA World Cup calendar: all 104 matches across June and July with live results and model predictions, organized by date.",
     "today": "Today",
-    "empty": "No matches scheduled."
+    "empty": "No matches scheduled.",
+    "showEarlier": "Show earlier"
   }
 }

@@ -587,6 +587,7 @@
     "metaTitle": "WM-2026-Spielkalender — Kompletter Spielplan & Ergebnisse nach Datum",
     "metaDesc": "Der komplette Spielkalender der FIFA Fußball-Weltmeisterschaft 2026: alle 104 Spiele im Juni und Juli mit Live-Ergebnissen und Modell-Prognosen, nach Datum geordnet.",
     "today": "Heute",
-    "empty": "Keine Spiele angesetzt."
+    "empty": "Keine Spiele angesetzt.",
+    "showEarlier": "Frühere anzeigen"
   }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { MatchInfo } from "@/lib/predictions";
+import type { MatchInfo, SlotCandidate } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { fmtTimeShort, fmtDay, fmtDayKey, pct } from "@/lib/format";
 import { useViewerZone } from "@/lib/useViewerZone";
@@ -14,83 +14,174 @@ const ROUND_KEY: Record<string, string> = {
   GROUP: "rounds.GROUP", R32: "rounds.R32", R16: "rounds.R16", QF: "rounds.QF", SF: "rounds.SF", "3P": "rounds.THIRD", FINAL: "rounds.FINAL",
 };
 
-// The tournament spans June + July 2026 (2026-06-11 → 2026-07-19).
-const MONTHS = [
-  { year: 2026, month: 5 }, // June (0-indexed)
-  { year: 2026, month: 6 }, // July
-];
-
+// Each phase gets a distinct accent so its date span reads as a colored "lane" (an all-day bar across the
+// week, plus a legend). Order = tournament order. Desaturated for the dark theme.
+const PHASES = [
+  { key: "GROUP", color: "#64748b" },
+  { key: "R32", color: "#34d399" },
+  { key: "R16", color: "#38bdf8" },
+  { key: "QF", color: "#a78bfa" },
+  { key: "SF", color: "#fbbf24" },
+  { key: "THIRD", color: "#fb7185" },
+  { key: "FINAL", color: "#facc15" },
+] as const;
+const PHASE_COLOR: Record<string, string> = Object.fromEntries(PHASES.map((p) => [p.key, p.color]));
+const phaseKeyOf = (round: string) => (round === "3P" ? "THIRD" : round);
+const mix = (color: string, p: number) => `color-mix(in oklab, ${color} ${p}%, transparent)`;
 const pad = (n: number) => String(n).padStart(2, "0");
+const dateKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 export function Calendar({ matches }: { matches: MatchInfo[] }) {
   const t = useT();
   const locale = useLocale();
   const { zone } = useViewerZone();
-  // Resolve "today" only after mount (viewer-zone dependent) so SSR/hydration match.
   const [todayKey, setTodayKey] = useState<string | null>(null);
+  const [showPast, setShowPast] = useState(false);
   useEffect(() => setTodayKey(fmtDayKey(new Date().toISOString(), zone)), [zone]);
+  const mounted = todayKey != null;
 
-  // Bucket matches into the viewer's local day (YYYY-MM-DD), chronological within a day.
+  // Matches bucketed by viewer-local day; phase date-ranges (so even rest days inside a phase are colored).
   const byDay = new Map<string, MatchInfo[]>();
+  const phaseRange: Record<string, { min: string; max: string }> = {};
   for (const m of [...matches].sort((a, b) => a.utc.localeCompare(b.utc))) {
     const key = fmtDayKey(m.utc, zone);
     (byDay.get(key) ?? byDay.set(key, []).get(key)!).push(m);
+    const ph = phaseKeyOf(m.round);
+    const r = (phaseRange[ph] ??= { min: key, max: key });
+    if (key < r.min) r.min = key;
+    if (key > r.max) r.max = key;
   }
+  const phaseForKey = (key: string): string | null => {
+    for (const p of PHASES) {
+      const r = phaseRange[p.key];
+      if (r && key >= r.min && key <= r.max) return p.key;
+    }
+    return null;
+  };
+  const allKeys = [...byDay.keys()].sort();
+  const firstKey = allKeys[0] ?? "2026-06-11";
+  const lastKey = allKeys[allKeys.length - 1] ?? "2026-07-19";
 
-  // Localized weekday + month names (site locale, via zone.locale).
   const loc = zone.locale;
   const weekdays = Array.from({ length: 7 }, (_, i) =>
-    new Intl.DateTimeFormat(loc, { weekday: "short" }).format(new Date(2024, 0, 1 + i)), // 2024-01-01 = Monday
+    new Intl.DateTimeFormat(loc, { weekday: "short" }).format(new Date(2024, 0, 1 + i)), // Mon-start
+  );
+  const shortDate = (d: Date) => new Intl.DateTimeFormat(loc, { month: "short", day: "numeric" }).format(d);
+
+  // Build continuous Monday-aligned weeks covering the tournament span.
+  const start = new Date(2026, 5, 1); // June 1, 2026
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // back to Monday
+  const weeks: { days: Date[]; first: string; last: string }[] = [];
+  for (let w = new Date(start); ; w.setDate(w.getDate() + 7)) {
+    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(w); d.setDate(d.getDate() + i); return d; });
+    const first = dateKey(days[0]);
+    const last = dateKey(days[6]);
+    if (first > lastKey) break;
+    if (last >= firstKey) weeks.push({ days: days.map((d) => new Date(d)), first, last });
+    if (weeks.length > 12) break; // safety
+  }
+  const hasPast = mounted && weeks.some((wk) => wk.last < todayKey!);
+  const visibleWeeks = mounted && !showPast ? weeks.filter((wk) => wk.last >= todayKey!) : weeks;
+  const present = new Set([...matches].map((m) => phaseKeyOf(m.round)));
+
+  // Consecutive same-phase day runs within a week → one all-day bar each (Google-Calendar style).
+  const runsFor = (days: Date[]) => {
+    const ph = days.map((d) => phaseForKey(dateKey(d)));
+    const runs: { phase: string; start: number; len: number }[] = [];
+    for (let i = 0; i < 7; ) {
+      if (!ph[i]) { i++; continue; }
+      let j = i;
+      while (j < 7 && ph[j] === ph[i]) j++;
+      runs.push({ phase: ph[i]!, start: i, len: j - i });
+      i = j;
+    }
+    return runs;
+  };
+
+  const showEarlier = hasPast && !showPast && (
+    <button type="button" onClick={() => setShowPast(true)} className="text-muted-foreground hover:text-foreground border-border/70 hover:border-border mb-4 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m15 18-6-6 6-6" /></svg>
+      {t("calendar.showEarlier")}
+    </button>
   );
 
-  const agendaDays = [...byDay.keys()].sort();
-
   return (
-    <>
-      {/* Desktop: month grid */}
-      <div className="hidden space-y-10 md:block">
-        {MONTHS.map(({ year, month }) => {
-          const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-start
-          const daysInMonth = new Date(year, month + 1, 0).getDate();
-          const monthLabel = new Intl.DateTimeFormat(loc, { month: "long", year: "numeric" }).format(new Date(year, month, 1));
-          const cells: (number | null)[] = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
-          return (
-            <section key={`${year}-${month}`}>
-              <h2 className="mb-3 text-lg font-semibold tracking-tight capitalize">{monthLabel}</h2>
-              <div className="grid grid-cols-7 gap-1.5">
-                {weekdays.map((w, i) => (
-                  <div key={i} className="text-muted-2 pb-1 text-center font-mono text-[10px] font-semibold tracking-wide uppercase">{w}</div>
-                ))}
-                {cells.map((d, i) => {
-                  if (d == null) return <div key={`b${i}`} className="min-h-24 rounded-lg" />;
-                  const key = `${year}-${pad(month + 1)}-${pad(d)}`;
-                  const items = byDay.get(key) ?? [];
-                  const isToday = key === todayKey;
-                  return (
-                    <div key={key} className={`bg-card/30 min-h-24 rounded-lg border p-1 ${isToday ? "border-primary/60" : "border-border/50"}`}>
-                      <div className={`mb-1 px-1 text-right font-mono text-[11px] ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>{d}</div>
-                      <div className="space-y-1">
-                        {items.map((m) => <MatchCard key={m.match} m={m} zone={zone} locale={locale} t={t} />)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+    <div suppressHydrationWarning>
+      {/* Phase legend — sticky so the colour key stays visible deep in the calendar */}
+      <div className="bg-background/90 border-border/40 sticky top-14 z-20 -mx-4 mb-4 border-b px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+          {PHASES.filter((p) => present.has(p.key)).map((p) => (
+            <span key={p.key} className="inline-flex items-center gap-1.5 text-xs">
+              <span className="h-2 w-3.5 shrink-0 rounded-sm" style={{ backgroundColor: mix(p.color, 55) }} aria-hidden />
+              <span className="text-muted-foreground">{t(`rounds.${p.key}`)}</span>
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Mobile: agenda grouped by day */}
+      {showEarlier}
+
+      {/* Desktop: week rows, each with an all-day phase bar above the day cells */}
+      <div className="hidden space-y-6 md:block">
+        {visibleWeeks.map((wk) => (
+          <div key={wk.first}>
+            <div className="text-muted-2 mb-1.5 font-mono text-[11px]">{shortDate(wk.days[0])} – {shortDate(wk.days[6])}</div>
+            {/* all-day phase bars */}
+            <div className="mb-1 grid grid-cols-7 gap-1.5">
+              {runsFor(wk.days).map((run) => (
+                <div
+                  key={run.start}
+                  style={{ gridColumn: `${run.start + 1} / span ${run.len}`, backgroundColor: mix(PHASE_COLOR[run.phase], 16), color: PHASE_COLOR[run.phase] }}
+                  className="flex h-5 items-center overflow-hidden rounded px-2 text-[10px] font-semibold tracking-wide uppercase"
+                >
+                  <span className="truncate">{t(`rounds.${run.phase}`)}</span>
+                </div>
+              ))}
+            </div>
+            {/* day cells */}
+            <div className="grid grid-cols-7 gap-1.5">
+              {wk.days.map((d) => {
+                const key = dateKey(d);
+                const inRange = key >= "2026-06-01" && key <= "2026-07-31";
+                if (!inRange) return <div key={key} className="min-h-24 rounded-lg" />;
+                const items = byDay.get(key) ?? [];
+                const isToday = key === todayKey;
+                const phase = phaseForKey(key);
+                const color = phase ? PHASE_COLOR[phase] : null;
+                return (
+                  <div
+                    key={key}
+                    className={`min-h-24 rounded-lg border p-1 ${isToday ? "border-primary ring-primary/30 ring-2" : "border-border/40"}`}
+                    style={color ? { backgroundColor: mix(color, isToday ? 9 : 5) } : undefined}
+                  >
+                    <div className="mb-1 flex items-center gap-1 px-0.5">
+                      {isToday && <span className="text-primary text-[9px] font-bold tracking-wide uppercase">{t("calendar.today")}</span>}
+                      <span className={`ml-auto font-mono text-[11px] ${isToday ? "bg-primary text-background flex size-[18px] items-center justify-center rounded-full font-bold" : "text-muted-foreground"}`}>{d.getDate()}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {items.map((m) => <MatchCard key={m.match} m={m} zone={zone} locale={locale} t={t} />)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile: agenda grouped by day, present-focused, each header carrying its phase */}
       <div className="space-y-6 md:hidden">
-        {agendaDays.length === 0 && <p className="text-muted-foreground text-sm">{t("calendar.empty")}</p>}
-        {agendaDays.map((key) => {
+        {(mounted && !showPast ? allKeys.filter((k) => k >= todayKey!) : allKeys).map((key) => {
           const items = byDay.get(key)!;
           const isToday = key === todayKey;
+          const phase = phaseKeyOf(items[0].round);
+          const color = PHASE_COLOR[phase];
           return (
-            <section key={key}>
-              <h2 className="text-muted-foreground mb-2 flex items-center gap-2 font-mono text-xs font-semibold tracking-wide uppercase" suppressHydrationWarning>
-                {fmtDay(items[0].utc, zone)}
+            <section key={key} className={isToday ? "border-primary/40 bg-primary/[0.05] -mx-2 rounded-2xl border px-3 py-3" : ""}>
+              <h2 className="mb-2 flex items-center gap-2 font-mono text-xs font-semibold tracking-wide uppercase" suppressHydrationWarning>
+                <span className="h-2 w-3.5 shrink-0 rounded-sm" style={{ backgroundColor: mix(color, 55) }} aria-hidden />
+                <span className="text-muted-foreground">{fmtDay(items[0].utc, zone)}</span>
+                <span className="normal-case" style={{ color }}>· {t(`rounds.${phase}`)}</span>
                 {isToday && <span className="text-primary bg-primary/10 rounded px-1.5 py-0.5 text-[10px] tracking-normal normal-case">{t("calendar.today")}</span>}
               </h2>
               <div className="space-y-1.5">
@@ -100,7 +191,7 @@ export function Calendar({ matches }: { matches: MatchInfo[] }) {
           );
         })}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -113,7 +204,6 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? t("common.tbd");
   const homeWin = final && (m.homeScore ?? 0) > (m.awayScore ?? 0);
   const awayWin = final && (m.awayScore ?? 0) > (m.homeScore ?? 0);
-  const round = ROUND_KEY[m.round] ? t(ROUND_KEY[m.round]) : m.round;
   return (
     <Link
       href={localeHref(locale, `/match/${m.match}`)}
@@ -129,14 +219,35 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
             fmtTimeShort(m.utc, zone)
           )}
         </span>
-        <span className="shrink-0 truncate">{round}{m.group ? ` ${m.group}` : ""}</span>
+        {m.group && <span className="shrink-0 truncate">{m.group}</span>}
       </div>
-      <div className="space-y-0.5 px-2 pt-1 pb-1.5">
-        <TeamLine code={homeCode} name={homeName} score={final || live ? m.homeScore : undefined} win={homeWin} projected={!m.home} prob={!m.home ? m.projHome?.[0]?.prob : undefined} />
-        <TeamLine code={awayCode} name={awayName} score={final || live ? m.awayScore : undefined} win={awayWin} projected={!m.away} prob={!m.away ? m.projAway?.[0]?.prob : undefined} />
+      <div className="px-2 pt-1 pb-1.5">
+        <Side resolved={!!m.home} code={homeCode} name={homeName} score={final || live ? m.homeScore : undefined} win={homeWin} cands={m.projHome} />
+        <div className="border-border/40 my-1 border-t" />
+        <Side resolved={!!m.away} code={awayCode} name={awayName} score={final || live ? m.awayScore : undefined} win={awayWin} cands={m.projAway} />
       </div>
     </Link>
   );
+}
+
+// One side of a card: a resolved/clinched team (single line + score) OR — for an unresolved knockout
+// slot — the top-3 candidate teams ranked by probability, so the potential fillers stay visible with a
+// clear hierarchy (#1 emphasized, the rest muted).
+function Side({ resolved, code, name, score, win, cands }: { resolved: boolean; code: string | null; name: string; score?: number; win?: boolean; cands?: SlotCandidate[] }) {
+  if (!resolved && cands && cands.length > 1) {
+    return (
+      <div className="space-y-0.5">
+        {cands.slice(0, 3).map((c, i) => (
+          <div key={c.code} className="flex items-center gap-1.5">
+            <Flag code={c.code} size={14} />
+            <span className={`min-w-0 flex-1 truncate text-xs ${i === 0 ? "text-foreground/85 font-medium" : "text-muted-foreground"}`}>{c.name}</span>
+            <span className={`shrink-0 font-mono text-[10px] tabular-nums ${i === 0 ? "text-foreground/70" : "text-muted-2"}`}>{pct(Math.min(c.prob, 0.99))}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <TeamLine code={code} name={name} score={score} win={win} projected={!resolved} prob={!resolved ? cands?.[0]?.prob : undefined} />;
 }
 
 function TeamLine({ code, name, score, win, projected, prob }: { code: string | null; name: string; score?: number; win?: boolean; projected?: boolean; prob?: number }) {

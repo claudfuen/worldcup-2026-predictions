@@ -587,6 +587,7 @@
     "metaDesc": "El calendario completo del Mundial 2026: los 104 partidos de junio y julio con resultados en directo y predicciones del modelo, organizados por fecha.",
     "lede": "Todos los partidos de junio y julio de 2026 — resultados pasados y partidos por venir con el pronóstico del modelo, día a día.",
     "today": "Hoy",
-    "empty": "No hay partidos programados."
+    "empty": "No hay partidos programados.",
+    "showEarlier": "Ver anteriores"
   }
 }
