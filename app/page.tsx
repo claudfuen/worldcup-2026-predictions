@@ -1,16 +1,14 @@
-import Link from "next/link";
 import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive, liveActivity } from "@/lib/live";
 import { finalizeGroups, ratingsFromTeams } from "@/lib/liveProjection";
-import { Flag } from "@/components/flag";
-import { Delta } from "@/components/delta";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
-import { TodaySection } from "@/components/today-section";
+import { MastheadVerdict } from "@/components/masthead-verdict";
+import { MoverStrip } from "@/components/mover-strip";
+import { LiveTodayRail } from "@/components/live-today-rail";
 import { MatchesToWatch } from "@/components/matches-to-watch";
-import { ShareBar } from "@/components/share-bar";
-import { teamSlug } from "@/lib/slug";
-import { forecastPct } from "@/lib/format";
-import { clinchesR32 } from "@/lib/view/advance";
+import { BracketTeaser } from "@/components/bracket-teaser";
+import { TitleOdds } from "@/components/title-odds";
+import { LaunchRail } from "@/components/launch-rail";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -20,173 +18,34 @@ export const revalidate = 0;
 export default async function Page() {
   const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
   const matches = overlayLive(data.matches, live);
-  const contenders = data.teams.slice(0, 8);
-  const maxTitle = contenders[0]?.title || 1;
   const hasLive = liveActivity(data.matches, live);
-  // Finalize group clinch from results known right now, so a ✓ appears the instant a group locks.
+  // Finalize group clinch from results known right now, so the watch plan's decider signal is live-accurate.
   const groups = hasLive ? finalizeGroups(data.groups, matches, ratingsFromTeams(data.teams)) : data.groups;
-  // Teams that have mathematically clinched a Round-of-32 place: their R32 cell shows a ✓ (locked),
-  // never a capped forecast %. Sourced from the group clinch status, not the sim frequency.
-  const advanceClinched = new Set<string>();
-  for (const g of groups) {
-    for (const t of g.teams) {
-      if (clinchesR32(t.status)) advanceClinched.add(t.code);
-    }
-  }
-  const [c1, c2, c3] = data.teams;
-  // Biggest title-odds mover today (>= 1pp), for a fresh, shareable hook in the lede.
-  const mover = [...data.teams]
-    .filter((t) => t.titleDelta != null && Math.abs(t.titleDelta) >= 0.01)
-    .sort((a, b) => Math.abs(b.titleDelta!) - Math.abs(a.titleDelta!))[0];
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={hasLive} />
-      <header className="mb-8 max-w-3xl">
-        <div className="text-primary font-mono text-xs font-semibold tracking-wide uppercase">Live forecast</div>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">World Cup 2026 Predictions</h1>
-        <p className="text-muted-foreground mt-2 text-sm text-pretty">
-          {data.iterations.toLocaleString()} Monte Carlo simulations · {data.matchesPlayed}/{data.totalGroupMatches} group
-          matches played · live from real results.
-        </p>
-        {c1 && (
-          <>
-            <h2 className="mt-5 text-lg font-semibold tracking-tight">Who will win the 2026 World Cup?</h2>
-            <p className="text-muted-foreground mt-1.5 text-sm text-pretty">
-              The model&apos;s favorite is <Link href={`/team/${teamSlug(c1.name)}`} className="text-foreground font-medium hover:underline">{c1.name}</Link> ({forecastPct(c1.title)})
-              {c2 && <>, ahead of <Link href={`/team/${teamSlug(c2.name)}`} className="hover:underline">{c2.name}</Link> ({forecastPct(c2.title)})</>}
-              {c3 && <> and <Link href={`/team/${teamSlug(c3.name)}`} className="hover:underline">{c3.name}</Link> ({forecastPct(c3.title)})</>}, across {data.iterations.toLocaleString()} simulations
-              updated live from real results.
-              {mover && (
-                <>
-                  {" "}Biggest move today: <Link href={`/team/${teamSlug(mover.name)}`} className="text-foreground font-medium hover:underline">{mover.name}</Link>{" "}
-                  <span className={mover.titleDelta! > 0 ? "text-win" : "text-destructive"}>
-                    {mover.titleDelta! > 0 ? "▲" : "▼"}{Math.abs(Math.round(mover.titleDelta! * 100))}
-                  </span>{" "}
-                  to {forecastPct(mover.title)}.
-                </>
-              )}
-            </p>
-            <div className="mt-4">
-              <ShareBar text={`${c1.name} are the ${forecastPct(c1.title)} favorite to win the World Cup 2026, per 20,000 Monte Carlo sims.`} path="/" />
-            </div>
-          </>
-        )}
+
+      {/* 1. The model's call — the signature, the most-important thing first */}
+      <header className="mb-10 max-w-3xl">
+        <MastheadVerdict teams={data.teams} iterations={data.iterations} />
+        <MoverStrip teams={data.teams} />
       </header>
 
+      {/* 2. What's happening now — promoted from dead-last to position #2 */}
+      <LiveTodayRail matches={matches} className="mb-10" />
+
+      {/* 3. What to watch next — the curated plan */}
       <MatchesToWatch matches={matches} teams={data.teams} groups={groups} className="mb-10" />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Title contenders */}
-        <section className="lg:col-span-2">
-          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Title odds</h2>
-          <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border">
-            {contenders.map((t, i) => (
-              <Link key={t.code} href={`/team/${teamSlug(t.name)}`} className="hover:bg-muted/20 flex items-center gap-3 px-4 py-3">
-                <span className="text-muted-2 w-4 text-right font-mono text-xs tabular-nums">{i + 1}</span>
-                <Flag code={t.code} size={22} />
-                <span className="w-28 shrink-0 truncate text-sm font-medium">{t.name}</span>
-                <div className="bg-muted/30 relative h-1.5 flex-1 overflow-hidden rounded-full">
-                  <div className="bg-primary/85 absolute inset-y-0 left-0 rounded-full" style={{ width: `${(t.title / maxTitle) * 100}%` }} />
-                </div>
-                <span className="flex w-16 shrink-0 items-center justify-end gap-1 font-mono text-sm font-semibold tabular-nums">
-                  {forecastPct(t.title)}<Delta v={t.titleDelta} />
-                </span>
-              </Link>
-            ))}
-          </div>
-          <p className="text-muted-2 mt-2 text-[11px]">
-            <span className="text-win">▲</span>
-            <span className="text-destructive">▼</span> change since the start of today
-          </p>
-        </section>
+      {/* 4. Where it's heading — one honest glimpse, launches into the bracket */}
+      <BracketTeaser matches={matches} teams={data.teams} className="mb-10" />
 
-        {/* Side column - eyebrow mirrors "Title odds" so the card tops align across the two columns */}
-        <section>
-          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Explore</h2>
-          <div className="space-y-4">
-            <NavCard href="/groups" title="Groups" desc="Standings, qualification odds & cut-offs" />
-            <NavCard href="/bracket" title="Bracket" desc="Projected knockout tree to the final" />
-            <NavCard href="/schedule" title="Schedule" desc="All 104 matches, your local time" />
-            <NavCard href="/methodology" title="Method" desc="How the model works" />
-          </div>
-        </section>
-      </div>
+      {/* 5. The title race in depth */}
+      <TitleOdds teams={data.teams} className="mb-10" />
 
-      <section className="mt-10">
-        <h2 className="text-muted-foreground mb-1 font-mono text-xs font-semibold tracking-wide uppercase">Chance of reaching each round</h2>
-        <p className="text-muted-2 mb-3 text-xs">How deep each contender is projected to go, across {data.iterations.toLocaleString()} simulations.</p>
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-muted-foreground border-border/60 border-b text-[10px] tracking-wide">
-                <th className="py-2 pr-2 text-left font-medium">Team</th>
-                <th className="hidden w-12 px-1 text-right font-medium sm:table-cell">R32</th>
-                <th className="w-12 px-1 text-right font-medium">R16</th>
-                <th className="hidden w-12 px-1 text-right font-medium sm:table-cell">QF</th>
-                <th className="hidden w-12 px-1 text-right font-medium sm:table-cell">SF</th>
-                <th className="w-12 px-1 text-right font-medium">Final</th>
-                <th className="w-16 px-1 pr-2 text-right font-semibold">Champion</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.teams.slice(0, 12).map((t) => (
-                <tr key={t.code} className="border-border/40 border-b last:border-0">
-                  <td className="py-2 pr-2">
-                    <Link href={`/team/${teamSlug(t.name)}`} className="flex items-center gap-2 hover:underline">
-                      <Flag code={t.code} size={18} />
-                      <span className="truncate font-medium">{t.name}</span>
-                    </Link>
-                  </td>
-                  <RoundCell v={t.advance} hideMobile clinched={advanceClinched.has(t.code)} />
-                  <RoundCell v={t.r16} />
-                  <RoundCell v={t.qf} hideMobile />
-                  <RoundCell v={t.sf} hideMobile />
-                  <RoundCell v={t.final} />
-                  <td className="text-primary px-1 pr-2 text-right font-mono text-sm font-semibold tabular-nums" style={{ backgroundColor: heat(t.title) }}>{forecastPct(t.title)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <TodaySection matches={matches} />
-
-      <footer className="border-border/60 text-muted-2 mt-12 border-t pt-6 text-xs text-pretty">
-        Elo + Poisson scoreline model (backtested RPS ~0.18) with rating uncertainty, host advantage and an extra-time/penalty
-        knockout model · 2026 head-to-head-first tiebreakers · verified 495-row third-place table. <Link href="/methodology" className="text-primary">How it works →</Link>
-        <div className="mt-2">Live data via ESPN · not affiliated with FIFA.</div>
-      </footer>
+      {/* 6. Launch anywhere + trust */}
+      <LaunchRail teams={data.teams} iterations={data.iterations} />
     </main>
-  );
-}
-
-// Heatmap tint: a faint primary wash whose strength scales with the probability, so the funnel reads
-// as signal (deep at R32, fading toward Champion) rather than a flat grid of grey numbers.
-function heat(v: number): string {
-  return `color-mix(in oklab, var(--primary) ${Math.round(Math.min(v, 1) * 22)}%, transparent)`;
-}
-
-function RoundCell({ v, hideMobile, clinched }: { v: number; hideMobile?: boolean; clinched?: boolean }) {
-  return (
-    <td
-      className={`px-1 text-right font-mono text-xs tabular-nums ${clinched ? "text-win" : "text-muted-2"} ${hideMobile ? "hidden sm:table-cell" : ""}`}
-      style={{ backgroundColor: clinched ? heat(1) : heat(v) }}
-    >
-      {clinched ? <span title="Clinched a Round-of-32 place">✓</span> : forecastPct(v)}
-    </td>
-  );
-}
-
-function NavCard({ href, title, desc }: { href: string; title: string; desc: string }) {
-  return (
-    <Link href={href} className="group border-border bg-card hover:border-primary/50 hover:bg-surface-raised block rounded-2xl border p-4 transition-colors">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold">{title}</span>
-        <span className="text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden>→</span>
-      </div>
-      <div className="text-muted-foreground mt-0.5 text-xs">{desc}</div>
-    </Link>
   );
 }
