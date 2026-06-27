@@ -265,11 +265,23 @@ function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "a
   const label = name ?? proj?.name ?? "TBD";
   const prob = resolved ? null : proj?.prob;
   const isHi = highlightCode && code === highlightCode;
+  // A played knockout match: show each side's score and mark the team that advanced (the winner — set even
+  // when decided on penalties, where the regulation scores are level).
+  const played = m.status === "final";
+  const score = side === "home" ? m.homeScore : m.awayScore;
+  const isWinner = played && !!m.winner && m.winner === resolved;
+  const isLoser = played && !!m.winner && m.winner !== resolved;
+  const onPens = played && m.homeScore != null && m.homeScore === m.awayScore;
   return (
     <div {...tipProps} className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}${hoverCls}`}>
       <Flag code={code} size={big ? 22 : 18} />
-      <span className={`min-w-0 flex-1 truncate ${resolved ? "font-semibold" : "text-foreground/80"}`}>{label}</span>
-      {resolved ? (
+      <span className={`min-w-0 flex-1 truncate ${isLoser ? "text-muted-foreground" : resolved ? "font-semibold" : "text-foreground/80"}`}>{label}</span>
+      {played ? (
+        <span className="flex shrink-0 items-center gap-1">
+          {isWinner && onPens && <span className="text-win/70 font-mono text-[8px] font-semibold tracking-wide uppercase" title="Won on penalties">pens</span>}
+          <span className={`font-mono font-bold tabular-nums ${big ? "text-sm" : "text-xs"} ${isWinner ? "text-win" : "text-muted-foreground"}`}>{score}</span>
+        </span>
+      ) : resolved ? (
         <span className={`shrink-0 font-bold text-win ${big ? "text-xs" : "text-[10px]"}`} title="Confirmed">✓</span>
       ) : (
         prob != null && <ProbMeter p={prob} width={big ? 22 : 16} className={`shrink-0 text-muted-foreground ${big ? "text-xs" : "text-[10px]"}`} />

@@ -309,7 +309,9 @@ function ScoreTeam({ m, side }: { m: MatchInfo; side: "home" | "away" }) {
   const hasScore = m.status === "final" || m.status === "live";
   const score = hasScore ? (side === "home" ? m.homeScore : m.awayScore) : undefined;
   const other = hasScore ? (side === "home" ? m.awayScore : m.homeScore) : undefined;
-  const win = m.status === "final" && score != null && other != null && score > other; // no "winner" while live
+  // The advancing team: ESPN's winner flag when present (covers penalty wins, where the score is level),
+  // else the higher score. Never marked while live.
+  const win = m.status === "final" && (m.winner ? m.winner === resolved : score != null && other != null && score > other);
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
       {resolved && name ? (

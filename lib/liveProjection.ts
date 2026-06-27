@@ -110,15 +110,29 @@ export function finalizeBracket(matches: MatchInfo[], groups: GroupView[], ratin
       /* needs >=8 distinct group thirds; always true with 12 groups */
     }
   }
+  // A just-finished knockout match (final, before the next cron) resolves its W##/L## feeders for the next
+  // round, and marks its own winner — so the bracket advances live. A penalty result (level score, no winner
+  // flag yet) is left for the cron, which reads ESPN's advancing flag.
+  const koSlotTeam: Record<string, string> = {};
+  const koWinner: Record<number, string> = {};
+  for (const m of matches) {
+    if (m.round === "GROUP" || m.status !== "final" || !m.home || !m.away) continue;
+    const winner = m.winner ?? (m.homeScore != null && m.awayScore != null && m.homeScore !== m.awayScore ? (m.homeScore > m.awayScore ? m.home : m.away) : null);
+    if (!winner) continue;
+    koWinner[m.match] = winner;
+    koSlotTeam[`W${m.match}`] = winner;
+    koSlotTeam[`L${m.match}`] = winner === m.home ? m.away : m.home;
+  }
   return matches.map((m) => {
     if (m.round === "GROUP") return m;
     let home = m.home;
     let away = m.away;
-    // clinched group winner/runner-up -> "1X"/"2X" slots
-    const lh = m.slotHome ? lockedSlot[m.slotHome] : undefined;
-    const la = m.slotAway ? lockedSlot[m.slotAway] : undefined;
+    // clinched group winner/runner-up -> "1X"/"2X" slots; played knockout feeders -> their real qualifier
+    const lh = m.slotHome ? lockedSlot[m.slotHome] ?? koSlotTeam[m.slotHome] : undefined;
+    const la = m.slotAway ? lockedSlot[m.slotAway] ?? koSlotTeam[m.slotAway] : undefined;
     if (lh && !home) home = lh;
     if (la && !away) away = la;
+    const winner = m.winner ?? koWinner[m.match]; // stamp a decisive winner so the bracket highlights it live
     // deterministic third-place assignment, once the group stage is fully decided
     if (m.round === "R32") {
       const thirdSide = m.slotHome?.startsWith("3:") ? "home" : m.slotAway?.startsWith("3:") ? "away" : null;
@@ -131,7 +145,7 @@ export function finalizeBracket(matches: MatchInfo[], groups: GroupView[], ratin
         }
       }
     }
-    if (home === m.home && away === m.away) return m; // nothing newly locked
+    if (home === m.home && away === m.away && winner === m.winner) return m; // nothing newly locked
     return {
       ...m,
       home,
@@ -139,6 +153,7 @@ export function finalizeBracket(matches: MatchInfo[], groups: GroupView[], ratin
       homeName: home ? TEAM_BY_CODE[home]?.name ?? home : m.homeName,
       awayName: away ? TEAM_BY_CODE[away]?.name ?? away : m.awayName,
       defined: Boolean(home && away),
+      winner,
     };
   });
 }
