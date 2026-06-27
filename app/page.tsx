@@ -80,16 +80,16 @@ export default async function Page() {
         {/* Title contenders */}
         <section className="lg:col-span-2">
           <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">Title odds</h2>
-          <div className="border-border-strong bg-surface-raised rounded-2xl border p-2">
+          <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border">
             {contenders.map((t, i) => (
-              <Link key={t.code} href={`/team/${teamSlug(t.name)}`} className="hover:bg-muted/30 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors">
+              <Link key={t.code} href={`/team/${teamSlug(t.name)}`} className="hover:bg-muted/20 flex items-center gap-3 px-4 py-3">
                 <span className="text-muted-2 w-4 text-right font-mono text-xs tabular-nums">{i + 1}</span>
-                <Flag code={t.code} size={26} />
-                <span className="w-32 shrink-0 font-medium">{t.name}</span>
-                <div className="bg-muted/40 relative h-2 flex-1 overflow-hidden rounded-full">
-                  <div className="from-primary to-primary/70 absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-[width] duration-700 ease-out" style={{ width: `${(t.title / maxTitle) * 100}%` }} />
+                <Flag code={t.code} size={22} />
+                <span className="w-28 shrink-0 truncate text-sm font-medium">{t.name}</span>
+                <div className="bg-muted/30 relative h-1.5 flex-1 overflow-hidden rounded-full">
+                  <div className="bg-primary/85 absolute inset-y-0 left-0 rounded-full" style={{ width: `${(t.title / maxTitle) * 100}%` }} />
                 </div>
-                <span className="flex w-16 shrink-0 items-center justify-end font-mono text-sm font-semibold tabular-nums">
+                <span className="flex w-16 shrink-0 items-center justify-end gap-1 font-mono text-sm font-semibold tabular-nums">
                   {forecastPct(t.title)}<Delta v={t.titleDelta} />
                 </span>
               </Link>
