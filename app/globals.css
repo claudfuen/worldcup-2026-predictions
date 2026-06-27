@@ -194,3 +194,9 @@
       }
     }
 }
+
+/* Score ticker marquee: the track holds two identical copies, so translating by -50% lands copy 2 exactly
+   where copy 1 was — a seamless loop. Paused on hover (set on the element in the component). */
+@keyframes ticker {
+  to { transform: translateX(-50%); }
+}

@@ -5,8 +5,11 @@ import "flag-icons/css/flag-icons.min.css"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Nav } from "@/components/nav"
+import { ScoreTicker } from "@/components/score-ticker"
 import { getPredictions } from "@/lib/getPredictions"
+import { getLiveMatches, overlayLive } from "@/lib/live"
 import { cn } from "@/lib/utils";
+import type { MatchInfo } from "@/lib/predictions"
 import type { Metadata, Viewport } from "next"
 
 const SITE_NAME = "World Cup 2026 Predictions"
@@ -74,8 +77,19 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   let updatedAt: string | null = null
+  let tickerItems: MatchInfo[] = []
   try {
-    updatedAt = (await getPredictions()).updatedAt
+    const data = await getPredictions()
+    updatedAt = data.updatedAt
+    let matches = data.matches
+    try {
+      matches = overlayLive(data.matches, await getLiveMatches())
+    } catch {
+      // live feed unavailable — fall back to the cached payload's results
+    }
+    const live = matches.filter((m) => m.status === "live")
+    const finals = matches.filter((m) => m.status === "final").sort((a, b) => b.utc.localeCompare(a.utc)).slice(0, 12)
+    tickerItems = [...live, ...finals]
   } catch {
     updatedAt = null
   }
@@ -89,6 +103,7 @@ export default async function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
         <ThemeProvider defaultTheme="dark" enableSystem={false}>
           <Nav updatedAt={updatedAt} />
+          <ScoreTicker items={tickerItems} />
           {children}
         </ThemeProvider>
         <Analytics />
