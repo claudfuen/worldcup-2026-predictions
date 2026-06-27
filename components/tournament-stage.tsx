@@ -47,7 +47,7 @@ export async function TournamentStage({
 
   return (
     <div className={`border-border bg-card rounded-2xl border px-4 py-3 ${className}`}>
-      <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none]">
+      <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(to_right,transparent,#000_1.25rem,#000_calc(100%-1.25rem),transparent)] md:[mask-image:none]">
         {phases.map((p, i) => (
           <Fragment key={p.key}>
             <span className={`font-mono text-[10px] font-semibold tracking-wide whitespace-nowrap uppercase ${i === cur ? "text-primary" : p.done ? "text-muted-foreground" : "text-muted-2"}`}>

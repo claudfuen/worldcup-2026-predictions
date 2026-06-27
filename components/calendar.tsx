@@ -110,7 +110,7 @@ export function Calendar({ matches }: { matches: MatchInfo[] }) {
     <div suppressHydrationWarning>
       {/* Phase legend — pinned below the nav + score ticker on desktop so the colour key stays visible
           deep in the calendar (mobile labels the phase inline in each day header, so it's a plain bar there). */}
-      <div className="bg-background/90 border-border/40 z-20 -mx-4 mb-4 border-b px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 md:sticky md:top-[85px] lg:-mx-8 lg:px-8">
+      <div className="bg-background/90 border-border/40 z-20 -mx-4 mb-4 border-b px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 md:sticky md:top-14 lg:-mx-8 lg:px-8">
         <div className="flex flex-wrap gap-x-3 gap-y-1.5">
           {PHASES.filter((p) => present.has(p.key)).map((p) => (
             <span key={p.key} className="inline-flex items-center gap-1.5 text-xs">
@@ -158,7 +158,7 @@ export function Calendar({ matches }: { matches: MatchInfo[] }) {
                   >
                     <div className="mb-1 flex items-center gap-1 px-0.5">
                       {isToday && <span className="text-primary text-[9px] font-bold tracking-wide uppercase">{t("calendar.today")}</span>}
-                      <span className={`ml-auto font-mono text-[11px] ${isToday ? "bg-primary text-background flex size-[18px] items-center justify-center rounded-full font-bold" : "text-muted-foreground"}`}>{d.getDate()}</span>
+                      <span className={`ml-auto font-mono text-[11px] ${isToday ? "bg-primary text-background flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 font-bold" : "text-muted-foreground"}`}>{d.getDate()}</span>
                     </div>
                     <div className="space-y-1">
                       {items.map((m) => <MatchCard key={m.match} m={m} zone={zone} locale={locale} t={t} />)}

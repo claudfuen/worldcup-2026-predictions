@@ -104,9 +104,9 @@ function Row({ e, all, t, locale }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[]
     <tr
       {...tip.triggerProps}
       {...tip.tapProps}
-      className={`cursor-help border-l-2 ${e.advancing ? "border-l-contention" : "border-l-transparent"} ${e.rank === 8 ? "border-b-primary/50 border-b border-dashed" : ""} ${elim ? "opacity-45" : ""} hover:bg-muted/20`}
+      className={`border-s-2 ${e.advancing ? "border-s-contention" : "border-s-transparent"} ${e.rank === 8 ? "border-b-primary/50 border-b border-dashed" : ""} ${elim ? "opacity-45" : ""} hover:bg-muted/20`}
     >
-      <td className="text-muted-foreground py-2 pr-1 pl-3 font-mono text-[11px]">{e.rank}</td>
+      <td className="text-muted-foreground cursor-help py-2 pe-1 ps-3 font-mono text-[11px]">{e.rank}</td>
       <td className="py-2">
         <div className="flex min-w-0 items-center gap-2">
           <Link href={localeHref(locale, `/team/${slugForCode(e.code)}`)} className="flex min-w-0 items-center gap-2 hover:underline">
@@ -116,10 +116,10 @@ function Row({ e, all, t, locale }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[]
           <Link href={localeHref(locale, `/group/${e.group.toLowerCase()}`)} className="text-muted-foreground hover:text-primary shrink-0 text-[11px] hover:underline">{t("groups.grpShort", { group: e.group })}</Link>
         </div>
       </td>
-      <td className="text-muted-foreground px-1 text-center font-mono text-xs tabular-nums">{e.gf}</td>
-      <td className="px-1 text-center font-mono text-xs tabular-nums">{e.gd >= 0 ? "+" : ""}{e.gd}</td>
-      <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{e.pts}</td>
-      <td className="px-2 pr-3 text-right text-xs tabular-nums">
+      <td className="text-muted-foreground cursor-help px-1 text-center font-mono text-xs tabular-nums">{e.gf}</td>
+      <td className="cursor-help px-1 text-center font-mono text-xs tabular-nums">{e.gd >= 0 ? "+" : ""}{e.gd}</td>
+      <td className="cursor-help px-1 text-center font-mono text-[13px] font-bold tabular-nums">{e.pts}</td>
+      <td className="cursor-help px-2 pe-3 text-right text-xs tabular-nums">
         {through ? (
           <span className="text-win font-semibold" title={decided ? t("groups.thirdSetTitle") : t("groups.thirdInTitle")}>
             {decided ? t("groups.thirdSet") : t("groups.thirdIn")}
@@ -150,13 +150,13 @@ export function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
       <div className="border-border bg-card overflow-hidden rounded-2xl border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-muted-foreground border-border/60 border-b text-[10px] tracking-wide">
-              <th className="py-2 pr-1 pl-3 text-left font-medium">{t("groups.thirdColRank")}</th>
+            <tr className="text-muted-foreground border-border/60 border-b text-[11px] tracking-wide">
+              <th className="py-2 pe-1 ps-3 text-left font-medium">{t("groups.thirdColRank")}</th>
               <th className="py-2 text-left font-medium">{t("groups.thirdColTeam")}</th>
               <th className="w-8 px-1 text-center font-medium">{t("groups.colGf")}</th>
               <th className="w-8 px-1 text-center font-medium">{t("groups.colGd")}</th>
               <th className="w-8 px-1 text-center font-semibold">{t("groups.colPts")}</th>
-              <th className="px-2 pr-3 text-right font-medium" title={t("groups.thirdColChanceTitle")}>{t("groups.thirdColChance")}</th>
+              <th className="px-2 pe-3 text-right font-medium" title={t("groups.thirdColChanceTitle")}>{t("groups.thirdColChance")}</th>
             </tr>
           </thead>
           <tbody>

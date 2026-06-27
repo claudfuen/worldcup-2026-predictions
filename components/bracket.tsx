@@ -6,6 +6,7 @@ import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { slugForCode } from "@/lib/slug";
 import { pct, fmtDay } from "@/lib/format";
+import { fifaCity } from "@/lib/venues";
 import { useViewerZone } from "@/lib/useViewerZone";
 import { ProbMeter } from "./prob-meter";
 import { useT } from "@/lib/i18n/provider";
@@ -42,7 +43,7 @@ export function Bracket({
           hint there's more) instead of being flattened into per-round tabs. */}
       <div className="border-border bg-card/20 relative overflow-hidden rounded-2xl border">
         <div className="overflow-x-auto overscroll-x-contain p-3 sm:p-4 [scrollbar-width:thin] [mask-image:linear-gradient(to_right,transparent,#000_1.25rem,#000_calc(100%-1.25rem),transparent)] md:[mask-image:none]">
-          <div className="flex min-w-[1100px] items-stretch">
+          <div dir="ltr" className="flex min-w-[1100px] items-stretch">
             {ROUNDS.map((round, ri) => (
               <Fragment key={round}>
                 <div className="flex min-w-[168px] flex-1 flex-col">
@@ -100,7 +101,7 @@ function Connectors({ count }: { count: number }) {
       <div className="flex flex-1 flex-col gap-y-2.5">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="flex flex-1 items-center">
-            <div className="border-muted-foreground/45 h-1/2 w-full rounded-r-md border-t border-r border-b" />
+            <div className="border-muted-foreground/45 h-1/2 w-full rounded-e-md border-t border-e border-b" />
           </div>
         ))}
       </div>
@@ -126,7 +127,7 @@ function Node({ m, hasTicket, big, final }: { m: MatchInfo; hasTicket: boolean; 
       }`}
     >
       <div className={`flex items-center justify-between gap-1 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "px-2.5 pt-2 pb-1 text-[10px]" : "px-2 pt-1.5 pb-1 text-[9px]"}`}>
-        <span className="truncate" suppressHydrationWarning>{final ? t("rounds.FINAL") : `M${m.match}`} · {fmtDay(m.utc, zone)}<span className="hidden sm:inline"> · {m.city}</span></span>
+        <span className="truncate" suppressHydrationWarning>{final ? t("rounds.FINAL") : `M${m.match}`} · {fmtDay(m.utc, zone)}<span className="hidden sm:inline"> · {fifaCity(m.venue, m.city)}</span></span>
         {hasTicket && (
           <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" className="text-contention shrink-0" aria-label={t("bracket.youHaveTickets")}>
             <path d="M6 3a2 2 0 0 0-2 2v15l8-4 8 4V5a2 2 0 0 0-2-2H6Z" />
@@ -164,7 +165,7 @@ function Side({ m, side, big }: { m: MatchInfo; side: "home" | "away"; big?: boo
         <span className={`min-w-0 flex-1 truncate ${big ? "text-sm" : "text-[13px]"} ${isLoser ? "text-muted-foreground" : "font-semibold"}`}>{name}</span>
         {played ? (
           <span className="flex shrink-0 items-center gap-1">
-            {isWinner && onPens && <span className="text-win/70 font-mono text-[8px] font-semibold tracking-wide uppercase" title={t("bracket.wonOnPenalties")}>{t("bracket.pens")}</span>}
+            {isWinner && onPens && <span className="text-win/70 font-mono text-[9px] font-semibold tracking-wide uppercase" title={t("bracket.wonOnPenalties")}>{t("bracket.pens")}</span>}
             <span className={`font-mono font-bold tabular-nums ${big ? "text-sm" : "text-xs"} ${isWinner ? "text-win" : "text-muted-foreground"}`}>{score}</span>
           </span>
         ) : (
@@ -195,7 +196,12 @@ function Side({ m, side, big }: { m: MatchInfo; side: "home" | "away"; big?: boo
         return (
           <div key={c.code} className="flex items-center gap-1.5">
             <Flag code={c.code} size={big ? 16 : 14} />
-            {third && <span className="text-muted-2 font-mono text-[8px] font-semibold tracking-wide uppercase" title={t("bracket.thirdPlacedTeam")}>{t("rounds.shortThird")}</span>}
+            {third &&
+              (big ? (
+                <span className="text-muted-2 font-mono text-[8px] font-semibold tracking-wide uppercase" title={t("bracket.thirdPlacedTeam")}>{t("rounds.shortThird")}</span>
+              ) : (
+                <span className="text-muted-2 shrink-0 font-mono text-[9px] font-semibold tabular-nums" title={t("bracket.thirdPlacedTeam")}>3</span>
+              ))}
             <span className={`text-foreground/70 min-w-0 flex-1 truncate ${big ? "text-xs" : "text-[11px]"}`}>{c.name}</span>
             <ProbMeter p={c.prob} width={big ? 30 : 22} className={`text-muted-foreground shrink-0 ${big ? "text-xs" : "text-[10px]"}`} />
           </div>

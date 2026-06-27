@@ -116,7 +116,7 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
             onClick={() => setOpen(false)}
             className="fixed inset-x-0 top-14 bottom-0 z-40 bg-black/40 md:hidden"
           />
-          <nav className="border-border/70 bg-background/95 absolute inset-x-0 top-14 z-50 space-y-0.5 border-b p-2 shadow-lg backdrop-blur-xl md:hidden">
+          <nav className="border-border/70 bg-background/95 absolute inset-x-0 top-14 z-50 space-y-0.5 border-b p-2 backdrop-blur-xl md:hidden dark:inset-ring dark:inset-ring-white/5">
             {ROUTES.map((l) => {
               const active = isActive(l.href);
               return (

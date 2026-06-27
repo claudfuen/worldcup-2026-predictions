@@ -159,7 +159,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
                 <div key={key} className="bg-card flex flex-col items-center gap-1 px-2 py-4" style={{ backgroundColor: heat(r32Clinched ? 1 : v) }}>
                   <span className="text-muted-2 text-[10px] font-medium tracking-wide uppercase">{label}</span>
                   <span className={`font-mono text-lg font-bold tabular-nums ${r32Clinched ? "text-win" : key === "title" ? "text-primary" : ""}`}>
-                    {r32Clinched ? <span title={t("team.clinchedR32Title")}>✓</span> : r32Out ? t("team.outShort") : forecastPct(v)}
+                    {r32Clinched ? <span className="inline-flex items-center justify-center leading-none" title={t("team.clinchedR32Title")}>✓</span> : r32Out ? t("team.outShort") : forecastPct(v)}
                   </span>
                 </div>
               );
@@ -179,6 +179,16 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
           </div>
           <div className="border-border bg-card overflow-hidden rounded-2xl border">
             <table className="w-full text-sm">
+              <thead>
+                <tr className="text-muted-foreground text-[10px] tracking-wide">
+                  <th className="w-6 py-1.5 pr-1 pl-3 text-left font-medium" />
+                  <th className="py-1.5 text-left font-medium">{t("groups.colTeam")}</th>
+                  <th className="px-1 text-center font-medium" title={t("groups.colPlayedTitle")}>{t("groups.colPlayed")}</th>
+                  <th className="px-1 text-center font-medium" title={t("groups.colGdTitle")}>{t("groups.colGd")}</th>
+                  <th className="px-1 text-center font-semibold" title={t("groups.colPtsTitle")}>{t("groups.colPts")}</th>
+                  <th className="px-2 pr-3 text-right font-medium" />
+                </tr>
+              </thead>
               <tbody>
                 {groupView.teams.map((tm, i) => {
                   const me = tm.code === team.code;
@@ -226,8 +236,8 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
                     <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
                       {m.home === team.code ? m.homeScore : m.awayScore}–{m.home === team.code ? m.awayScore : m.homeScore}
                     </span>
-                  ) : m.favorite ? (
-                    <span className="text-muted-2 shrink-0 text-[11px]">{m.favorite.code === team.code ? t("team.favored") : ""}</span>
+                  ) : m.favorite && m.favorite.code === team.code ? (
+                    <span className="text-muted-2 shrink-0 text-[11px]">{t("team.favored")}</span>
                   ) : null}
                 </Link>
               );

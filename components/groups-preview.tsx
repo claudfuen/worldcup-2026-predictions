@@ -26,7 +26,7 @@ export async function GroupsPreview({ groups, className = "" }: { groups: GroupV
           <div key={g.group} className="flex items-center gap-1.5 text-xs">
             <span className="text-muted-2 w-3 shrink-0 font-mono">{g.group}</span>
             <Flag code={g.teams[0]?.code ?? null} size={14} />
-            <span className="text-foreground/80 min-w-0 truncate font-medium">{g.teams[0]?.code}</span>
+            <span className="text-foreground/80 min-w-0 truncate font-medium">{g.teams[0]?.name}</span>
           </div>
         ))}
       </div>

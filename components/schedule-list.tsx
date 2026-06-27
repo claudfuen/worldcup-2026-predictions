@@ -138,7 +138,7 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
           )}
           <div className="text-muted-2 hidden max-w-44 truncate text-[10px] sm:block">{fifaVenue(m.venue)}</div>
         </div>
-        {upcoming && <TicketLink matchNo={m.match} placement="schedule_row" variant="inline" className="relative -my-2 px-1 py-2" />}
+        {upcoming && <TicketLink matchNo={m.match} placement="schedule_row" variant="inline" className="relative z-10 -my-2 px-1 py-2" />}
       </div>
     </div>
   );
@@ -167,7 +167,7 @@ function Segmented({ options, value, onChange }: { options: { key: string; label
           onClick={() => onChange(o.key)}
           aria-pressed={value === o.key}
           className={`flex-1 rounded-[0.3rem] px-3 py-2 text-sm whitespace-nowrap sm:flex-none sm:py-1 ${
-            value === o.key ? "bg-surface-raised text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
+            value === o.key ? "bg-surface-raised text-foreground inset-ring inset-ring-white/10 font-medium" : "text-muted-foreground hover:text-foreground"
           }`}
         >
           {o.label}

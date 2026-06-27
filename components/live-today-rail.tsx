@@ -130,14 +130,15 @@ function RailSection({
 function LiveRow({ m, t, locale }: { m: MatchInfo; t: TFunction; locale: Locale }) {
   return (
     <Link href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-live/[0.08] bg-live/[0.04] block px-4 py-3">
-      {/* Left-anchored matchup + score; the live clock is a quiet element pinned to the right of the row. */}
-      <div className="flex items-center gap-2">
+      {/* Left-anchored matchup + score; the live clock is a quiet element pinned to the right of the row.
+          On narrow mobile it wraps below so the two team names keep their width and stay legible. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <Flag code={m.home} size={20} />
         <span className="min-w-0 shrink truncate text-[15px] font-semibold">{m.homeName}</span>
         <span className="shrink-0 px-1 font-mono text-base font-bold tabular-nums">{m.homeScore}<span className="text-muted-2 px-0.5">–</span>{m.awayScore}</span>
         <Flag code={m.away} size={20} />
         <span className="min-w-0 shrink truncate text-[15px] font-semibold">{m.awayName}</span>
-        <span className="text-live ml-auto inline-flex shrink-0 items-center gap-1.5 pl-2 font-mono text-xs font-bold tracking-wide">
+        <span className="text-live inline-flex shrink-0 items-center gap-1.5 ps-2 font-mono text-xs font-bold tracking-wide max-sm:ms-7 max-sm:basis-full max-sm:ps-0 sm:ms-auto">
           <span className="bg-live size-2 animate-pulse rounded-full" />{m.liveDetail ?? t("home.liveUpper")}
         </span>
       </div>
@@ -154,7 +155,7 @@ function SlateRow({ m, zone, hotReason, t, locale, showDate = false }: { m: Matc
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? t("common.tbd");
   return (
     <Link href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-muted/20 flex items-center gap-2 px-4 py-2.5 sm:gap-3">
-      <span className={`text-muted-2 shrink-0 font-mono text-[11px] ${showDate ? "whitespace-nowrap" : "w-12 sm:w-16"}`} suppressHydrationWarning>
+      <span className={`text-muted-2 shrink-0 font-mono text-[11px] ${showDate ? "whitespace-nowrap" : "w-14 sm:w-16"}`} suppressHydrationWarning>
         {showDate ? fmtDay(m.utc, zone) : fmtTime(m.utc, zone)}
       </span>
       <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">

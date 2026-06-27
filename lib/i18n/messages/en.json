@@ -464,6 +464,7 @@
   },
   "signin": {
     "heading": "Sign in",
+    "emailLabel": "Email address",
     "subtext": "We'll email you a magic link - no password. Sign in to save the matches you're tracking.",
     "submit": "Email me a sign-in link",
     "sending": "Sending…",

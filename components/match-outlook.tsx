@@ -31,6 +31,8 @@ export async function MatchOutlook({ round, home, away }: { round: string; home:
         <span className={`truncate text-[13px] font-medium ${out ? "text-muted-foreground line-through" : ""}`}>{tm.name}</span>
       </div>
       {out ? (
+        // One readable band across the onward-ladder columns (a single state, not per-column data). Spanning
+        // keeps "Eliminated" legible — the narrow ~40px data columns can't hold the word on their own.
         <div className="bg-card text-muted-2 flex items-center px-3 py-2.5 text-xs" style={{ gridColumn: `span ${cols.length}` }}>{t("common.eliminated")}</div>
       ) : (
         cols.map(([k]) => (

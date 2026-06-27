@@ -20,13 +20,13 @@ export async function ProvisionalStandings({ proj, bare }: { proj: ProvisionalGr
             <span className="inline-flex items-center gap-1 font-semibold text-live">
               <span className="size-1.5 animate-pulse rounded-full bg-live" />{t("groups.liveUpper")}
             </span>
-            <Link href={localeHref(locale, `/team/${teamSlug(TEAM_BY_CODE[l.home]?.name ?? l.home)}`)} className="flex items-center gap-1.5 hover:underline">
+            <Link href={localeHref(locale, `/team/${teamSlug(TEAM_BY_CODE[l.home]?.name ?? l.home)}`)} className="flex min-w-0 items-center gap-1.5 hover:underline">
               <Flag code={l.home} size={14} />
-              <span className="font-medium">{t(`teams.${l.home}`)}</span>
+              <span className="min-w-0 truncate font-medium">{t(`teams.${l.home}`)}</span>
             </Link>
-            <span className="font-mono font-bold tabular-nums">{l.homeGoals}&ndash;{l.awayGoals}</span>
-            <Link href={localeHref(locale, `/team/${teamSlug(TEAM_BY_CODE[l.away]?.name ?? l.away)}`)} className="flex items-center gap-1.5 hover:underline">
-              <span className="font-medium">{t(`teams.${l.away}`)}</span>
+            <span className="shrink-0 font-mono font-bold tabular-nums">{l.homeGoals}&ndash;{l.awayGoals}</span>
+            <Link href={localeHref(locale, `/team/${teamSlug(TEAM_BY_CODE[l.away]?.name ?? l.away)}`)} className="flex min-w-0 items-center gap-1.5 hover:underline">
+              <span className="min-w-0 truncate font-medium">{t(`teams.${l.away}`)}</span>
               <Flag code={l.away} size={14} />
             </Link>
           </div>

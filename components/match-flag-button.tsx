@@ -73,7 +73,7 @@ export function MatchFlagButton({
       aria-pressed={on}
       aria-label={on ? t("matchFlag.removeFromMyMatches") : t("matchFlag.addToMyMatches")}
       title={on ? t("matchFlag.removeFromMyMatches") : t("matchFlag.addToMyMatches")}
-      className={`shrink-0 rounded-md p-1 leading-none disabled:opacity-60 ${
+      className={`flex size-9 shrink-0 items-center justify-center rounded-md disabled:opacity-60 ${
         on ? "text-contention" : "text-muted-foreground/40 hover:text-muted-foreground"
       }`}
     >

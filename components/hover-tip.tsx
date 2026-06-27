@@ -19,11 +19,18 @@ import { createPortal } from "react-dom";
 
 type TipPos = { left: number; top?: number; bottom?: number };
 
+const PANEL_W = 256; // matches the panel's w-64
+
 function place(el: Element): TipPos {
   const r = el.getBoundingClientRect();
-  const left = Math.max(8, Math.min(r.left, window.innerWidth - 272)); // 256px panel + margin
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - PANEL_W - 8)); // panel + margin
   const below = r.bottom < window.innerHeight * 0.6; // flip above in the lower viewport so it stays on-screen
-  return below ? { left, top: r.bottom + 6 } : { left, bottom: window.innerHeight - r.top + 6 };
+  if (below) {
+    // Keep the panel's bottom on-screen on short viewports, mirroring the left-edge guard.
+    const top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - 8));
+    return { left, top };
+  }
+  return { left, bottom: window.innerHeight - r.top + 6 };
 }
 
 export function useHoverTip() {
@@ -68,7 +75,7 @@ export function HoverTipPanel({ pos, children }: { pos: TipPos | null; children:
     <div
       role="tooltip"
       style={{ position: "fixed", left: pos.left, top: pos.top, bottom: pos.bottom, zIndex: 60 }}
-      className="border-border-strong bg-surface-raised/95 pointer-events-none w-64 rounded-xl border p-3 text-xs shadow-xl backdrop-blur supports-[backdrop-filter]:bg-surface-raised/85"
+      className="border-border-strong bg-surface-raised/95 pointer-events-none w-64 rounded-xl border p-3 text-xs shadow-xl ring-1 ring-black/40 dark:shadow-none backdrop-blur supports-[backdrop-filter]:bg-surface-raised/85"
     >
       {children}
     </div>,

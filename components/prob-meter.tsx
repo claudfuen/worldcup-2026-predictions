@@ -11,7 +11,10 @@ export function ProbMeter({ p, width = 26, className = "" }: { p: number; width?
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`}>
       <span className="bg-muted/30 relative inline-block h-1 shrink-0 overflow-hidden rounded-full" style={{ width }} aria-hidden>
-        <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(v * 100, 4)}%`, background: fill }} />
+        {v * 100 >= 2 && (
+          // Floor to a visible 3px so a long shot reads as an intentional minimal mark, not a sub-pixel artifact.
+          <span className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${v * 100}%`, minWidth: 3, background: fill }} />
+        )}
       </span>
       <span className="font-mono tabular-nums">{forecastPct(p)}</span>
     </span>

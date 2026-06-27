@@ -262,7 +262,7 @@ export function InstallPrompt() {
         aria-modal="true"
         aria-label={t("install.dialogAria")}
         tabIndex={-1}
-        className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 bg-surface-raised border-border-strong relative w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl duration-200 outline-none dark:inset-ring dark:inset-ring-white/5"
+        className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 bg-surface-raised border-border-strong relative w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl duration-200 outline-none dark:inset-ring dark:inset-ring-white/5 dark:shadow-none"
       >
         <button
           type="button"

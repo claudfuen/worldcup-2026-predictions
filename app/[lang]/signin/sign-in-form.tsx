@@ -52,6 +52,7 @@ export function SignInForm({ next }: { next: string }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
+        aria-label={t("signin.emailLabel")}
         className="border-border bg-card focus:border-primary/60 w-full rounded-xl border px-4 py-3 text-sm outline-none"
       />
       <button

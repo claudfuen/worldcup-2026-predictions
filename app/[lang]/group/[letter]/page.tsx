@@ -12,7 +12,6 @@ import { LocalTime } from "@/components/local-time";
 import { AdvanceBadge } from "@/components/view/advance-badge";
 import { teamAdvanceDisplay } from "@/lib/view/advance";
 import { pct } from "@/lib/format";
-import { ProbMeter } from "@/components/prob-meter";
 import { HotBadge } from "@/components/hot-badge";
 import { computeWatchability } from "@/lib/watchability";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -156,11 +155,7 @@ export default async function GroupPage({ params }: { params: Promise<{ letter: 
                     <Cell v={(tm.gd >= 0 ? "+" : "") + tm.gd} />
                     <td className="px-1 text-center font-mono text-[13px] font-bold tabular-nums">{tm.pts}</td>
                     <td className="px-1 pr-3 text-right whitespace-nowrap">
-                      {tm.status === "live" ? (
-                        <span className="inline-flex justify-end"><ProbMeter p={tm.advance} width={18} className="text-muted-foreground text-[11px]" /></span>
-                      ) : (
-                        <AdvanceBadge d={teamAdvanceDisplay(tm, i)} />
-                      )}
+                      <AdvanceBadge d={teamAdvanceDisplay(tm, i)} />
                     </td>
                   </tr>
                 );
