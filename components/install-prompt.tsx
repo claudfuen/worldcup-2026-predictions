@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 
@@ -55,6 +55,7 @@ export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [show, setShow] = useState(false);
   const [iosTip, setIosTip] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Count this tab-session once (returning-visitor signal) + tag how the app was opened, so we can see
   // installed-app usage vs browser in analytics (the app is "aware" of running as an installed instance).
@@ -170,12 +171,37 @@ export function InstallPrompt() {
     return () => clearTimeout(t);
   }, [views, deferred, show]);
 
-  // Lock background scroll while the popup is up (it's a modal).
+  // Modal behaviour while the popup is up: lock scroll, move focus into the dialog, Escape to close,
+  // trap Tab within it, and restore focus on close (a11y / world-class modal hygiene).
   useEffect(() => {
     if (!show) return;
+    const prevFocus = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        dismiss();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const f = dialogRef.current.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])');
+        if (f.length === 0) return;
+        const first = f[0];
+        const last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+      prevFocus?.focus?.();
     };
   }, [show]);
 
@@ -225,10 +251,12 @@ export function InstallPrompt() {
         className="animate-in fade-in absolute inset-0 bg-black/60 backdrop-blur-sm duration-200"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Add to home screen"
-        className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 bg-surface-raised border-border-strong relative w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl duration-200 dark:inset-ring dark:inset-ring-white/5"
+        tabIndex={-1}
+        className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 bg-surface-raised border-border-strong relative w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl duration-200 outline-none dark:inset-ring dark:inset-ring-white/5"
       >
         <button
           type="button"
