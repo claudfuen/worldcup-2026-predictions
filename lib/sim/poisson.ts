@@ -164,6 +164,33 @@ export function liveKoAdvance(
   return reg.win + reg.draw * (et.win + et.draw * 0.5);
 }
 
+// In-game state for the live model (beyond the scoreline): red cards and shot/possession dominance.
+export interface LiveInGame {
+  redHome?: number; redAway?: number;
+  possHome?: number; possAway?: number; // %
+  shotsHome?: number; shotsAway?: number;
+  sotHome?: number; sotAway?: number; // shots on target
+}
+
+// An Elo-equivalent nudge to the home rating gap from the live in-game state, used to bend the
+// remaining-time goal rates. Two effects, deliberately bounded so they refine rather than dominate the
+// scoreline:
+//   • Red cards — a sending-off is a heavy handicap, and it matters MORE the more time remains (more match
+//     left to exploit the extra man); weighted up by the remaining fraction.
+//   • Shot / possession dominance — a noisy signal early, so its weight GROWS as the match is observed
+//     (1 - fraction remaining), and it's capped.
+export function liveEloAdjustment(g: LiveInGame, frac: number): number {
+  const f = Math.max(0, Math.min(1, frac));
+  const RED = 220; // Elo per net red card (at full remaining time)
+  const redNudge = ((g.redAway ?? 0) - (g.redHome ?? 0)) * RED * (0.35 + 0.65 * f);
+  const sotDiff = (g.sotHome ?? 0) - (g.sotAway ?? 0);
+  const shotDiff = (g.shotsHome ?? 0) - (g.shotsAway ?? 0);
+  const possDiff = ((g.possHome ?? 50) - (g.possAway ?? 50)) / 100;
+  const dom = sotDiff * 14 + shotDiff * 4 + possDiff * 60; // Elo from in-game dominance
+  const domNudge = Math.max(-140, Math.min(140, dom)) * (1 - f);
+  return redNudge + domNudge;
+}
+
 // Sample the FINAL scoreline of an in-progress match for the Monte Carlo: current score + Poisson goals
 // over the remaining fraction. frac=0 returns the current score unchanged (match effectively over).
 export function sampleRemainingScoreline(

@@ -342,7 +342,19 @@
     "unitDays": "d",
     "unitHours": "h",
     "unitMins": "m",
-    "unitSecs": "s"
+    "unitSecs": "s",
+    "timeline": "Match events",
+    "assist": "assist: {name}",
+    "penaltyTag": "pen.",
+    "ownGoalTag": "o.g.",
+    "yellowCardLabel": "Yellow card",
+    "redCardLabel": "Red card",
+    "matchStats": "Match stats",
+    "statPossession": "Possession",
+    "statShots": "Shots",
+    "statShotsOnTarget": "Shots on target",
+    "statCorners": "Corners",
+    "statFouls": "Fouls"
   },
   "team": {
     "fallbackTitle": "Team",

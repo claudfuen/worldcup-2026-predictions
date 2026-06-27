@@ -1,7 +1,8 @@
 import { cache } from "react";
 import { fetchLive, type LiveMatch } from "./espn";
-import { liveWdl, liveKoAdvance, fracRemaining } from "./sim/poisson";
+import { liveWdl, liveKoAdvance, fracRemaining, liveEloAdjustment } from "./sim/poisson";
 import { hostEloBoost } from "./sim/hosts";
+import { redCardCount, type MatchSummary } from "./matchEvents";
 import { kvGetJSON, kvSetJSON, KV_CONFIGURED, LIVE_FEED_KEY } from "./kv";
 import type { Ratings } from "./sim/types";
 import type { MatchInfo } from "./predictions";
@@ -75,15 +76,28 @@ export interface LiveProbs {
 // CURRENT win/draw/loss for an in-progress match, conditioned on the live score and minute elapsed — the
 // "now" read shown next to the pre-match forecast. Uses the same rating gap as the cron's pre-match probs
 // (live Elo + host advantage), so the two reconcile: at kickoff this ~equals the pre-match line and sharpens
-// toward the actual result as the clock runs. Returns null when the match isn't live or the minute is unknown
-// (we don't guess a clock). Cheap + analytic, so it can run on every render at no extra ESPN cost.
-export function liveMatchProbs(m: MatchInfo, ratings: Ratings): LiveProbs | null {
+// toward the actual result as the clock runs. When the match summary is supplied, the gap is further bent by
+// the in-game state — red cards (a big handicap) and shot/possession dominance. Returns null when the match
+// isn't live or the minute is unknown (we don't guess a clock). Cheap + analytic.
+export function liveMatchProbs(m: MatchInfo, ratings: Ratings, summary?: MatchSummary): LiveProbs | null {
   if (m.status !== "live" || !m.home || !m.away || m.homeScore == null || m.awayScore == null) return null;
   if (m.liveMinute == null) return null;
-  const diff =
+  const frac = fracRemaining(m.liveMinute);
+  let diff =
     (ratings[m.home] ?? 1500) - (ratings[m.away] ?? 1500) +
     hostEloBoost(m.home, m.venue) - hostEloBoost(m.away, m.venue);
-  const frac = fracRemaining(m.liveMinute);
+  if (summary) {
+    const reds = redCardCount(summary.events, m.home, m.away);
+    diff += liveEloAdjustment(
+      {
+        redHome: reds.home, redAway: reds.away,
+        possHome: summary.stats?.home.possession ?? undefined, possAway: summary.stats?.away.possession ?? undefined,
+        shotsHome: summary.stats?.home.shots ?? undefined, shotsAway: summary.stats?.away.shots ?? undefined,
+        sotHome: summary.stats?.home.shotsOnTarget ?? undefined, sotAway: summary.stats?.away.shotsOnTarget ?? undefined,
+      },
+      frac,
+    );
+  }
   const wdl = liveWdl(diff, m.homeScore, m.awayScore, frac);
   const out: LiveProbs = { minute: m.liveMinute, home: wdl.win, draw: wdl.draw, away: wdl.loss };
   if (m.round !== "GROUP") {

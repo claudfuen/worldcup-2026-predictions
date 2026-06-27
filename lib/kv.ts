@@ -54,3 +54,7 @@ export const LIVE_SIG_KEY = "predictions:livesig:v11";
 // Short-lived cache of the raw ESPN live scoreboard, shared across requests so a traffic spike during a
 // match can't hammer ESPN (bounded to a few calls per minute regardless of concurrent visitors).
 export const LIVE_FEED_KEY = "live:scoreboard:v1";
+
+// Per-match timeline + stats from ESPN's summary endpoint (suffixed with the match number). Short TTL for
+// live matches, hours for finished ones — set by the caller; this is just the key prefix.
+export const MATCH_EVENTS_KEY = "match:summary:v1";

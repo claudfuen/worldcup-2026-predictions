@@ -9,7 +9,10 @@ import { pct, forecastPct } from "@/lib/format";
 import { LiveAutoRefresh } from "@/components/live-auto-refresh";
 import { LocalTime } from "@/components/local-time";
 import { provisionalGroup, ratingsFromTeams, finalizeGroups, finalizeBracket } from "@/lib/liveProjection";
+import { getMatchSummary } from "@/lib/matchEvents";
 import { ProvisionalStandings } from "@/components/provisional-standings";
+import { MatchTimeline } from "@/components/match-timeline";
+import { MatchStats } from "@/components/match-stats";
 import { WinProbBar } from "@/components/win-prob-bar";
 import { MatchOutlook } from "@/components/match-outlook";
 import { BracketPath } from "@/components/bracket-path";
@@ -83,9 +86,11 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   const m = localizeMatch(found, t);
   const state: "final" | "live" | "defined" | "undefined" =
     m.status === "final" ? "final" : m.status === "live" ? "live" : m.defined ? "defined" : "undefined";
-  // Current win probability for an in-progress match, conditioned on the live score + minute (instant,
-  // analytic — recomputed every render off the live fetch, no cron lag). Null if the minute is unknown.
-  const liveProbs = liveMatchProbs(m, ratings);
+  // Per-match timeline (goals/cards) + headline stats from ESPN, for live and completed matches.
+  const summary = await getMatchSummary(m);
+  // Current win probability for an in-progress match, conditioned on the live score + minute AND the in-game
+  // state (red cards, shot/possession dominance). Instant/analytic; null if the minute is unknown.
+  const liveProbs = liveMatchProbs(m, ratings, summary);
   // Is this one of the current watch-plan picks? (same scorer as the homepage "matches to watch")
   const heat = computeWatchability(allMatches, data.teams, data.groups).byMatch.get(m.match);
   // Both teams' path-to-the-final odds, for the tournament-outlook comparison (only when both are known).
@@ -326,6 +331,10 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           </div>
         </section>
       )}
+
+      {/* What actually happened: goals/cards timeline + head-to-head stats (live + completed matches). */}
+      {m.home && m.away && <MatchTimeline events={summary.events} homeCode={m.home} awayCode={m.away} />}
+      <MatchStats stats={summary.stats} />
 
       {homePred && awayPred && <MatchOutlook round={m.round} home={homePred} away={awayPred} />}
 
