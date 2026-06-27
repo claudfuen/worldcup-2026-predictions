@@ -18,6 +18,8 @@ import { ShareBar } from "@/components/share-bar";
 import { computeWatchability } from "@/lib/watchability";
 import { TicketLink } from "@/components/ticket-link";
 import { hasTickets, TICKET_PROVIDER } from "@/lib/tickets";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { RelatedLinks, type RelLink } from "@/components/related-links";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,6 +99,20 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
         )
       : null;
 
+  const matchLabel = `${m.homeName ?? prettySlot(m.slotHome)} v ${m.awayName ?? prettySlot(m.slotAway)}`;
+  // Breadcrumb parents are contextual: group matches sit under their Group; knockouts under the Bracket.
+  const crumbs =
+    m.round === "GROUP" && m.group
+      ? [{ label: "Home", href: "/" }, { label: "Groups", href: "/groups" }, { label: `Group ${m.group}`, href: `/group/${m.group.toLowerCase()}` }, { label: matchLabel }]
+      : [{ label: "Home", href: "/" }, { label: "Bracket", href: "/bracket" }, { label: ROUND_NAME[m.round], href: "/bracket" }, { label: matchLabel }];
+  // "Keep exploring" windows: both teams, the parent group/bracket, and the schedule.
+  const related: RelLink[] = [];
+  if (m.home && m.homeName) related.push({ label: m.homeName, href: `/team/${teamSlug(m.homeName)}`, code: m.home });
+  if (m.away && m.awayName) related.push({ label: m.awayName, href: `/team/${teamSlug(m.awayName)}`, code: m.away });
+  if (m.round === "GROUP" && m.group) related.push({ label: `Group ${m.group}`, href: `/group/${m.group.toLowerCase()}`, hint: "standings" });
+  related.push({ label: "Bracket", href: "/bracket", hint: "knockout path" });
+  related.push({ label: "Full schedule", href: "/schedule" });
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {eventLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }} />}
@@ -104,7 +120,7 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       <h1 className="sr-only">
         {(m.homeName ?? prettySlot(m.slotHome))} vs {(m.awayName ?? prettySlot(m.slotAway))} prediction - World Cup 2026 {ROUND_NAME[m.round]}
       </h1>
-      <Link href="/schedule" className="text-muted-foreground hover:text-foreground text-sm">← Schedule</Link>
+      <Breadcrumbs items={crumbs} />
 
       {/* Top band: the matchup hero beside a match-facts rail — uses the width instead of a lonely column. */}
       <div className="mt-4 grid items-stretch gap-5 lg:grid-cols-5">
@@ -142,7 +158,16 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
         <aside className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border lg:col-span-2">
           <FactRow label="Kickoff" value={<LocalTime utc={m.utc} mode="datetime" />} />
           <FactRow label="Venue" value={`${m.venue}, ${m.city}`} />
-          <FactRow label="Stage" value={`${ROUND_NAME[m.round]}${m.group ? ` · Group ${m.group}` : ""} · Match ${m.match}`} />
+          <FactRow label="Stage" value={
+            <>
+              {m.round === "GROUP" && m.group ? (
+                <>Group stage · <Link href={`/group/${m.group.toLowerCase()}`} className="hover:text-primary underline-offset-2 hover:underline">Group {m.group}</Link></>
+              ) : (
+                <Link href="/bracket" className="hover:text-primary underline-offset-2 hover:underline">{ROUND_NAME[m.round]}</Link>
+              )}
+              <span className="text-muted-2"> · Match {m.match}</span>
+            </>
+          } />
           <FactRow label="Status" value={state === "final" ? "Full time" : state === "live" ? `Live · ${m.liveDetail}` : "Upcoming"} />
           {heat?.hot && <FactRow label="Worth watching" value={heat.reason} />}
           {state !== "final" && state !== "live" && hasTickets(m.match) && (
@@ -257,6 +282,8 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           <p className="text-muted-2 mt-2 text-xs">How likely each contender is to fill the slot, across {data.iterations.toLocaleString()} simulations.</p>
         </section>
       )}
+
+      <RelatedLinks links={related} />
     </main>
   );
 }
