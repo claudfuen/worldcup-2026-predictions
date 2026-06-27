@@ -4,14 +4,27 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 
-// "Add to Home Screen" prompt for retention. Gated by engagement (a returning visitor, or 3rd page this
-// session) so first-time landers aren't nagged; remembers dismissal for 30 days. Android uses the native
-// beforeinstallprompt; iOS (no native prompt) gets Share → Add to Home Screen instructions. Lifecycle
-// outcomes go to both analytics backends via trackEvent.
+// "Add to Home Screen" install popup. Pervasive (the tournament is short-lived): shows once per session,
+// fires on the first visit after a brief dwell, and re-prompts again the next session (≥2h later) even
+// after a dismiss. Re-openable on demand via the `wc:open-install` window event (the nav menu dispatches
+// it). Android uses the native beforeinstallprompt; iOS/others get Add-to-Home-Screen instructions.
 const DISMISS_KEY = "wc:install-dismissed-until";
 const SESSIONS_KEY = "wc:sessions";
 const SESSION_GUARD = "wc:session-started";
-const DISMISS_DAYS = 1; // World Cup runs fast — re-prompt the next day rather than waiting weeks
+const SHOWN_SESSION_KEY = "wc:install-shown-session";
+const INSTALLED_KEY = "wc:installed";
+const COOLDOWN_MS = 2 * 60 * 60 * 1000; // after a dismiss, suppress for ~2h (so a new session re-prompts)
+export const OPEN_INSTALL_EVENT = "wc:open-install";
+
+function isInstalled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (localStorage.getItem(INSTALLED_KEY) === "1") return true;
+  } catch {
+    /* ignore */
+  }
+  return isStandalone();
+}
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -35,16 +48,33 @@ export function InstallPrompt() {
   const [show, setShow] = useState(false);
   const [iosTip, setIosTip] = useState(false);
 
-  // Count this tab-session once (returning-visitor signal).
+  // Count this tab-session once (returning-visitor signal) + tag how the app was opened, so we can see
+  // installed-app usage vs browser in analytics (the app is "aware" of running as an installed instance).
   useEffect(() => {
     try {
       if (!sessionStorage.getItem(SESSION_GUARD)) {
         localStorage.setItem(SESSIONS_KEY, String(Number(localStorage.getItem(SESSIONS_KEY) ?? "0") + 1));
         sessionStorage.setItem(SESSION_GUARD, "1");
+        trackEvent("app_open", { mode: isStandalone() ? "standalone" : "browser" });
       }
     } catch {
       /* storage blocked */
     }
+  }, []);
+
+  // Fired by the browser when the PWA is actually installed — record the conversion and never prompt again.
+  useEffect(() => {
+    const onInstalled = () => {
+      try {
+        localStorage.setItem(INSTALLED_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      trackEvent("pwa_installed", { platform: isIos() ? "ios" : "android" });
+      setShow(false);
+    };
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
   }, []);
 
   // Count page views this session (the layout persists across client navigations).
@@ -57,6 +87,18 @@ export function InstallPrompt() {
     } catch {
       /* ignore */
     }
+  }, []);
+
+  // Manual re-open from anywhere (e.g. the nav menu "Add to home screen" item), bypassing all gating.
+  useEffect(() => {
+    const open = () => {
+      if (isInstalled()) return; // already installed → nothing to prompt
+      setIosTip(false);
+      setShow(true);
+      trackEvent("pwa_prompt_shown", { platform: isIos() ? "ios" : "android", source: "menu" });
+    };
+    window.addEventListener(OPEN_INSTALL_EVENT, open);
+    return () => window.removeEventListener(OPEN_INSTALL_EVENT, open);
   }, []);
 
   // Capture Android's installability event.
@@ -72,19 +114,26 @@ export function InstallPrompt() {
   // Decide whether to surface the prompt. Aggressive (the tournament is short-lived): fire on the first
   // visit after a brief dwell so they glimpse value, and almost instantly for returning/engaged users.
   useEffect(() => {
-    if (show || isStandalone()) return;
+    if (show || isInstalled()) return;
     let sessions = 0;
-    let dismissedUntil = 0;
+    let until = 0;
+    let shownThisSession = false;
     try {
       sessions = Number(localStorage.getItem(SESSIONS_KEY) ?? "0");
-      dismissedUntil = Number(localStorage.getItem(DISMISS_KEY) ?? "0");
+      until = Number(localStorage.getItem(DISMISS_KEY) ?? "0");
+      shownThisSession = sessionStorage.getItem(SHOWN_SESSION_KEY) === "1";
     } catch {
       /* ignore */
     }
-    if (Date.now() < dismissedUntil) return;
+    if (shownThisSession || Date.now() < until) return; // once per session; ~2h cooldown after a dismiss
     if (!deferred && !isIos()) return; // can't install: desktop/Android without the event
     const engaged = sessions >= 2 || views >= 2; // returning, or has clicked into something
     const t = setTimeout(() => {
+      try {
+        sessionStorage.setItem(SHOWN_SESSION_KEY, "1");
+      } catch {
+        /* ignore */
+      }
       setShow(true);
       trackEvent("pwa_prompt_shown", { platform: deferred ? "android" : "ios" });
     }, engaged ? 1200 : 5000);
@@ -102,7 +151,7 @@ export function InstallPrompt() {
 
   function remember() {
     try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DAYS * 86_400_000));
+      localStorage.setItem(DISMISS_KEY, String(Date.now() + COOLDOWN_MS));
     } catch {
       /* ignore */
     }
@@ -120,8 +169,9 @@ export function InstallPrompt() {
       trackEvent("pwa_install_choice", { platform: "android", outcome: choice?.outcome ?? "unknown" });
       setDeferred(null);
       remember();
-    } else if (isIos()) {
-      trackEvent("pwa_install_ios_instructions", { platform: "ios" });
+    } else {
+      // No native prompt (iOS, or a manual open without an install event) → show instructions.
+      trackEvent("pwa_install_instructions", { platform: isIos() ? "ios" : "other" });
       setIosTip(true);
     }
   }
@@ -178,10 +228,18 @@ export function InstallPrompt() {
               </svg>
             </span>
             <h2 className="font-display mt-4 text-lg font-semibold tracking-tight">Add it in two taps</h2>
-            <p className="text-muted-foreground mt-1.5 text-sm text-pretty">
-              Tap the <span className="text-foreground font-medium">Share</span> button in Safari, then choose{" "}
-              <span className="text-foreground font-medium">“Add to Home Screen.”</span>
-            </p>
+            {isIos() ? (
+              <p className="text-muted-foreground mt-1.5 text-sm text-pretty">
+                Tap the <span className="text-foreground font-medium">Share</span> button in Safari, then choose{" "}
+                <span className="text-foreground font-medium">“Add to Home Screen.”</span>
+              </p>
+            ) : (
+              <p className="text-muted-foreground mt-1.5 text-sm text-pretty">
+                Open your browser menu (<span className="text-foreground font-medium">⋮</span>), then choose{" "}
+                <span className="text-foreground font-medium">“Add to Home screen”</span> or{" "}
+                <span className="text-foreground font-medium">“Install app.”</span>
+              </p>
+            )}
             <button type="button" onClick={dismiss} className="text-muted-foreground hover:text-foreground mt-5 w-full rounded-lg px-4 py-2 text-sm">Got it</button>
           </>
         )}

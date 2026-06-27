@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { fmtTime, fmtDateTime } from "@/lib/format";
 import { useViewerZone } from "@/lib/useViewerZone";
+import { OPEN_INSTALL_EVENT } from "@/components/install-prompt";
 
 // The final is 2026-07-19; after it, the cron stops and the payload is the frozen final state. Past
 // this instant the freshness indicator reads "Final" rather than an ever-growing "Updated Xd ago",
@@ -22,7 +23,22 @@ const LINKS = [
 export function Nav({ updatedAt }: { updatedAt: string | null }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const [installed, setInstalled] = useState(false);
   const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+
+  // Awareness of running as / having an installed instance — hides the "Add to home screen" affordance.
+  useEffect(() => {
+    try {
+      const nav = navigator as Navigator & { standalone?: boolean };
+      setInstalled(
+        localStorage.getItem("wc:installed") === "1" ||
+          window.matchMedia("(display-mode: standalone)").matches ||
+          Boolean(nav.standalone),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Close the mobile drawer on navigation and on Escape.
   useEffect(() => setOpen(false), [path]);
@@ -108,6 +124,21 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
                 </Link>
               );
             })}
+            {!installed && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  window.dispatchEvent(new Event(OPEN_INSTALL_EVENT));
+                }}
+                className="text-muted-foreground hover:bg-muted/30 hover:text-foreground border-border/60 mt-1 flex w-full items-center gap-2 rounded-lg border-t px-3 py-3 text-base"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden className="text-primary">
+                  <path d="M12 3v12" /><path d="m7 11 5 5 5-5" /><path d="M5 21h14" />
+                </svg>
+                Add to home screen
+              </button>
+            )}
           </nav>
         </>
       )}
