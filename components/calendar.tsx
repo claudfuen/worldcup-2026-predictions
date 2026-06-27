@@ -107,8 +107,9 @@ export function Calendar({ matches }: { matches: MatchInfo[] }) {
 
   return (
     <div suppressHydrationWarning>
-      {/* Phase legend — sticky so the colour key stays visible deep in the calendar */}
-      <div className="bg-background/90 border-border/40 sticky top-14 z-20 -mx-4 mb-4 border-b px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      {/* Phase legend — pinned below the nav + score ticker on desktop so the colour key stays visible
+          deep in the calendar (mobile labels the phase inline in each day header, so it's a plain bar there). */}
+      <div className="bg-background/90 border-border/40 z-20 -mx-4 mb-4 border-b px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 md:sticky md:top-[85px] lg:-mx-8 lg:px-8">
         <div className="flex flex-wrap gap-x-3 gap-y-1.5">
           {PHASES.filter((p) => present.has(p.key)).map((p) => (
             <span key={p.key} className="inline-flex items-center gap-1.5 text-xs">
@@ -222,9 +223,9 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
         {m.group && <span className="shrink-0 truncate">{m.group}</span>}
       </div>
       <div className="px-2 pt-1 pb-1.5">
-        <Side resolved={!!m.home} code={homeCode} name={homeName} score={final || live ? m.homeScore : undefined} win={homeWin} cands={m.projHome} />
+        <Side resolved={!!m.home} code={homeCode} name={homeName} score={final || live ? m.homeScore : undefined} win={homeWin} cands={m.projHome} knockout={m.round !== "GROUP"} />
         <div className="border-border/40 my-1 border-t" />
-        <Side resolved={!!m.away} code={awayCode} name={awayName} score={final || live ? m.awayScore : undefined} win={awayWin} cands={m.projAway} />
+        <Side resolved={!!m.away} code={awayCode} name={awayName} score={final || live ? m.awayScore : undefined} win={awayWin} cands={m.projAway} knockout={m.round !== "GROUP"} />
       </div>
     </Link>
   );
@@ -233,7 +234,18 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
 // One side of a card: a resolved/clinched team (single line + score) OR — for an unresolved knockout
 // slot — the top-3 candidate teams ranked by probability, so the potential fillers stay visible with a
 // clear hierarchy (#1 emphasized, the rest muted).
-function Side({ resolved, code, name, score, win, cands }: { resolved: boolean; code: string | null; name: string; score?: number; win?: boolean; cands?: SlotCandidate[] }) {
+function Side({ resolved, code, name, score, win, cands, knockout }: { resolved: boolean; code: string | null; name: string; score?: number; win?: boolean; cands?: SlotCandidate[]; knockout?: boolean }) {
+  // Clinched knockout participant: certain, so it gets the SAME prominence as the candidate lead (bold,
+  // larger flag) — but no probability bar, which reads as "settled" next to the candidates' bars.
+  if (resolved && knockout) {
+    return (
+      <div className="flex items-center gap-1.5 px-0.5 py-px">
+        <Flag code={code} size={15} />
+        <span className="text-foreground min-w-0 flex-1 truncate text-[13px] font-semibold">{name}</span>
+        {score != null && <span className={`shrink-0 font-mono text-[12px] tabular-nums ${win ? "text-foreground font-bold" : "text-muted-foreground"}`}>{score}</span>}
+      </div>
+    );
+  }
   if (!resolved && cands && cands.length > 1) {
     return (
       <div className="space-y-px">
@@ -242,7 +254,7 @@ function Side({ resolved, code, name, score, win, cands }: { resolved: boolean; 
           const w = Math.max(3, Math.min(c.prob, 0.99) * 100); // bar scaled to likelihood
           return (
             <div key={c.code} className="relative flex items-center overflow-hidden rounded">
-              <span className="absolute inset-y-0 left-0" style={{ width: `${w}%`, backgroundColor: mix("var(--primary)", lead ? 15 : 6) }} aria-hidden />
+              <span className="absolute inset-y-0 left-0" style={{ width: `${w}%`, backgroundColor: mix("var(--foreground)", lead ? 13 : 5) }} aria-hidden />
               <span className="relative flex w-full items-center gap-1.5 px-0.5 py-px">
                 <Flag code={c.code} size={lead ? 15 : 13} />
                 <span className={`min-w-0 flex-1 truncate ${lead ? "text-foreground text-[13px] font-semibold" : i === 1 ? "text-muted-foreground text-[11px]" : "text-muted-2 text-[11px]"}`}>{c.name}</span>
