@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPredictions } from "@/lib/getPredictions";
-import { getLiveMatches, overlayLive, liveActivity } from "@/lib/live";
+import { getLiveMatches, overlayLive, liveActivity, liveMatchProbs } from "@/lib/live";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
 import { slugForCode } from "@/lib/slug";
@@ -83,6 +83,9 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
   const m = localizeMatch(found, t);
   const state: "final" | "live" | "defined" | "undefined" =
     m.status === "final" ? "final" : m.status === "live" ? "live" : m.defined ? "defined" : "undefined";
+  // Current win probability for an in-progress match, conditioned on the live score + minute (instant,
+  // analytic — recomputed every render off the live fetch, no cron lag). Null if the minute is unknown.
+  const liveProbs = liveMatchProbs(m, ratings);
   // Is this one of the current watch-plan picks? (same scorer as the homepage "matches to watch")
   const heat = computeWatchability(allMatches, data.teams, data.groups).byMatch.get(m.match);
   // Both teams' path-to-the-final odds, for the tournament-outlook comparison (only when both are known).
@@ -294,13 +297,31 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
       {state === "live" && m.probs && (
         <section className="mt-8">
           <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-[0.1em] uppercase">
-            {t("match.preMatchWinProb")}
+            {liveProbs ? t("match.liveWinProb") : t("match.preMatchWinProb")}
           </h2>
           <div className="border-border bg-card rounded-2xl border p-4 dark:inset-ring dark:inset-ring-white/5">
             <p className="text-live mb-3 text-xs font-medium">
               {t("match.liveScoreLine", { home: m.homeName, homeScore: m.homeScore, awayScore: m.awayScore, away: m.awayName, detail: m.liveDetail })}
             </p>
-            <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={m.homeName!} awayName={m.awayName!} />
+            {liveProbs ? (
+              <>
+                {/* Conditioned on the current score + minute — the "now" read */}
+                <div className="text-live mb-2 font-mono text-[10px] font-semibold tracking-wide uppercase">{t("match.liveNow", { minute: liveProbs.minute })}</div>
+                <WinProbBar home={liveProbs.home} draw={liveProbs.draw} away={liveProbs.away} homeName={m.homeName!} awayName={m.awayName!} />
+                {liveProbs.advance && (
+                  <p className="text-muted-2 mt-3 text-xs">
+                    {t("match.liveAdvance", { home: m.homeName, homePct: pct(liveProbs.advance.home), away: m.awayName, awayPct: pct(liveProbs.advance.away) })}
+                  </p>
+                )}
+                {/* The pre-match line, for comparison */}
+                <div className="border-border/50 mt-4 border-t pt-3">
+                  <div className="text-muted-2 mb-2 font-mono text-[10px] font-semibold tracking-wide uppercase">{t("match.preMatchLabel")}</div>
+                  <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={m.homeName!} awayName={m.awayName!} />
+                </div>
+              </>
+            ) : (
+              <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={m.homeName!} awayName={m.awayName!} />
+            )}
             <p className="text-muted-2 mt-4 text-xs">{t("match.forecastUpdatesNote")}</p>
           </div>
         </section>

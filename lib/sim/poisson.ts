@@ -104,3 +104,77 @@ export function sampleScoreline(ratingDiff: number, rand: () => number, cfg = {}
   const [lh, la] = eloToLambdas(ratingDiff, cfg);
   return [samplePoisson(lh, rand), samplePoisson(la, rand)];
 }
+
+// ── Live (in-progress) conditioning ─────────────────────────────────────────────────────────────────
+// A match that's underway is NOT a fresh 90 minutes: its outcome is the CURRENT score plus whatever is
+// scored in the time that remains. We model the remaining minutes as Poisson with the same per-match goal
+// rates scaled by the fraction of the match left, then add them to the goals already on the board. So a
+// side leading 1-0 with little time left is a heavy favourite; at kickoff (frac=1, 0-0) this collapses
+// back to the ordinary pre-match read.
+
+/** Fraction of a 90' match still to play given elapsed minutes (clamped 0..1; stoppage/extra time -> 0). */
+export function fracRemaining(minute: number | null | undefined): number {
+  if (minute == null || !isFinite(minute)) return 1;
+  return Math.max(0, Math.min(1, (90 - minute) / 90));
+}
+
+// Win/Draw/Loss (home perspective) for the FINAL result given the live score (hg-ag) and the fraction of
+// the match remaining. Convolves the remaining-time Poisson onto the current score. Independent Poisson
+// (no Dixon-Coles: the correction is on absolute low scores, not on goals-from-here, and is negligible).
+export function liveWdl(
+  ratingDiff: number,
+  hg: number,
+  ag: number,
+  frac: number,
+  cfg: { supDiv?: number; totalGoals?: number } = {},
+  maxAdd = 10,
+): { win: number; draw: number; loss: number } {
+  const [lh, la] = eloToLambdas(ratingDiff, cfg);
+  const f = Math.max(0, Math.min(1, frac));
+  const mh = lh * f;
+  const ma = la * f;
+  let win = 0, draw = 0, loss = 0;
+  for (let i = 0; i <= maxAdd; i++) {
+    for (let j = 0; j <= maxAdd; j++) {
+      const p = poissonPmf(mh, i) * poissonPmf(ma, j);
+      const fh = hg + i, fa = ag + j;
+      if (fh > fa) win += p;
+      else if (fh === fa) draw += p;
+      else loss += p;
+    }
+  }
+  const s = win + draw + loss || 1;
+  return { win: win / s, draw: draw / s, loss: loss / s };
+}
+
+// Probability the first/home side ADVANCES from an in-progress KNOCKOUT match: the live regulation result,
+// then (on the remaining draw mass) a fresh ~1/3-length extra time, then a coin-flip shootout. Mirrors
+// koAdvanceRaw but anchored on the current score + time left.
+export function liveKoAdvance(
+  ratingDiff: number,
+  hg: number,
+  ag: number,
+  frac: number,
+  cfg: { supDiv?: number; totalGoals?: number; rho?: number } = {},
+): number {
+  const reg = liveWdl(ratingDiff, hg, ag, frac, cfg, 8);
+  const [lh, la] = eloToLambdas(ratingDiff, cfg);
+  const rho = cfg.rho ?? POISSON_CONFIG.rho;
+  const et = wdlFromLambdas(lh * 0.33, la * 0.33, rho, 8); // extra time from level
+  return reg.win + reg.draw * (et.win + et.draw * 0.5);
+}
+
+// Sample the FINAL scoreline of an in-progress match for the Monte Carlo: current score + Poisson goals
+// over the remaining fraction. frac=0 returns the current score unchanged (match effectively over).
+export function sampleRemainingScoreline(
+  ratingDiff: number,
+  hg: number,
+  ag: number,
+  frac: number,
+  rand: () => number,
+  cfg = {},
+): [number, number] {
+  const [lh, la] = eloToLambdas(ratingDiff, cfg);
+  const f = Math.max(0, Math.min(1, frac));
+  return [hg + samplePoisson(lh * f, rand), ag + samplePoisson(la * f, rand)];
+}

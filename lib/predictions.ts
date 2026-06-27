@@ -62,6 +62,7 @@ export interface MatchInfo {
   awayScore?: number;
   winner?: string; // advancing team of a completed knockout match (set even when decided on penalties)
   liveDetail?: string; // clock/state for in-progress matches, e.g. "45'+3'"
+  liveMinute?: number; // parsed elapsed minute for an in-progress match (drives live win-probability)
   // forecast for DEFINED matches only
   favorite?: { code: string; name: string; winProb: number };
   probs?: { home: number; draw: number; away: number };

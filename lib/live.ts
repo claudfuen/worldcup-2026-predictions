@@ -1,5 +1,8 @@
 import { cache } from "react";
 import { fetchLive } from "./espn";
+import { liveWdl, liveKoAdvance, fracRemaining } from "./sim/poisson";
+import { hostEloBoost } from "./sim/hosts";
+import type { Ratings } from "./sim/types";
 import type { MatchInfo } from "./predictions";
 
 // Fresh in-progress AND just-finished matches, fetched per request (cache() dedupes within a single
@@ -31,8 +34,39 @@ export function overlayLive(matches: MatchInfo[], live: Awaited<ReturnType<typeo
     if (l.state === "post") {
       return { ...m, status: "final" as const, homeScore, awayScore };
     }
-    return { ...m, status: "live" as const, homeScore, awayScore, liveDetail: l.detail };
+    return { ...m, status: "live" as const, homeScore, awayScore, liveDetail: l.detail, liveMinute: l.minute ?? undefined };
   });
+}
+
+export interface LiveProbs {
+  minute: number;
+  home: number; // P(home wins in regulation, given the live score + time left)
+  draw: number;
+  away: number;
+  advance?: { home: number; away: number }; // knockout only: P(side advances incl. ET + shootout)
+}
+
+// CURRENT win/draw/loss for an in-progress match, conditioned on the live score and minute elapsed — the
+// "now" read shown next to the pre-match forecast. Uses the same rating gap as the cron's pre-match probs
+// (live Elo + host advantage), so the two reconcile: at kickoff this ~equals the pre-match line and sharpens
+// toward the actual result as the clock runs. Returns null when the match isn't live or the minute is unknown
+// (we don't guess a clock). Cheap + analytic, so it can run on every render at no extra ESPN cost.
+export function liveMatchProbs(m: MatchInfo, ratings: Ratings): LiveProbs | null {
+  if (m.status !== "live" || !m.home || !m.away || m.homeScore == null || m.awayScore == null) return null;
+  if (m.liveMinute == null) return null;
+  const diff =
+    (ratings[m.home] ?? 1500) - (ratings[m.away] ?? 1500) +
+    hostEloBoost(m.home, m.venue) - hostEloBoost(m.away, m.venue);
+  const frac = fracRemaining(m.liveMinute);
+  const wdl = liveWdl(diff, m.homeScore, m.awayScore, frac);
+  const out: LiveProbs = { minute: m.liveMinute, home: wdl.win, draw: wdl.draw, away: wdl.loss };
+  if (m.round !== "GROUP") {
+    out.advance = {
+      home: liveKoAdvance(diff, m.homeScore, m.awayScore, frac),
+      away: liveKoAdvance(-diff, m.awayScore, m.homeScore, frac),
+    };
+  }
+  return out;
 }
 
 // Safety bound: keep auto-refreshing for at most 6h after a match's kickoff while the model catches up,

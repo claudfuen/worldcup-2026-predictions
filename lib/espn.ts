@@ -71,6 +71,29 @@ export interface LiveMatch {
   state: "in" | "post"; // "in" = in-progress, "post" = full-time (just finished)
   date: string; // ESPN kickoff time (ISO) - lets callers bound "recently finished"
   detail: string; // e.g. "45'+3'", "HT", "FT" - the clock/state from ESPN
+  minute: number | null; // parsed elapsed minute (HT=45, "63'"->63, "45'+2'"->47), for live conditioning
+}
+
+// Parse ESPN's soccer clock into an ELAPSED minute used for live win-probability conditioning. ESPN gives
+// a minute string for in-progress soccer ("63'", "45'+2'", "HT") plus a period index; we read the string
+// first (most precise) and fall back to a rough per-period midpoint. Returns null only when nothing is
+// parseable (callers then treat the live match as frozen rather than guessing). Full-time / extra-time map
+// to >=90 so the "remaining fraction" is 0.
+export function parseLiveMinute(displayClock?: string, detail?: string, period?: number): number | null {
+  const s = `${displayClock ?? ""} ${detail ?? ""}`.trim();
+  const lower = s.toLowerCase();
+  if (/half.?time|\bht\b/.test(lower)) return 45;
+  if (/full.?time|\bft\b|\baet\b|\bpens?\b|penalt|after extra|\bend\b/.test(lower)) return 90; // regulation done
+  const m = s.match(/(\d+)\s*'?(?:\s*\+\s*(\d+))?/); // "63'", "45'+2'", "90'+4'", "105'+1'"
+  if (m) {
+    const base = Number(m[1]);
+    const extra = m[2] ? Number(m[2]) : 0;
+    if (isFinite(base)) return base + extra;
+  }
+  if (period === 1) return 23; // rough half-midpoints when only the period is known
+  if (period === 2) return 68;
+  if (period && period >= 3) return 90; // extra time / shootout -> regulation already over
+  return null;
 }
 
 // In-progress AND just-finished matches (ESPN state "in" or "post"). Fetched fresh per request so both
@@ -103,6 +126,7 @@ export async function fetchLive(): Promise<LiveMatch[]> {
       state,
       date: e.date,
       detail: comp.status?.type?.shortDetail ?? comp.status?.type?.detail ?? comp.status?.displayClock ?? (state === "post" ? "FT" : "LIVE"),
+      minute: state === "post" ? 90 : parseLiveMinute(comp.status?.displayClock, comp.status?.type?.shortDetail ?? comp.status?.type?.detail, comp.status?.period),
     });
   }
   return out;
@@ -167,7 +191,7 @@ export function buildGroupMatches(results: FetchedMatch[]): Record<string, Group
 interface EspnEvent {
   date: string;
   competitions?: {
-    status?: { displayClock?: string; type?: { state?: string; detail?: string; shortDetail?: string } };
+    status?: { displayClock?: string; period?: number; type?: { state?: string; detail?: string; shortDetail?: string } };
     competitors?: { homeAway?: string; score?: string | number; winner?: boolean; team: { displayName: string } }[];
   }[];
 }
