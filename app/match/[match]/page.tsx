@@ -16,6 +16,8 @@ import { BracketPath } from "@/components/bracket-path";
 import { ProbMeter } from "@/components/prob-meter";
 import { ShareBar } from "@/components/share-bar";
 import { computeWatchability } from "@/lib/watchability";
+import { TicketLink } from "@/components/ticket-link";
+import { hasTickets, TICKET_PROVIDER } from "@/lib/tickets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -143,6 +145,12 @@ export default async function MatchPage({ params }: { params: Promise<{ match: s
           <FactRow label="Stage" value={`${ROUND_NAME[m.round]}${m.group ? ` · Group ${m.group}` : ""} · Match ${m.match}`} />
           <FactRow label="Status" value={state === "final" ? "Full time" : state === "live" ? `Live · ${m.liveDetail}` : "Upcoming"} />
           {heat?.hot && <FactRow label="Worth watching" value={heat.reason} />}
+          {state !== "final" && state !== "live" && hasTickets(m.match) && (
+            <div className="p-3">
+              <TicketLink matchNo={m.match} placement="match_facts" variant="button" />
+              <p className="text-muted-2 mt-1.5 text-center text-[10px]">Resale via {TICKET_PROVIDER} · opens in a new tab</p>
+            </div>
+          )}
         </aside>
       </div>
 

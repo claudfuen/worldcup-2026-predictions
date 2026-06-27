@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { HotBadge } from "./hot-badge";
+import { TicketLink } from "./ticket-link";
 import { fmtTimeShort, fmtDay, fmtDayKey, pct } from "@/lib/format";
 import { useViewerZone } from "@/lib/useViewerZone";
 
@@ -87,8 +88,12 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
   const final = m.status === "final";
   const live = m.status === "live";
   const showScore = final || live;
+  const upcoming = !final && !live;
+  // Full-row link as an overlay so we can also place a real ticket <a> in the row (anchors can't nest).
+  // Interactive exceptions (the ticket link) sit above the overlay via relative z-10.
   return (
-    <Link href={`/match/${m.match}`} className="hover:bg-muted/30 flex items-center gap-3 px-3 py-2.5 transition-colors sm:px-4">
+    <div className="hover:bg-muted/30 relative flex items-center gap-3 px-3 py-2.5 transition-colors sm:px-4">
+      <Link href={`/match/${m.match}`} className="absolute inset-0" aria-label={`${homeLabel} v ${awayLabel} — match details`} />
       <div className="text-muted-foreground w-16 shrink-0 text-xs">
         <div className="font-mono whitespace-nowrap" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</div>
         <div className="text-[10px]">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>
@@ -115,8 +120,9 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
           )}
           <div className="text-muted-2 truncate text-[10px]">{m.venue}</div>
         </div>
+        {upcoming && <TicketLink matchNo={m.match} placement="schedule_row" variant="inline" className="relative" />}
       </div>
-    </Link>
+    </div>
   );
 }
 
