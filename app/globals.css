@@ -48,13 +48,14 @@
     --color-contention: var(--contention);
     --color-loss: var(--loss);
     --color-data-cool: var(--data-cool);
+    /* Tighter radii read more precise/editorial; large multipliers tamed so cards aren't soft/toy-like. */
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --radius-xl: calc(var(--radius) * 1.15);
+    --radius-2xl: calc(var(--radius) * 1.4);
+    --radius-3xl: calc(var(--radius) * 1.7);
+    --radius-4xl: calc(var(--radius) * 2.0);
 }
 
 :root {
@@ -89,7 +90,7 @@
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
+    --radius: 0.5rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.546 0.245 262.881);
@@ -101,16 +102,16 @@
 }
 
 .dark {
-    --background: oklch(0.155 0.009 168);
-    --foreground: oklch(0.968 0.004 160);
+    --background: oklch(0.16 0.006 175);
+    --foreground: oklch(0.965 0.004 160);
     /* Two-step elevation: card sits above the page, surface-raised above the card (no shadows in dark mode) */
-    --card: oklch(0.205 0.009 168);
-    --card-foreground: oklch(0.968 0.004 160);
-    --surface-raised: oklch(0.243 0.010 168);
-    --popover: oklch(0.216 0.009 168);
-    --popover-foreground: oklch(0.968 0.004 160);
-    --primary: oklch(0.75 0.158 157);
-    --primary-foreground: oklch(0.18 0.03 165);
+    --card: oklch(0.207 0.007 172);
+    --card-foreground: oklch(0.965 0.004 160);
+    --surface-raised: oklch(0.245 0.008 172);
+    --popover: oklch(0.218 0.007 172);
+    --popover-foreground: oklch(0.965 0.004 160);
+    --primary: oklch(0.74 0.10 163);
+    --primary-foreground: oklch(0.17 0.025 168);
     --secondary: oklch(0.27 0.01 168);
     --secondary-foreground: oklch(0.968 0.004 160);
     --muted: oklch(0.255 0.008 168);
@@ -123,12 +124,12 @@
     --border: oklch(1 0 0 / 9%);
     --border-strong: oklch(1 0 0 / 16%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.75 0.158 157);
-    --win: oklch(0.80 0.16 155);
-    --live: oklch(0.68 0.20 18);
-    --contention: oklch(0.81 0.14 78);
-    --loss: oklch(0.62 0.012 165);
-    --data-cool: oklch(0.72 0.13 230);
+    --ring: oklch(0.74 0.10 163);
+    --win: oklch(0.76 0.105 160);
+    --live: oklch(0.64 0.155 24);
+    --contention: oklch(0.78 0.09 82);
+    --loss: oklch(0.60 0.012 165);
+    --data-cool: oklch(0.70 0.08 235);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -157,11 +158,10 @@
     @apply bg-background text-foreground;
     font-size: 0.875rem;
     line-height: 1.6;
-    /* Subtle lit backdrop (two faint radials + top sheen) so wide-screen margins read as composed space */
+    /* A single, very faint top sheen — enough to give wide margins depth, without a "glowy demo" wash. */
     background-image:
-      radial-gradient(52rem 26rem at 50% -8rem, color-mix(in oklab, var(--primary) 9%, transparent), transparent),
-      radial-gradient(46rem 30rem at 90% 110%, color-mix(in oklab, var(--data-cool) 5%, transparent), transparent),
-      linear-gradient(180deg, color-mix(in oklab, var(--foreground) 3%, transparent), transparent 12rem);
+      radial-gradient(60rem 28rem at 50% -12rem, color-mix(in oklab, var(--primary) 4%, transparent), transparent 70%),
+      linear-gradient(180deg, color-mix(in oklab, var(--foreground) 2%, transparent), transparent 10rem);
     background-attachment: fixed;
     }
   /* Display headings, single light color (per ui.sh dark-mode rule); fluid h1 */
