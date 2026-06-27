@@ -21,11 +21,11 @@ import { GroupsPreview } from "@/components/groups-preview";
 import { TitleOdds } from "@/components/title-odds";
 import { teamAdvanceDisplay } from "@/lib/view/advance";
 import { isClinched } from "@/lib/view/types";
-import { forecastPct } from "@/lib/format";
+import { forecastPct, ordinal } from "@/lib/format";
 import type { Metadata } from "next";
 import { getT, getLocale } from "@/lib/i18n/server";
 import { buildAlternates } from "@/lib/i18n/links";
-import { localeHref } from "@/lib/i18n/config";
+import { localeHref, localeConfig } from "@/lib/i18n/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // per-request live overlay: a finished match shows its score at once
@@ -102,7 +102,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
       : row?.status === "advanced" ? t("team.statusAdvanced")
       : row?.status === "eliminated" ? t("team.statusEliminated")
       : t("team.statusPlace", {
-          place: row ? ordinal(groupRank(groupView, team.code)) : "",
+          place: row ? ordinal(groupRank(groupView, team.code), localeConfig(locale).intl) : "",
           group: team.group,
         });
 
@@ -122,11 +122,11 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
             {advanceOut ? (
               <>{t("team.ledeOut", { group: team.group })}</>
             ) : advanceClinched ? (
-              <>{t("team.ledeClinchedA")} <span className="text-foreground font-medium">{titlePct}</span> {t("team.ledeClinchedB")} <span className="text-foreground font-medium">{ordinal(rank)}</span>{t("team.ledeClinchedC", { iterations: data.iterations })}</>
+              <>{t("team.ledeClinchedA")} <span className="text-foreground font-medium">{titlePct}</span> {t("team.ledeClinchedB")} <span className="text-foreground font-medium">{ordinal(rank, localeConfig(locale).intl)}</span>{t("team.ledeClinchedC", { iterations: data.iterations })}</>
             ) : (
               <>{t("team.ledeRaceA")} <span className="text-foreground font-medium">{advancePct}</span> {t("team.ledeRaceB")}{" "}
               <span className="text-foreground font-medium">{titlePct}</span> {t("team.ledeRaceC")}{" "}
-              <span className="text-foreground font-medium">{ordinal(rank)}</span>{t("team.ledeRaceD", { iterations: data.iterations })}</>
+              <span className="text-foreground font-medium">{ordinal(rank, localeConfig(locale).intl)}</span>{t("team.ledeRaceD", { iterations: data.iterations })}</>
             )}
           </p>
         )}
@@ -263,8 +263,4 @@ function heat(v: number): string {
 }
 function groupRank(gv: { teams: { code: string }[] } | undefined, code: string): number {
   return (gv?.teams.findIndex((t) => t.code === code) ?? 0) + 1;
-}
-function ordinal(n: number): string {
-  const s = ["th", "st", "nd", "rd"], v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }

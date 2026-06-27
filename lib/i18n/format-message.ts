@@ -66,8 +66,9 @@ function resolvePlural(inner: string, params: Params, intlLocale: string): strin
   const exact = branches.get(`=${count}`);
   const category = pluralRules(intlLocale).select(count);
   const chosen = exact ?? branches.get(category) ?? branches.get("other") ?? "";
-  // "#" inside a plural branch is the localized count.
-  return chosen.replace(/#/g, fmtNumber(count, intlLocale));
+  // "#" is the localized count; then recurse so any {vars}/nested plurals INSIDE the chosen branch
+  // resolve too (a translator may legitimately place "{teams}" inside a plural branch).
+  return formatMessage(chosen.replace(/#/g, fmtNumber(count, intlLocale)), params, intlLocale);
 }
 
 /**

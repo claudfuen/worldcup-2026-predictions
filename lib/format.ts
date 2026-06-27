@@ -40,6 +40,40 @@ export function fmtDayKey(utc: string, z?: Zone): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: tzOf(z), year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(utc));
 }
 
+// Localized ordinal, e.g. en 1st/2nd/3rd, es 1.º, fr 1er/2e, de 1., it 1º, pt 1º, ru 1-й, hi 1वाँ,
+// id ke-1, ja/zh 第1, ko 1위, ar 1. Returns a COMPLETE display ordinal — callers interpolate it whole
+// (do not append a suffix in the message catalog). `locale` is a BCP-47 tag; only the language matters.
+const ORD_EN: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
+export function ordinal(n: number, locale = DEFAULT_LOCALE): string {
+  const lang = locale.split("-")[0];
+  switch (lang) {
+    case "en":
+      return `${n}${ORD_EN[new Intl.PluralRules("en", { type: "ordinal" }).select(n)] ?? "th"}`;
+    case "fr":
+      return n === 1 ? "1er" : `${n}e`;
+    case "es":
+      return `${n}.º`;
+    case "it":
+    case "pt":
+      return `${n}º`;
+    case "de":
+      return `${n}.`;
+    case "ru":
+      return `${n}-й`;
+    case "hi":
+      return `${n}वाँ`;
+    case "id":
+      return `ke-${n}`;
+    case "ja":
+    case "zh":
+      return `第${n}`;
+    case "ko":
+      return `${n}위`;
+    default: // ar + any fallback: a bare number reads fine in a stats context
+      return `${n}`;
+  }
+}
+
 export function pct(v: number): string {
   if (v >= 0.9995) return "100%";
   if (v > 0 && v < 0.005) return "<1%";

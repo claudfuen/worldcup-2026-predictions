@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { useViewerZone } from "@/lib/useViewerZone";
-import { fmtTime, fmtDayKey, pct } from "@/lib/format";
+import { fmtTime, fmtDay, fmtDayKey, pct } from "@/lib/format";
 import { HotBadge } from "@/components/hot-badge";
 import { useT, type TFunction } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
@@ -87,6 +87,7 @@ export function LiveTodayRail({ matches, hotReasons = {}, className = "" }: { ma
           hotReasons={hotReasons}
           t={t}
           locale={locale}
+          showDate
         />
       )}
     </section>
@@ -95,7 +96,7 @@ export function LiveTodayRail({ matches, hotReasons = {}, className = "" }: { ma
 
 // One labelled slate (heading + card of rows + overflow link). Used for both "Today" and "Recent results".
 function RailSection({
-  heading, matches, cap, zone, hotReasons, t, locale, showFullSchedule = false,
+  heading, matches, cap, zone, hotReasons, t, locale, showFullSchedule = false, showDate = false,
 }: {
   heading: string;
   matches: MatchInfo[];
@@ -105,6 +106,7 @@ function RailSection({
   t: TFunction;
   locale: Locale;
   showFullSchedule?: boolean;
+  showDate?: boolean;
 }) {
   const shown = matches.slice(0, cap);
   return (
@@ -116,7 +118,7 @@ function RailSection({
         )}
       </div>
       <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border">
-        {shown.map((m) => <SlateRow key={m.match} m={m} zone={zone} hotReason={hotReasons[m.match]} t={t} locale={locale} />)}
+        {shown.map((m) => <SlateRow key={m.match} m={m} zone={zone} hotReason={hotReasons[m.match]} t={t} locale={locale} showDate={showDate} />)}
       </div>
       {matches.length > cap && (
         <Link href={localeHref(locale, "/schedule")} className="text-primary mt-2 inline-block text-xs hover:underline">{t("home.moreCount", { n: matches.length - cap })}</Link>
@@ -127,23 +129,24 @@ function RailSection({
 
 function LiveRow({ m, t, locale }: { m: MatchInfo; t: TFunction; locale: Locale }) {
   return (
-    <Link href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-live/[0.08] bg-live/[0.04] block px-4 py-3.5">
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+    <Link href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-live/[0.08] bg-live/[0.04] block px-4 py-3">
+      {/* Left-anchored matchup + score; the live clock is a quiet element pinned to the right of the row. */}
+      <div className="flex items-center gap-2">
         <Flag code={m.home} size={20} />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{m.homeName}</span>
-        <span className="shrink-0 px-1.5 font-mono text-lg font-bold tabular-nums">{m.homeScore}<span className="text-muted-2">–</span>{m.awayScore}</span>
+        <span className="min-w-0 shrink truncate text-[15px] font-semibold">{m.homeName}</span>
+        <span className="shrink-0 px-1 font-mono text-base font-bold tabular-nums">{m.homeScore}<span className="text-muted-2 px-0.5">–</span>{m.awayScore}</span>
         <Flag code={m.away} size={20} />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{m.awayName}</span>
-        <span className="text-live ml-auto inline-flex shrink-0 basis-full items-center justify-end gap-1.5 font-mono text-xs font-bold tracking-wide sm:basis-auto">
+        <span className="min-w-0 shrink truncate text-[15px] font-semibold">{m.awayName}</span>
+        <span className="text-live ml-auto inline-flex shrink-0 items-center gap-1.5 pl-2 font-mono text-xs font-bold tracking-wide">
           <span className="bg-live size-2 animate-pulse rounded-full" />{m.liveDetail ?? t("home.liveUpper")}
         </span>
       </div>
-      {m.favorite && <div className="text-muted-2 mt-1.5 truncate text-[11px]">{t("home.preMatch", { name: m.favorite.name, pct: pct(m.favorite.winProb) })}</div>}
+      {m.favorite && <div className="text-muted-2 mt-1 truncate text-[11px]">{t("home.preMatch", { name: m.favorite.name, pct: pct(m.favorite.winProb) })}</div>}
     </Link>
   );
 }
 
-function SlateRow({ m, zone, hotReason, t, locale }: { m: MatchInfo; zone?: import("@/lib/format").Zone; hotReason?: string; t: TFunction; locale: Locale }) {
+function SlateRow({ m, zone, hotReason, t, locale, showDate = false }: { m: MatchInfo; zone?: import("@/lib/format").Zone; hotReason?: string; t: TFunction; locale: Locale; showDate?: boolean }) {
   const final = m.status === "final";
   const homeCode = m.home ?? m.projHome?.[0]?.code ?? null;
   const awayCode = m.away ?? m.projAway?.[0]?.code ?? null;
@@ -151,8 +154,8 @@ function SlateRow({ m, zone, hotReason, t, locale }: { m: MatchInfo; zone?: impo
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? t("common.tbd");
   return (
     <Link href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-muted/20 flex items-center gap-2 px-4 py-2.5 sm:gap-3">
-      <span className="text-muted-2 w-12 shrink-0 font-mono text-[11px] sm:w-16" suppressHydrationWarning>
-        {fmtTime(m.utc, zone)}
+      <span className={`text-muted-2 shrink-0 font-mono text-[11px] ${showDate ? "whitespace-nowrap" : "w-12 sm:w-16"}`} suppressHydrationWarning>
+        {showDate ? fmtDay(m.utc, zone) : fmtTime(m.utc, zone)}
       </span>
       <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
         <Flag code={homeCode} size={16} />

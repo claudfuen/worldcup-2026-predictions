@@ -4,17 +4,12 @@ import Link from "next/link";
 import type { ThirdPlaceEntry } from "@/lib/predictions";
 import { Flag } from "@/components/flag";
 import { slugForCode } from "@/lib/slug";
-import { forecastPct } from "@/lib/format";
+import { forecastPct, ordinal } from "@/lib/format";
 import { ProbMeter } from "@/components/prob-meter";
 import { useHoverTip, HoverTipPanel } from "@/components/hover-tip";
 import { useT, type TFunction } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
-import { localeHref } from "@/lib/i18n/config";
-
-const ordinal = (n: number) => {
-  const s = ["th", "st", "nd", "rd"], v = n % 100;
-  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-};
+import { localeHref, localeConfig } from "@/lib/i18n/config";
 
 // What still has to happen for a not-yet-settled third, computed from the full 12-row race. Six-or-fewer
 // teams are mathematically locked above it (the DECIDED groups' thirds that outrank it); every still-playing
@@ -33,7 +28,7 @@ function survival(e: ThirdPlaceEntry, all: ThirdPlaceEntry[]) {
 
 // One row's hover detail: what (if anything) would still change the team's Round-of-32 fate, plus the
 // model's top-3 likely opponents (probability conditional on the team actually advancing).
-function RowTip({ e, all, t }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[]; t: TFunction }) {
+function RowTip({ e, all, t, intl }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[]; t: TFunction; intl: string }) {
   const through = e.status === "won_group" || e.status === "second" || e.status === "advanced";
   const matchLine = e.match
     ? e.city
@@ -64,12 +59,12 @@ function RowTip({ e, all, t }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[]; t: 
         : t("groups.fracAtLeast", { need: s.needBelow, total: s.swingCount });
     const pct = forecastPct(e.advanceProb);
     if (s.needBelow <= 0) {
-      headline = t("groups.tipSafe", { ordinal: ordinal(e.rank), pct });
+      headline = t("groups.tipSafe", { ordinal: ordinal(e.rank, intl), pct });
     } else if (e.advancing) {
-      headline = t("groups.tipHolding", { ordinal: ordinal(e.rank), pct, frac, letters: s.letters });
+      headline = t("groups.tipHolding", { ordinal: ordinal(e.rank, intl), pct, frac, letters: s.letters });
     } else {
       const dangers = s.dangers.length ? t("groups.tipDangers", { dangers: s.dangers.join(", ") }) : "";
-      headline = t("groups.tipBelowCut", { ordinal: ordinal(e.rank), pct, frac, letters: s.letters, dangers });
+      headline = t("groups.tipBelowCut", { ordinal: ordinal(e.rank, intl), pct, frac, letters: s.letters, dangers });
     }
   }
 
@@ -135,7 +130,7 @@ function Row({ e, all, t, locale }: { e: ThirdPlaceEntry; all: ThirdPlaceEntry[]
           <ProbMeter p={e.advanceProb} className={`justify-end ${e.advancing ? "text-contention" : "text-muted-foreground"}`} />
         )}
       </td>
-      {tip.open && <HoverTipPanel pos={tip.pos}><RowTip e={e} all={all} t={t} /></HoverTipPanel>}
+      {tip.open && <HoverTipPanel pos={tip.pos}><RowTip e={e} all={all} t={t} intl={localeConfig(locale).intl} /></HoverTipPanel>}
     </tr>
   );
 }

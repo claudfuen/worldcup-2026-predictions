@@ -3,8 +3,8 @@
 import { useViewerZone } from "@/lib/useViewerZone";
 import { fmtDateTime, fmtTime, fmtTimeShort, fmtDay } from "@/lib/format";
 
-// Renders a single UTC instant in the viewer's local time. Server-rendered pages can drop this
-// in place of a formatted string; it shows ET until the client resolves the real zone.
+// Renders a single UTC instant in the viewer's local TIME but the SITE's LANGUAGE (useViewerZone supplies
+// the site locale for formatting + the viewer's timezone). Shows ET until the client resolves the zone.
 // `timeshort` omits the zone suffix (for dense cards where it would otherwise force an awkward wrap).
 export function LocalTime({ utc, mode = "datetime" }: { utc: string; mode?: "datetime" | "time" | "timeshort" | "day" }) {
   const { zone } = useViewerZone();
