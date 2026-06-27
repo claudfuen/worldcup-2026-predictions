@@ -2,12 +2,11 @@
 
 import { Fragment, useState } from "react";
 import Link from "next/link";
-import type { MatchInfo, SlotCandidate } from "@/lib/predictions";
+import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { teamSlug } from "@/lib/slug";
 import { pct, fmtDay } from "@/lib/format";
 import { useViewerZone } from "@/lib/useViewerZone";
-import { useHoverTip, HoverTipPanel } from "./hover-tip";
 import { ProbMeter } from "./prob-meter";
 
 // Column orderings chosen so each match's two feeders are vertically adjacent (top half, then bottom half).
@@ -172,85 +171,64 @@ function Node({ m, hasTicket, highlightCode, big, final }: { m: MatchInfo; hasTi
   );
 }
 
-// Hover panel listing the top candidates that could still fill an unresolved slot, with fill %.
-function CandidateTip({ cands, third }: { cands: SlotCandidate[]; third?: boolean }) {
-  return (
-    <>
-      <div className="text-muted-2 mb-1 font-mono text-[9px] font-semibold tracking-wide uppercase">
-        {third ? "Likely 3rd to fill this slot" : "Likely to fill this slot"}
-      </div>
-      <ul className="space-y-1">
-        {cands.slice(0, 3).map((c) => (
-          <li key={c.code} className="flex items-center gap-1.5">
-            <Flag code={c.code} size={15} />
-            <span className="text-foreground/80 min-w-0 flex-1 truncate">{c.name}</span>
-            <span className="text-muted-foreground shrink-0 font-mono tabular-nums">{pct(Math.min(c.prob, 0.99))}</span>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 function Side({ m, side, highlightCode, big }: { m: MatchInfo; side: "home" | "away"; highlightCode?: string; big?: boolean }) {
   const resolved = side === "home" ? m.home : m.away;
   const name = side === "home" ? m.homeName : m.awayName;
   const slot = side === "home" ? m.slotHome : m.slotAway;
   const cands = (side === "home" ? m.projHome : m.projAway) ?? [];
-  const proj = cands[0];
-  const tip = useHoverTip();
-  // An unresolved slot offers a candidate hover; a confirmed (resolved) team does not. `cursor-help` (added
-  // to the row className) hints it's hoverable. No tap-to-pin here — the slot already links to its match
-  // page, which lists candidates, so touch users have a fallback.
-  const hoverable = !resolved && cands.length > 0;
-  const tipProps = hoverable ? tip.triggerProps : {};
-  const hoverCls = hoverable ? " cursor-help" : "";
+  const third = !!slot?.startsWith("3:");
 
-  // Third-place slots: a best-third can come from any of several groups (FIFA Annex C). We show the Monte
-  // Carlo's most-likely qualifier with its fill probability, tagged "3rd" so the slot's nature stays clear.
-  // The slot resolves to a bold, confirmed team (the `resolved` path below) once the group stage ends.
-  if (!resolved && slot?.startsWith("3:")) {
-    const groups = slot.slice(2).split(",").join("/");
-    const isHi = highlightCode && proj?.code === highlightCode;
+  // CONFIRMED — a clinched team or a played result. Rendered EDITORIAL: bigger flag, bold name, a green ✓
+  // (or the score), so a locked slot reads as settled against the smaller "race" on the other side.
+  if (resolved) {
+    const isHi = highlightCode && resolved === highlightCode;
+    const played = m.status === "final";
+    const score = side === "home" ? m.homeScore : m.awayScore;
+    const isWinner = played && !!m.winner && m.winner === resolved;
+    const isLoser = played && !!m.winner && m.winner !== resolved;
+    const onPens = played && m.homeScore != null && m.homeScore === m.awayScore;
     return (
-      <div {...tipProps} className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}${hoverCls}`}>
-        {proj ? <Flag code={proj.code} size={big ? 22 : 18} /> : <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-[22px]" : "size-[18px]"}`} aria-hidden />}
-        <span className="text-foreground/80 min-w-0 flex-1 truncate">
-          <span className="text-muted-2 mr-1 font-mono text-[9px] font-semibold tracking-wide uppercase" title={`Third-placed team from group ${groups}`}>3rd</span>
-          {proj?.name ?? groups}
-        </span>
-        {proj?.prob != null && <ProbMeter p={proj.prob} width={big ? 22 : 16} className={`shrink-0 text-muted-foreground ${big ? "text-xs" : "text-[10px]"}`} />}
-        {tip.open && <HoverTipPanel pos={tip.pos}><CandidateTip cands={cands} third /></HoverTipPanel>}
+      <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-2 px-2.5 py-2"} ${isHi ? "bg-primary/10" : ""}`}>
+        <Flag code={resolved} size={big ? 24 : 20} />
+        <span className={`min-w-0 flex-1 truncate ${big ? "text-sm" : "text-[13px]"} ${isLoser ? "text-muted-foreground" : "font-semibold"}`}>{name}</span>
+        {played ? (
+          <span className="flex shrink-0 items-center gap-1">
+            {isWinner && onPens && <span className="text-win/70 font-mono text-[8px] font-semibold tracking-wide uppercase" title="Won on penalties">pens</span>}
+            <span className={`font-mono font-bold tabular-nums ${big ? "text-sm" : "text-xs"} ${isWinner ? "text-win" : "text-muted-foreground"}`}>{score}</span>
+          </span>
+        ) : (
+          <span className={`shrink-0 font-bold text-win ${big ? "text-sm" : "text-xs"}`} title="Confirmed">✓</span>
+        )}
       </div>
     );
   }
 
-  const code = resolved ?? proj?.code ?? null;
-  const label = name ?? proj?.name ?? "TBD";
-  const prob = resolved ? null : proj?.prob;
-  const isHi = highlightCode && code === highlightCode;
-  // A played knockout match: show each side's score and mark the team that advanced (the winner — set even
-  // when decided on penalties, where the regulation scores are level).
-  const played = m.status === "final";
-  const score = side === "home" ? m.homeScore : m.awayScore;
-  const isWinner = played && !!m.winner && m.winner === resolved;
-  const isLoser = played && !!m.winner && m.winner !== resolved;
-  const onPens = played && m.homeScore != null && m.homeScore === m.awayScore;
+  // UNCONFIRMED — surface the RACE for this slot inline (no hover): the top contenders with their fill %,
+  // rendered small/secondary so a settled team opposite reads as the bigger, editorial one. A near-locked
+  // slot (one candidate dominant) naturally collapses to a single row.
+  const shown = cands.filter((c) => c.prob >= 0.05).slice(0, 3);
+  const list = shown.length ? shown : cands.slice(0, 1);
+  if (list.length === 0) {
+    return (
+      <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-2 px-2.5 py-2"}`}>
+        <span className={`bg-muted/30 shrink-0 rounded-[3px] ${big ? "size-6" : "size-[18px]"}`} aria-hidden />
+        <span className="text-muted-2 text-xs">TBD</span>
+      </div>
+    );
+  }
   return (
-    <div {...tipProps} className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-1.5 px-2 py-1.5"} ${isHi ? "bg-primary/10" : ""}${hoverCls}`}>
-      <Flag code={code} size={big ? 22 : 18} />
-      <span className={`min-w-0 flex-1 truncate ${isLoser ? "text-muted-foreground" : resolved ? "font-semibold" : "text-foreground/80"}`}>{label}</span>
-      {played ? (
-        <span className="flex shrink-0 items-center gap-1">
-          {isWinner && onPens && <span className="text-win/70 font-mono text-[8px] font-semibold tracking-wide uppercase" title="Won on penalties">pens</span>}
-          <span className={`font-mono font-bold tabular-nums ${big ? "text-sm" : "text-xs"} ${isWinner ? "text-win" : "text-muted-foreground"}`}>{score}</span>
-        </span>
-      ) : resolved ? (
-        <span className={`shrink-0 font-bold text-win ${big ? "text-xs" : "text-[10px]"}`} title="Confirmed">✓</span>
-      ) : (
-        prob != null && <ProbMeter p={prob} width={big ? 22 : 16} className={`shrink-0 text-muted-foreground ${big ? "text-xs" : "text-[10px]"}`} />
-      )}
-      {!resolved && tip.open && <HoverTipPanel pos={tip.pos}><CandidateTip cands={cands} /></HoverTipPanel>}
+    <div className={`${big ? "space-y-1.5 px-3 py-2" : "space-y-1 px-2.5 py-1.5"}`}>
+      {list.map((c) => {
+        const isHi = highlightCode && c.code === highlightCode;
+        return (
+          <div key={c.code} className={`flex items-center gap-1.5 ${isHi ? "bg-primary/10 -mx-1 rounded px-1" : ""}`}>
+            <Flag code={c.code} size={big ? 16 : 14} />
+            {third && <span className="text-muted-2 font-mono text-[8px] font-semibold tracking-wide uppercase" title="Third-placed team">3rd</span>}
+            <span className={`text-foreground/70 min-w-0 flex-1 truncate ${big ? "text-xs" : "text-[11px]"}`}>{c.name}</span>
+            <ProbMeter p={c.prob} width={big ? 30 : 22} className={`text-muted-foreground shrink-0 ${big ? "text-xs" : "text-[10px]"}`} />
+          </div>
+        );
+      })}
     </div>
   );
 }
