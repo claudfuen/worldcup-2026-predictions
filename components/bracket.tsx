@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import Link from "next/link";
 import type { MatchInfo } from "@/lib/predictions";
 import { Flag } from "./flag";
@@ -31,41 +31,9 @@ export function Bracket({
 }) {
   const byMatch = new Map(matches.map((m) => [m.match, m]));
   const tickets = new Set(myMatchNumbers);
-  const [highlight, setHighlight] = useState("");
-
-  // Every team that appears anywhere in the knockout projections, for the "trace a team" picker.
-  const teamMap = new Map<string, string>();
-  for (const m of matches) {
-    if (m.home && m.homeName) teamMap.set(m.home, m.homeName);
-    if (m.away && m.awayName) teamMap.set(m.away, m.awayName);
-    for (const c of m.projHome ?? []) teamMap.set(c.code, c.name);
-    for (const c of m.projAway ?? []) teamMap.set(c.code, c.name);
-  }
-  const teamOpts = [...teamMap.entries()].map(([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name));
-  const hl = highlight || undefined;
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span id="trace-team-label" className="text-muted-foreground font-mono text-[10px] font-semibold tracking-wide uppercase">Trace a team</span>
-        <select
-          aria-labelledby="trace-team-label"
-          value={highlight}
-          onChange={(e) => setHighlight(e.target.value)}
-          className="border-border-strong bg-surface-raised hover:border-primary/40 focus-visible:border-primary/60 focus-visible:ring-primary/50 rounded-lg border px-3 py-1.5 text-sm outline-none focus-visible:ring-2"
-        >
-          <option value="">Pick a team to light up its path</option>
-          {teamOpts.map((t) => (
-            <option key={t.code} value={t.code}>{t.name}</option>
-          ))}
-        </select>
-        {highlight && (
-          <button onClick={() => setHighlight("")} className="text-muted-foreground hover:text-foreground text-xs">
-            Clear
-          </button>
-        )}
-      </div>
-
       {/* One enclosed, horizontally-scrollable bracket: the border frames the scroll so it reads as
           intentional on desktop, and on mobile the full connected tree is pannable by touch (edge fades
           hint there's more) instead of being flattened into per-round tabs. */}
@@ -84,7 +52,7 @@ export function Bracket({
                       const m = byMatch.get(mn);
                       return (
                         <div key={mn} className="flex flex-1 items-center">
-                          {m && <Node m={m} hasTicket={tickets.has(mn)} highlightCode={hl} final={round === "FINAL"} />}
+                          {m && <Node m={m} hasTicket={tickets.has(mn)} final={round === "FINAL"} />}
                         </div>
                       );
                     })}

@@ -26,7 +26,7 @@ export default async function SchedulePage() {
   const hotReasons: Record<number, string> = {};
   for (const p of byMatch.values()) if (p.hot) hotReasons[p.match.match] = p.reason;
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={liveActivity(data.matches, live)} />
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">World Cup 2026 schedule</h1>

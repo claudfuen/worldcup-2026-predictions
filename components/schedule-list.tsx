@@ -93,26 +93,28 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
         <div className="font-mono whitespace-nowrap" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</div>
         <div className="text-[10px]">{ROUND_NAME[m.round]}{m.group ? ` ${m.group}` : ""}</div>
       </div>
-      <div className="min-w-0 flex-1 sm:flex-none sm:w-64">
+      <div className="min-w-0 flex-1">
         <TeamRow code={homeCode} label={homeLabel} score={showScore ? m.homeScore : undefined} win={final && (m.homeScore ?? 0) > (m.awayScore ?? 0)} projected={!m.home} prob={!m.home ? m.projHome?.[0]?.prob : undefined} />
         <TeamRow code={awayCode} label={awayLabel} score={showScore ? m.awayScore : undefined} win={final && (m.awayScore ?? 0) > (m.homeScore ?? 0)} projected={!m.away} prob={!m.away ? m.projAway?.[0]?.prob : undefined} />
       </div>
-      {hotReason != null && <HotBadge reason={hotReason} className="ml-auto shrink-0" />}
-      <div className="hidden w-44 shrink-0 sm:ml-auto sm:block">
-        {live ? (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-live">
-            <span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE {m.liveDetail}
-          </span>
-        ) : final ? (
-          <span className="text-[11px] font-medium text-win">FT</span>
-        ) : m.favorite ? (
-          <span className="text-muted-foreground text-[11px]">
-            <span className="text-foreground/80">{m.favorite.name}</span> {pct(m.favorite.winProb)}
-          </span>
-        ) : (
-          <span className="text-muted-2 text-[11px]">projected</span>
-        )}
-        <div className="text-muted-2 truncate text-[10px]">{m.venue}</div>
+      <div className="ml-auto flex shrink-0 items-center gap-2.5">
+        {hotReason != null && <HotBadge reason={hotReason} />}
+        <div className="hidden max-w-44 text-right sm:block">
+          {live ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-live">
+              <span className="size-1.5 animate-pulse rounded-full bg-live" />LIVE {m.liveDetail}
+            </span>
+          ) : final ? (
+            <span className="text-[11px] font-medium text-win">FT</span>
+          ) : m.favorite ? (
+            <span className="text-muted-foreground text-[11px]">
+              <span className="text-foreground/80">{m.favorite.name}</span> {pct(m.favorite.winProb)}
+            </span>
+          ) : (
+            <span className="text-muted-2 text-[11px]">projected</span>
+          )}
+          <div className="text-muted-2 truncate text-[10px]">{m.venue}</div>
+        </div>
       </div>
     </Link>
   );
