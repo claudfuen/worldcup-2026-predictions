@@ -236,14 +236,21 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
 function Side({ resolved, code, name, score, win, cands }: { resolved: boolean; code: string | null; name: string; score?: number; win?: boolean; cands?: SlotCandidate[] }) {
   if (!resolved && cands && cands.length > 1) {
     return (
-      <div className="space-y-0.5">
-        {cands.slice(0, 3).map((c, i) => (
-          <div key={c.code} className="flex items-center gap-1.5">
-            <Flag code={c.code} size={14} />
-            <span className={`min-w-0 flex-1 truncate text-xs ${i === 0 ? "text-foreground/85 font-medium" : "text-muted-foreground"}`}>{c.name}</span>
-            <span className={`shrink-0 font-mono text-[10px] tabular-nums ${i === 0 ? "text-foreground/70" : "text-muted-2"}`}>{pct(Math.min(c.prob, 0.99))}</span>
-          </div>
-        ))}
+      <div className="space-y-px">
+        {cands.slice(0, 3).map((c, i) => {
+          const lead = i === 0;
+          const w = Math.max(3, Math.min(c.prob, 0.99) * 100); // bar scaled to likelihood
+          return (
+            <div key={c.code} className="relative flex items-center overflow-hidden rounded">
+              <span className="absolute inset-y-0 left-0" style={{ width: `${w}%`, backgroundColor: mix("var(--primary)", lead ? 15 : 6) }} aria-hidden />
+              <span className="relative flex w-full items-center gap-1.5 px-0.5 py-px">
+                <Flag code={c.code} size={lead ? 15 : 13} />
+                <span className={`min-w-0 flex-1 truncate ${lead ? "text-foreground text-[13px] font-semibold" : i === 1 ? "text-muted-foreground text-[11px]" : "text-muted-2 text-[11px]"}`}>{c.name}</span>
+                <span className={`shrink-0 font-mono tabular-nums ${lead ? "text-foreground/90 text-[12px] font-semibold" : "text-muted-2 text-[10px]"}`}>{pct(Math.min(c.prob, 0.99))}</span>
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   }
