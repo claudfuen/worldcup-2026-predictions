@@ -170,3 +170,16 @@ export function liveActivity(matches: MatchInfo[], live: Awaited<ReturnType<type
       now - Date.parse(l.date) < RECENT_FINAL_WINDOW_MS,
   );
 }
+
+// The score-ticker's contents, derived from a (live-overlaid) match list. Single source of truth so the
+// SSR layout and the /api/ticker poll endpoint always agree: LIVE now → next confirmed fixtures (both teams
+// known, so never a "TBD" knockout slot) → most recent finals (regardless of age, so a rest day is never blank).
+export function selectTickerItems(matches: MatchInfo[]): MatchInfo[] {
+  const live = matches.filter((m) => m.status === "live");
+  const upcoming = matches
+    .filter((m) => m.status === "scheduled" && m.home && m.away)
+    .sort((a, b) => a.utc.localeCompare(b.utc))
+    .slice(0, 6);
+  const finals = matches.filter((m) => m.status === "final").sort((a, b) => b.utc.localeCompare(a.utc)).slice(0, 10);
+  return [...live, ...upcoming, ...finals];
+}

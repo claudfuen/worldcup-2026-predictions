@@ -1,19 +1,29 @@
+"use client";
 import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { LocalTime } from "@/components/local-time";
 import type { MatchInfo } from "@/lib/predictions";
-import { getT, getLocale } from "@/lib/i18n/server";
+import { useT, type TFunction } from "@/lib/i18n/provider";
+import { useLocale } from "@/lib/i18n/client";
 import { localeHref, type Locale } from "@/lib/i18n/config";
-import type { TFunction } from "@/lib/i18n/server";
+import { useLivePoll } from "@/lib/useLivePoll";
+
+type TickerData = { items: MatchInfo[]; hasLive: boolean };
 
 // A persistent, auto-scrolling pulse strip under the nav — present on every page. Three states, colour-
 // coded for a clear at-a-glance distinction: LIVE (red, pulsing dot + clock) → UPCOMING (cool blue, local
 // kickoff time) → FINISHED (green FT + score). Pure CSS marquee (two copies, translate -50%), pauses on
-// hover, every item links to its match. Server-rendered; no live win-prob, just real scores and times.
-export async function ScoreTicker({ items }: { items: MatchInfo[] }) {
+// hover, every item links to its match. SSR paints `initialItems`; then it polls /api/ticker (fast while a
+// match is live, slow otherwise) so scores tick on their own without a full page re-render — no live win-prob.
+export function ScoreTicker({ initialItems, hasLive }: { initialItems: MatchInfo[]; hasLive: boolean }) {
+  const t = useT();
+  const locale = useLocale();
+  const { items } = useLivePoll<TickerData>(
+    "/api/ticker",
+    { items: initialItems, hasLive },
+    (d) => d?.items.some((m) => m.status === "live") ?? false,
+  );
   if (items.length === 0) return null;
-  const t = await getT();
-  const locale = await getLocale();
   const dur = Math.max(40, items.length * 6); // scale duration with count → consistent scroll speed
   return (
     <div className="border-border/60 bg-background/70 sticky top-14 z-40 overflow-hidden border-b backdrop-blur-xl">

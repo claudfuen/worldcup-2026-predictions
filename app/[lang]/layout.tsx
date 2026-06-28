@@ -11,7 +11,7 @@ import { AnalyticsListener } from "@/components/analytics-listener"
 import { InstallPrompt } from "@/components/install-prompt"
 import { ServiceWorkerRegister } from "@/components/sw-register"
 import { getPredictions } from "@/lib/getPredictions"
-import { getLiveMatches, overlayLive } from "@/lib/live"
+import { getLiveMatches, overlayLive, selectTickerItems, liveActivity } from "@/lib/live"
 import { cn } from "@/lib/utils";
 import { localeConfig } from "@/lib/i18n/config"
 import { getMessages } from "@/lib/i18n/server"
@@ -93,26 +93,20 @@ export default async function RootLayout({
   const messages = await getMessages()
   let updatedAt: string | null = null
   let tickerItems: MatchInfo[] = []
+  let tickerHasLive = false
   try {
     const data = await getPredictions()
     updatedAt = data.updatedAt
     let matches = data.matches
     try {
-      matches = overlayLive(data.matches, await getLiveMatches())
+      const live = await getLiveMatches()
+      matches = overlayLive(data.matches, live)
+      tickerHasLive = liveActivity(data.matches, live)
     } catch {
       // live feed unavailable — fall back to the cached payload's results
     }
-    // Live (now) → upcoming confirmed fixtures (next, with kickoff time) → recent finals (past). Upcoming
-    // is limited to matches with both teams known, so the ticker never shows a "TBD" knockout slot.
-    const live = matches.filter((m) => m.status === "live")
-    const upcoming = matches
-      .filter((m) => m.status === "scheduled" && m.home && m.away)
-      .sort((a, b) => a.utc.localeCompare(b.utc))
-      .slice(0, 6)
-    // The most recent finals regardless of age — always "the latest results", never an empty ticker on a
-    // knockout rest day (chosen over a strict time window for exactly that reason).
-    const finals = matches.filter((m) => m.status === "final").sort((a, b) => b.utc.localeCompare(a.utc)).slice(0, 10)
-    tickerItems = [...live, ...upcoming, ...finals]
+    // SSR first paint; the client ScoreTicker then polls /api/ticker (same selector) to keep it live.
+    tickerItems = selectTickerItems(matches)
   } catch {
     updatedAt = null
   }
@@ -129,7 +123,7 @@ export default async function RootLayout({
           <I18nProvider messages={messages} intl={cfg.intl}>
             <AnalyticsListener />
             <Nav updatedAt={updatedAt} />
-            <ScoreTicker items={tickerItems} />
+            <ScoreTicker initialItems={tickerItems} hasLive={tickerHasLive} />
             {children}
             {/* Site-wide footer: language selector (every page, all breakpoints) + source link */}
             <div className="border-border/60 mt-4 border-t">

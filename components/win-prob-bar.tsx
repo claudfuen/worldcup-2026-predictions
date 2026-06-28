@@ -1,9 +1,11 @@
+"use client";
 import { forecastPct } from "@/lib/format";
-import { getT } from "@/lib/i18n/server";
+import { useT } from "@/lib/i18n/provider";
 
 // A single 100%-wide stacked bar (home | draw | away) - no empty track. Home reads as the model/forecast
-// voice (primary), away as the cool data pole, draw as neutral. Used for match win probability.
-export async function WinProbBar({
+// voice (primary), away as the cool data pole, draw as neutral. Used for match win probability. Client so it
+// can live inside the polled match islands — the width transitions animate as SWR pushes fresh probabilities.
+export function WinProbBar({
   home,
   draw,
   away,
@@ -16,7 +18,7 @@ export async function WinProbBar({
   homeName: string;
   awayName: string;
 }) {
-  const t = await getT();
+  const t = useT();
   return (
     <div>
       <div className="bg-muted/40 flex h-2.5 w-full overflow-hidden rounded-full dark:inset-ring dark:inset-ring-white/5">

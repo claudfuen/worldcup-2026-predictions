@@ -1,11 +1,13 @@
-import { getT } from "@/lib/i18n/server";
+"use client";
+import { useT } from "@/lib/i18n/provider";
 import type { MatchStats as MatchStatsData } from "@/lib/matchEvents";
 
 // Head-to-head match stats (possession, shots, on-target, corners, fouls) as proportional bars — home in
 // pitch-green from the left, away in cool-blue from the right, matching the win-probability bar's voices.
-// Shown for live + completed matches; renders nothing when ESPN has no boxscore yet.
-export async function MatchStats({ stats }: { stats: MatchStatsData | null }) {
-  const t = await getT();
+// Shown for live + completed matches; renders nothing when ESPN has no boxscore yet. Client so it can live
+// inside the polled match islands (stats refresh in place as SWR re-fetches the live boxscore).
+export function MatchStats({ stats }: { stats: MatchStatsData | null }) {
+  const t = useT();
   if (!stats) return null;
   const rows: { label: string; h: number | null; a: number | null; pctSuffix?: boolean }[] = [
     { label: t("match.statPossession"), h: stats.home.possession, a: stats.away.possession, pctSuffix: true },

@@ -1,17 +1,20 @@
+"use client";
 import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { TEAM_BY_CODE } from "@/lib/data/teams";
 import { teamSlug } from "@/lib/slug";
 import type { ProvisionalGroup } from "@/lib/liveProjection";
-import { getT, getLocale } from "@/lib/i18n/server";
+import { useT } from "@/lib/i18n/provider";
+import { useLocale } from "@/lib/i18n/client";
 import { localeHref } from "@/lib/i18n/config";
 
 // "If the live score holds" standings for one group. Deterministic (frozen current scoreline);
 // the green/amber zones are provisional positions, a ✓ is mathematically guaranteed given the
 // live result. The official table (completed matches only) is rendered elsewhere and untouched.
-export async function ProvisionalStandings({ proj, bare }: { proj: ProvisionalGroup; bare?: boolean }) {
-  const t = await getT();
-  const locale = await getLocale();
+// Client so it can live inside the polled match islands — rows reshuffle in place as the live score moves.
+export function ProvisionalStandings({ proj, bare }: { proj: ProvisionalGroup; bare?: boolean }) {
+  const t = useT();
+  const locale = useLocale();
   return (
     <div className={bare ? "overflow-hidden" : "border-border bg-card overflow-hidden rounded-2xl border"}>
       <div className="border-border/60 space-y-1 border-b px-4 py-2.5">
