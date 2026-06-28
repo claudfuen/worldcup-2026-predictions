@@ -21,8 +21,10 @@ export interface AwardEntry {
   projected: number; // forecast FINAL value (mean), incl. goals still to come
   winProb: number; // P(finishes the tournament top of this race), incl. ties split
   eliminated: boolean; // mathematically out: team has no matches left AND already below the leader (frozen
-  // tally that someone has already beaten). A definitive state, not a probability — there is no symmetric
-  // "clinched", because an active player can always score more, so the lead can never be locked mid-tournament.
+  // tally that someone has already beaten). A definitive state, not a probability.
+  clinched: boolean; // won the award — only possible once the tournament is over (no matches left for ANYONE,
+  // since an active player can always score more). At that point the top tally, broken by the secondary metric,
+  // has clinched. Mid-tournament this is always false; that's the asymmetry with `eliminated`.
 }
 
 export interface Awards {
@@ -72,11 +74,14 @@ export async function aggregateScorers(
   return { tallies: [...byKey.values()], matchesCounted: played.length };
 }
 
-// Per-team match accounting: how many matches each team has already played (the rate denominator) and how
-// many group matches remain (knockout depth comes from the sim probabilities instead).
-function teamMatchCounts(matches: MatchInfo[]): { played: Map<string, number>; groupRemaining: Map<string, number> } {
+// Per-team match accounting: matches already played (the rate denominator), group matches still to come, and
+// KNOCKOUT matches already played. The last one matters because the sim's reach-probabilities (advance/r16/…)
+// count a round with prob 1 once the team is conditioned into it — i.e. they include KO matches the team has
+// ALREADY played — so remaining KO = expected-total-KO minus KO-already-played.
+function teamMatchCounts(matches: MatchInfo[]): { played: Map<string, number>; groupRemaining: Map<string, number>; koPlayed: Map<string, number> } {
   const played = new Map<string, number>();
   const groupPlayed = new Map<string, number>();
+  const koPlayed = new Map<string, number>();
   const bump = (m: Map<string, number>, c?: string | null) => c && m.set(c, (m.get(c) ?? 0) + 1);
   for (const m of matches) {
     const counts = m.status === "final" || m.status === "live";
@@ -84,15 +89,19 @@ function teamMatchCounts(matches: MatchInfo[]): { played: Map<string, number>; g
     bump(played, m.home);
     bump(played, m.away);
     if (m.round === "GROUP") { bump(groupPlayed, m.home); bump(groupPlayed, m.away); }
+    else { bump(koPlayed, m.home); bump(koPlayed, m.away); }
   }
   const groupRemaining = new Map<string, number>();
   // Every team plays 3 group matches; whatever isn't played/in-progress yet still lies ahead.
   for (const c of played.keys()) groupRemaining.set(c, Math.max(0, 3 - (groupPlayed.get(c) ?? 0)));
-  return { played, groupRemaining };
+  return { played, groupRemaining, koPlayed };
 }
 
 // The distribution of how many KNOCKOUT matches a team still plays, derived from the sim's round-reach
-// marginals. A team plays a match in every round it reaches; everyone who reaches the semifinal then plays
+// marginals. NOTE: this is the FULL-tournament KO depth (from R32); during the group stage that equals the
+// remaining depth, but once a team is mid-bracket it slightly over-states remaining KO in the win% MC (the
+// projected mean is corrected via koPlayed in buildBoard). Refine to a remaining-only distribution before the
+// knockout stage begins. A team plays a match in every round it reaches; everyone who reaches the semifinal then plays
 // a 5th match (final OR third-place playoff), so the only reachable counts are {0,1,2,3,5}.
 function koDepthDist(t: TeamProb): { k: number; p: number }[] {
   const adv = t.advance, r16 = t.r16, qf = t.qf, sf = t.sf;
@@ -149,13 +158,17 @@ function simulateRace(cands: Cand[], rand: () => number): Map<number, number> {
 
 function buildBoard(
   tallies: Tally[],
-  valueOf: (t: Tally) => number,
+  metric: "goals" | "assists",
   priorRate: number,
   teams: Record<string, TeamProb>,
   played: Map<string, number>,
   groupRemaining: Map<string, number>,
+  koPlayed: Map<string, number>,
+  tournamentOver: boolean,
   rand: () => number,
 ): AwardEntry[] {
+  const valueOf = (t: Tally) => (metric === "goals" ? t.goals : t.assists);
+  const secondaryOf = (t: { goals: number; assists: number }) => (metric === "goals" ? t.assists : t.goals);
   const cands: Cand[] = tallies
     .filter((t) => valueOf(t) > 0)
     .map((t) => {
@@ -164,31 +177,40 @@ function buildBoard(
       const rate = Math.min(RATE_CAP, (valueOf(t) + PRIOR_STRENGTH * priorRate) / (matches + PRIOR_STRENGTH));
       const gr = groupRemaining.get(t.teamCode) ?? 0;
       const depth = tp ? koDepthDist(tp) : [{ k: 0, p: 1 }];
-      const expRemaining = gr + (tp ? expectedKoMatches(tp) : 0);
+      // Remaining KO = expected total KO minus KO already played (the reach-probs count played rounds as 1).
+      const koLeft = Math.max(0, (tp ? expectedKoMatches(tp) : 0) - (koPlayed.get(t.teamCode) ?? 0));
+      const expRemaining = gr + koLeft;
       return { player: t.player, teamCode: t.teamCode, value: valueOf(t), rate, groupRemaining: gr, depth, expRemaining };
     });
   const winProbs = simulateRace(cands, rand);
-  // The current race leader: anyone frozen (no matches left) and strictly below this can never catch up.
   const leaderValue = cands.reduce((m, c) => Math.max(m, c.value), 0);
   const FROZEN = 0.01; // expected remaining matches ≈ 0 → the team has no game left to add to the tally
-  return cands
-    .map((c, i) => {
-      const t = tallies.find((x) => x.player === c.player && x.teamCode === c.teamCode)!;
-      return {
-        player: c.player,
-        teamCode: c.teamCode,
-        value: c.value,
-        goals: t.goals,
-        assists: t.assists,
-        penalties: t.penalties,
-        matches: played.get(c.teamCode) ?? 0,
-        matchesLeft: c.expRemaining,
-        projected: c.value + c.rate * c.expRemaining,
-        winProb: winProbs.get(i) ?? 0,
-        eliminated: c.expRemaining < FROZEN && c.value < leaderValue,
-      };
-    })
-    .sort((a, b) => b.value - a.value || b.projected - a.projected || b.winProb - a.winProb);
+  const built = cands.map((c, i) => {
+    const t = tallies.find((x) => x.player === c.player && x.teamCode === c.teamCode)!;
+    return {
+      player: c.player,
+      teamCode: c.teamCode,
+      value: c.value,
+      goals: t.goals,
+      assists: t.assists,
+      penalties: t.penalties,
+      matches: played.get(c.teamCode) ?? 0,
+      matchesLeft: c.expRemaining,
+      projected: c.value + c.rate * c.expRemaining,
+      winProb: winProbs.get(i) ?? 0,
+      // Eliminated: frozen tally already behind the leader → can never catch up.
+      eliminated: c.expRemaining < FROZEN && c.value < leaderValue,
+      clinched: false,
+    };
+  });
+  // Clinched: only once the tournament is over (nobody can score again) does the top tally — broken by the
+  // secondary metric (assists for the Boot, goals for assists) — lock the award. Ties on both share it.
+  if (tournamentOver && built.length) {
+    const top = built.filter((e) => e.value === leaderValue);
+    const maxSec = top.reduce((m, e) => Math.max(m, secondaryOf(e)), 0);
+    for (const e of top) if (secondaryOf(e) === maxSec) e.clinched = true;
+  }
+  return built.sort((a, b) => b.value - a.value || b.projected - a.projected || b.winProb - a.winProb);
 }
 
 export async function computeAwards(
@@ -198,9 +220,11 @@ export async function computeAwards(
   seed = FORECAST_SEED,
 ): Promise<Awards> {
   const { tallies, matchesCounted } = await aggregateScorers(matches, getSummary);
-  const { played, groupRemaining } = teamMatchCounts(matches);
+  const { played, groupRemaining, koPlayed } = teamMatchCounts(matches);
   const rand = mulberry32(seed);
-  const goldenBoot = buildBoard(tallies, (t) => t.goals, PRIOR_GOAL_RATE, teams, played, groupRemaining, rand);
-  const assists = buildBoard(tallies, (t) => t.assists, PRIOR_ASSIST_RATE, teams, played, groupRemaining, rand);
+  // The award can only be clinched once nobody can score again — i.e. every match is final.
+  const tournamentOver = matches.length > 0 && matches.every((m) => m.status === "final");
+  const goldenBoot = buildBoard(tallies, "goals", PRIOR_GOAL_RATE, teams, played, groupRemaining, koPlayed, tournamentOver, rand);
+  const assists = buildBoard(tallies, "assists", PRIOR_ASSIST_RATE, teams, played, groupRemaining, koPlayed, tournamentOver, rand);
   return { goldenBoot, assists, matchesCounted };
 }

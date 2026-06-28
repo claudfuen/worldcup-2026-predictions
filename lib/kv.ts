@@ -49,7 +49,10 @@ export const KV_CONFIGURED = Boolean(URL && TOKEN);
 //      upside lever, surfaced in the UI.
 // v15: award entries gained `eliminated` — a definitive "out" for a player whose team has no matches left and
 //      is already below the leader (shown as "out", not a 0% probability).
-export const PRED_KEY = "predictions:v15";
+// v16: award entries gained `clinched` (won — only once the tournament is over); AND a fix so a knockout match
+//      whose participant resolves from a locked third-place slot (e.g. Mexico v Ecuador) now gets its pre-match
+//      W/D/L / xG / scorelines (previously null because the slot resolved after the forecast pass).
+export const PRED_KEY = "predictions:v16";
 
 // Start-of-day snapshot of title/advance odds, for "moved since yesterday" deltas. Rolled once per ET day.
 export const BASELINE_KEY = "predictions:baseline:v1";

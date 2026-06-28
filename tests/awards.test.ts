@@ -102,4 +102,36 @@ describe("computeAwards elimination", () => {
     expect(zed.winProb).toBe(0); // and indeed cannot win
     expect(ava.eliminated).toBe(false); // leader on a deep-run team
   });
+
+  it("clinches the award only once every match is final (tournament over)", async () => {
+    // All matches final → nobody can score again. Both teams have played their 3 group games (frozen). Top
+    // tally clinches; the rest are out.
+    const sums: Record<number, MatchSummary> = {
+      1: { events: [goal("AAA", "Ava"), goal("AAA", "Ava"), goal("AAA", "Ava")], stats: null }, // Ava 3
+      2: { events: [goal("BBB", "Ben")], stats: null }, // Ben 1
+    };
+    const gs = async (m: MatchInfo): Promise<MatchSummary> => sums[m.match] ?? { events: [], stats: null };
+    // AAA and BBB each play 3 group games (all final) → groupRemaining 0, no KO → frozen.
+    const ms = [
+      mkMatch(1, "AAA", "BBB"), mkMatch(2, "AAA", "P1"), mkMatch(3, "AAA", "P2"),
+      mkMatch(4, "BBB", "P1"), mkMatch(5, "BBB", "P2"),
+    ];
+    const tms: Record<string, TeamProb> = {}; // out of the KO → probs irrelevant
+    const { goldenBoot } = await computeAwards(ms, tms, gs, 1);
+    const ava = goldenBoot.find((e) => e.player === "Ava")!;
+    const ben = goldenBoot.find((e) => e.player === "Ben")!;
+    expect(ava.clinched).toBe(true); // top tally, tournament over
+    expect(ben.clinched).toBe(false);
+    expect(ben.eliminated).toBe(true); // frozen below the winner
+  });
+
+  it("does NOT clinch while any match is still to play", async () => {
+    // Same leader, but one match still scheduled → an active player could still score, so no clinch.
+    const sums: Record<number, MatchSummary> = { 1: { events: [goal("AAA", "Ava"), goal("AAA", "Ava"), goal("AAA", "Ava")], stats: null } };
+    const gs = async (m: MatchInfo): Promise<MatchSummary> => sums[m.match] ?? { events: [], stats: null };
+    const ms = [mkMatch(1, "AAA", "BBB"), mkMatch(2, "CCC", "DDD", "scheduled")];
+    const tms: Record<string, TeamProb> = { AAA: team({ code: "AAA", advance: 0.9, r16: 0.6, qf: 0.4, sf: 0.2 }) };
+    const { goldenBoot } = await computeAwards(ms, tms, gs, 1);
+    expect(goldenBoot.find((e) => e.player === "Ava")!.clinched).toBe(false);
+  });
 });

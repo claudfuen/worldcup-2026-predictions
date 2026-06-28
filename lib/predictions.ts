@@ -135,6 +135,28 @@ export function applyDeltas(p: PredictionsPayload, base: BaselineSnapshot | null
   }
 }
 
+// Per-match pre-match read (W/D/L, favourite, xG, likely scorelines) for a DEFINED match — same host
+// advantage as the Monte Carlo so the detail page reconciles with the tournament odds. Idempotent and a
+// no-op until both teams are known; called both in the initial build AND again after a third-place slot
+// resolves a participant later (otherwise that match — e.g. a clinched third-place R32 — would have no probs).
+function fillMatchForecast(info: MatchInfo, ratings: Record<string, number>, preMatch: Record<string, Record<string, number>>): void {
+  if (!info.defined || !info.home || !info.away) return;
+  // For a completed match, read ratings as they stood BEFORE it (true pre-match view, no hindsight).
+  const r = info.status === "final" ? (preMatch[[info.home, info.away].sort().join("-")] ?? ratings) : ratings;
+  const diff =
+    (r[info.home] ?? 1500) - (r[info.away] ?? 1500) +
+    hostEloBoost(info.home, info.venue) - hostEloBoost(info.away, info.venue);
+  const p = wdlProbs(diff);
+  info.probs = { home: p.win, draw: p.draw, away: p.loss };
+  const favCode = p.win >= p.loss ? info.home : info.away;
+  info.favorite = { code: favCode, name: TEAM_BY_CODE[favCode].name, winProb: Math.max(p.win, p.loss) };
+  const [lh, la] = eloToLambdas(diff);
+  info.xg = { home: Math.round(lh * 10) / 10, away: Math.round(la * 10) / 10 };
+  if (info.status !== "final") {
+    info.topScores = scorelineDist(diff).slice(0, 6).map((s) => ({ h: s.h, a: s.a, prob: Math.round(s.prob * 1000) / 1000 }));
+  }
+}
+
 function topCandidates(dist: Record<string, number> | undefined, n = 4): SlotCandidate[] {
   if (!dist) return [];
   return Object.entries(dist)
@@ -278,22 +300,7 @@ export async function computePredictions(iterations = 20000, seed = 20260611, li
     // nation gets an Elo boost at home, larger at altitude), so the per-match W/D/L, xG and scorelines
     // shown on the detail page reconcile with the tournament odds. Kept for final matches too so the
     // detail page can show the model's pre-match read alongside the actual result.
-    if (info.defined && info.home && info.away) {
-      // For a completed match, read ratings as they stood BEFORE it (true pre-match view, no hindsight).
-      const r = info.status === "final" ? (preMatch[[info.home, info.away].sort().join("-")] ?? ratings) : ratings;
-      const diff =
-        (r[info.home] ?? 1500) - (r[info.away] ?? 1500) +
-        hostEloBoost(info.home, info.venue) - hostEloBoost(info.away, info.venue);
-      const p = wdlProbs(diff);
-      info.probs = { home: p.win, draw: p.draw, away: p.loss };
-      const favCode = p.win >= p.loss ? info.home : info.away;
-      info.favorite = { code: favCode, name: TEAM_BY_CODE[favCode].name, winProb: Math.max(p.win, p.loss) };
-      const [lh, la] = eloToLambdas(diff);
-      info.xg = { home: Math.round(lh * 10) / 10, away: Math.round(la * 10) / 10 };
-      if (info.status !== "final") {
-        info.topScores = scorelineDist(diff).slice(0, 6).map((s) => ({ h: s.h, a: s.a, prob: Math.round(s.prob * 1000) / 1000 }));
-      }
-    }
+    fillMatchForecast(info, ratings, preMatch);
     return info;
   });
 
@@ -400,6 +407,9 @@ export async function computePredictions(iterations = 20000, seed = 20260611, li
     if (thirdSide === "home") { if (!mi.home) { mi.home = code; mi.homeName = TEAM_BY_CODE[code].name; } }
     else if (!mi.away) { mi.away = code; mi.awayName = TEAM_BY_CODE[code].name; }
     mi.defined = Boolean(mi.home && mi.away);
+    // This slot resolved AFTER the forecast pass above — so a now-defined match (e.g. a clinched third-place
+    // R32 like Mexico v Ecuador) would otherwise have no pre-match W/D/L. Fill it in now.
+    if (mi.defined && !mi.probs) fillMatchForecast(mi, ratings, preMatch);
   }
 
   // Golden Boot + assists race, aggregated from the parsed match timelines and projected forward over each

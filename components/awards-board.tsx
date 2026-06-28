@@ -82,8 +82,17 @@ function FeaturedLeader({ entry, metric, accent, max, t, locale }: { entry: Awar
           </div>
         </div>
         <div className="shrink-0 text-right">
-          <div className={`font-mono text-3xl leading-none font-semibold tabular-nums sm:text-4xl ${a.text}`}>{forecastPct(entry.winProb)}</div>
-          <div className="text-muted-2 mt-1 font-mono text-[10px] tracking-wide uppercase">{t("awards.toWin")}</div>
+          {entry.clinched ? (
+            <div className={`inline-flex items-center gap-1.5 font-mono text-xl font-semibold tracking-[0.08em] uppercase sm:text-2xl ${a.text}`}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5 10 17.5 19 7" /></svg>
+              {t("awards.wonUpper")}
+            </div>
+          ) : (
+            <>
+              <div className={`font-mono text-3xl leading-none font-semibold tabular-nums sm:text-4xl ${a.text}`}>{forecastPct(entry.winProb)}</div>
+              <div className="text-muted-2 mt-1 font-mono text-[10px] tracking-wide uppercase">{t("awards.toWin")}</div>
+            </>
+          )}
         </div>
       </div>
       <div className="relative mt-4">
@@ -141,9 +150,15 @@ function Row({ entry, rank, metric, accent, max, t, locale }: { entry: AwardEntr
             </span>
           </div>
         )}
-        {/* P(win), or a dash when out */}
+        {/* P(win), "won" when clinched, or a dash when out */}
         <span className="w-9 shrink-0 text-right font-mono text-sm font-semibold tabular-nums">
-          {entry.eliminated ? <span className="text-muted-2" aria-hidden>—</span> : <>{forecastPct(entry.winProb)}<span className="sr-only"> {t("awards.chance")}</span></>}
+          {entry.clinched ? (
+            <span className={ACCENT[accent].text}>{t("awards.won")}</span>
+          ) : entry.eliminated ? (
+            <span className="text-muted-2" aria-hidden>—</span>
+          ) : (
+            <>{forecastPct(entry.winProb)}<span className="sr-only"> {t("awards.chance")}</span></>
+          )}
         </span>
       </Link>
     </li>

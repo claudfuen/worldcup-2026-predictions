@@ -40,11 +40,16 @@ export default async function AwardsPage() {
 
   const leader = goldenBoot[0];
   const leadCount = leader ? goldenBoot.filter((e) => e.goals === leader.goals).length : 0;
+  const clinchedCount = goldenBoot.filter((e) => e.clinched).length;
   const verdict = !leader
     ? t("awards.verdictNoData")
-    : leadCount > 1
-      ? t("awards.verdictTied", { player: leader.player, n: leadCount - 1, goals: leader.goals })
-      : t("awards.verdictLeader", { player: leader.player, goals: leader.goals, pct: forecastPct(leader.winProb) });
+    : leader.clinched
+      ? clinchedCount > 1
+        ? t("awards.verdictWonShared", { player: leader.player, goals: leader.goals })
+        : t("awards.verdictWon", { player: leader.player, goals: leader.goals })
+      : leadCount > 1
+        ? t("awards.verdictTied", { player: leader.player, n: leadCount - 1, goals: leader.goals })
+        : t("awards.verdictLeader", { player: leader.player, goals: leader.goals, pct: forecastPct(leader.winProb) });
 
   // ItemList structured data for the Golden Boot ranking — this is a head-term page ("golden boot odds")
   // and previously shipped no structured data. Built server-side; absolute origin to match the other pages.
