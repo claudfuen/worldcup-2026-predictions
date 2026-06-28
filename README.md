@@ -10,7 +10,7 @@
 
 <p>
   <a href="https://worldcup2026predictions.app"><img alt="Live demo" src="https://img.shields.io/badge/live-worldcup2026predictions.app-79e6b2?style=flat-square" /></a>
-  <a href="https://github.com/claudfuen/worldcup-2026-sim/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/claudfuen/worldcup-2026-sim?style=flat-square&color=79e6b2" /></a>
+  <a href="https://github.com/claudfuen/worldcup-2026-predictions/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/claudfuen/worldcup-2026-predictions?style=flat-square&color=79e6b2" /></a>
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js" />
   <img alt="React" src="https://img.shields.io/badge/React-19-149eca?style=flat-square&logo=react&logoColor=white" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white" />

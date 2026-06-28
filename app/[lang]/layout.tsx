@@ -130,7 +130,7 @@ export default async function RootLayout({
               <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
                 <LanguageSwitcher variant="footer" />
                 <a
-                  href="https://github.com/claudfuen/worldcup-2026-sim"
+                  href="https://github.com/claudfuen/worldcup-2026-predictions"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="GitHub"

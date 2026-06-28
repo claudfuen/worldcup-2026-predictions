@@ -3,7 +3,7 @@
 and prediction-vs-source consistency. Independently re-derives clinch to confirm certainty states."""
 import json, urllib.request, itertools, math, sys
 
-BASE="https://worldcup-2026-sim.vercel.app"
+BASE="https://worldcup2026predictions.app"
 def get(path):
     return json.load(urllib.request.urlopen(BASE+path, timeout=70))
 
