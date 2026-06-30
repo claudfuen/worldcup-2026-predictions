@@ -21,6 +21,22 @@
     "language": "Language",
     "homeAria": "World Cup Predictor — home"
   },
+  "cmd": {
+    "open": "Search",
+    "title": "Search",
+    "placeholder": "Search teams, groups, stadiums, matches, pages…",
+    "empty": "No results for “{q}”",
+    "group": "Group {letter}",
+    "matchN": "Match {n}",
+    "type_page": "Page",
+    "type_team": "Team",
+    "type_group": "Group",
+    "type_venue": "Stadium",
+    "type_match": "Match",
+    "hintNav": "navigate",
+    "hintOpen": "open",
+    "hintClose": "close"
+  },
   "venues": {
     "metaTitle": "World Cup 2026 Stadiums — All 16 Host Venues, Matches & Results",
     "metaDesc": "Every 2026 World Cup venue across the USA, Mexico and Canada — host cities, capacities, and the full match list and results at each stadium.",

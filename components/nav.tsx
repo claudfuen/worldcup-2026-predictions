@@ -9,6 +9,7 @@ import { localeHref, splitLocale } from "@/lib/i18n/config";
 import { useT } from "@/lib/i18n/provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OPEN_INSTALL_EVENT } from "@/components/install-prompt";
+import { CommandMenu, OPEN_COMMAND_EVENT } from "@/components/command-menu";
 
 // The final is 2026-07-19; after it, the cron stops and the payload is the frozen final state. Past
 // this instant the freshness indicator reads "Final" rather than an ever-growing "Updated Xd ago",
@@ -90,8 +91,18 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
           })}
         </nav>
 
-        {/* Right cluster: freshness + (mobile) hamburger */}
+        {/* Right cluster: search + freshness + (mobile) hamburger */}
         <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-2">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event(OPEN_COMMAND_EVENT))}
+            aria-label={t("cmd.open")}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted/40 border-border/60 flex h-10 items-center gap-2 rounded-lg px-2.5 transition-colors lg:border"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+            <span className="hidden text-sm lg:inline">{t("cmd.open")}</span>
+            <kbd className="text-muted-2 border-border bg-muted/40 hidden shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] lg:block">⌘K</kbd>
+          </button>
           <Freshness updatedAt={updatedAt} />
           <button
             type="button"
@@ -108,6 +119,8 @@ export function Nav({ updatedAt }: { updatedAt: string | null }) {
           </button>
         </div>
       </div>
+
+      <CommandMenu />
 
       {/* Mobile drawer */}
       {open && (
