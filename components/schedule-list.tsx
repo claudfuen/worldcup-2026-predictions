@@ -43,6 +43,10 @@ export function ScheduleList({ matches, hotReasons = {} }: { matches: MatchInfo[
   // A one-day look-back so just-finished and yesterday's matches don't vanish the moment the day rolls over
   // (you can still see yesterday's scores when you check in the next morning).
   const yesterday = nowIso ? fmtDayKey(new Date(Date.parse(nowIso) - 86400000).toISOString(), zone) : null;
+  const tomorrow = nowIso ? fmtDayKey(new Date(Date.parse(nowIso) + 86400000).toISOString(), zone) : null;
+  // A friendly header for the adjacent days; other days keep the full "Sat, Jul 4" date for orientation.
+  const dayLabel = (key: string, fallback: string) =>
+    key === today ? t("time.today") : key === tomorrow ? t("time.tomorrow") : key === yesterday ? t("time.yesterday") : fallback;
 
   // "Upcoming" is the default, but once nothing is upcoming (a rest day at the very end, or the whole
   // tournament is over) that filter would show an empty "no matches" on a page full of results — so fall
@@ -66,7 +70,7 @@ export function ScheduleList({ matches, hotReasons = {} }: { matches: MatchInfo[
   for (const m of [...shown].sort((a, b) => a.utc.localeCompare(b.utc))) {
     const key = fmtDayKey(m.utc, zone);
     let d = days.find((x) => x.key === key);
-    if (!d) { d = { key, label: fmtDay(m.utc, zone), items: [] }; days.push(d); }
+    if (!d) { d = { key, label: dayLabel(key, fmtDay(m.utc, zone)), items: [] }; days.push(d); }
     d.items.push(m);
   }
 

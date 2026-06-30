@@ -62,7 +62,7 @@ export function relativeDay(utc: string, z: Zone | undefined, nowIso: string): {
   // Local hour of the match (h23 → midnight is 0, never 24), to tell a daytime match from a night one.
   const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(new Date(utc)));
   const isNight = hour >= 18 || hour < NIGHT_ROLLOVER_H;
-  if (matchKey === todayKey) return isNight ? { key: "tonight" } : {}; // night → "Tonight"; daytime → just the time
+  if (matchKey === todayKey) return { key: isNight ? "tonight" : "today" }; // ticker suppresses a plain "today"
   if (matchKey === tomorrowKey) return { key: "tomorrow" };
   if (matchKey === yesterdayKey) return { key: "yesterday" };
   const diffDays = Math.round((Date.parse(matchKey) - Date.parse(todayKey)) / 86400000);

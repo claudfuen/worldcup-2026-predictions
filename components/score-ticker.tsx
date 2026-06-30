@@ -57,7 +57,9 @@ function TickerItem({ m, t, locale, nowIso, zone }: { m: MatchInfo; t: TFunction
   // Upcoming kickoff → a friendly relative day ("Tonight" / "Tomorrow" / weekday / date), or nothing for a
   // daytime match today (the bare time already reads as today).
   const rel = !live && !final ? relativeDay(m.utc, zone, nowIso) : null;
-  const dayWord = rel ? (rel.key ? t(`time.${rel.key}`) : rel.text) : null;
+  // A daytime kickoff today needs no day word — the bare time already reads as today. Everything else
+  // ("Tonight" / "Tomorrow" / weekday / date) gets the friendly label.
+  const dayWord = !rel || rel.key === "today" ? null : rel.key ? t(`time.${rel.key}`) : rel.text;
   const homeWon = m.winner != null && m.winner === m.home;
   const awayWon = m.winner != null && m.winner === m.away;
   const nameCls = (won: boolean) => (final ? (won ? "text-foreground" : "text-muted-foreground") : "text-foreground/90");

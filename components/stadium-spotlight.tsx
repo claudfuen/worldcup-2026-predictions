@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Flag } from "@/components/flag";
-import { LocalTime } from "@/components/local-time";
+import { LocalTime, RelativeDay } from "@/components/local-time";
 import { VENUE_BY_KEY } from "@/lib/data/venues";
 import { VENUE_PHOTOS } from "@/lib/data/venuePhotos";
 import { fifaVenue } from "@/lib/venues";
@@ -54,7 +54,7 @@ export async function StadiumSpotlight({ matches, className = "" }: { matches: M
             {label}
           </span>
           <span className="font-mono text-[11px] tracking-wide text-white/75" suppressHydrationWarning>
-            {m.status === "live" ? (m.liveDetail ?? t("common.live")) : <LocalTime utc={m.utc} mode="day" />}
+            {m.status === "live" ? (m.liveDetail ?? t("common.live")) : <><RelativeDay utc={m.utc} /> · <LocalTime utc={m.utc} mode="timeshort" /></>}
           </span>
         </div>
 

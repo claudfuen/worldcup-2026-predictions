@@ -10,9 +10,9 @@ const ET: Zone = { tz: "America/New_York", locale: "en-US" }; // EDT = UTC-4 in 
 const NOW = "2026-06-30T18:00:00Z";
 
 describe("relativeDay", () => {
-  it("daytime match today → no day word (the time alone reads as today)", () => {
+  it("daytime match today → today (the ticker suppresses this word; other surfaces show it)", () => {
     // 2026-06-30 17:00 EDT
-    expect(relativeDay("2026-06-30T21:00:00Z", ET, NOW)).toEqual({});
+    expect(relativeDay("2026-06-30T21:00:00Z", ET, NOW)).toEqual({ key: "today" });
   });
 
   it("evening match today → tonight", () => {
