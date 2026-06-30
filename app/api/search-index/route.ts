@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive } from "@/lib/live";
+import { playerUniverse } from "@/lib/players";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Compact match index for the ⌘K command palette, fetched lazily on first open. Returns CODES only (the
-// client localizes names) so it stays tiny: resolved participants where known, plus the top projected
-// candidates per slot so unresolved knockout ties are searchable by their EXPECTED matchups. Overlaid with
-// the live feed so a just-finished knockout shows its real teams immediately.
+// Compact index for the ⌘K command palette, fetched lazily on first open. Returns CODES only (the client
+// localizes names) so it stays tiny: matches (resolved participants + top projected candidates so unresolved
+// knockout ties are searchable by their EXPECTED matchups) and players (everyone with a tally). Match list is
+// overlaid with the live feed so a just-finished knockout shows its real teams immediately.
 export async function GET() {
   try {
     const data = await getPredictions();
@@ -28,8 +29,9 @@ export async function GET() {
       ph: (m.projHome ?? []).slice(0, 3).map((c) => c.code),
       pa: (m.projAway ?? []).slice(0, 3).map((c) => c.code),
     }));
-    return NextResponse.json({ matches: out }, { headers: { "cache-control": "public, max-age=60" } });
+    const players = playerUniverse(data.awards).map((p) => ({ name: p.player, team: p.teamCode, slug: p.slug }));
+    return NextResponse.json({ matches: out, players }, { headers: { "cache-control": "public, max-age=60" } });
   } catch {
-    return NextResponse.json({ matches: [] });
+    return NextResponse.json({ matches: [], players: [] });
   }
 }

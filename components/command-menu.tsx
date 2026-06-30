@@ -16,10 +16,11 @@ import { Flag } from "@/components/flag";
 
 export const OPEN_COMMAND_EVENT = "wc:open-command";
 
-// Compact match record from /api/search-index (codes only; names localized client-side).
+// Compact records from /api/search-index (codes only; names localized client-side).
 interface RawMatch { n: number; round: string; utc: string; city: string; h: string | null; a: string | null; ph: string[]; pa: string[]; }
+interface RawPlayer { name: string; team: string; slug: string; }
 
-type ItemType = "page" | "team" | "group" | "venue" | "match";
+type ItemType = "page" | "team" | "player" | "group" | "venue" | "match";
 interface Item {
   id: string;
   type: ItemType;
@@ -55,19 +56,20 @@ export function CommandMenu() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [matchData, setMatchData] = useState<RawMatch[] | null>(null);
+  const [playerData, setPlayerData] = useState<RawPlayer[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const fetchedRef = useRef(false);
 
-  // Lazy-load the live match index on first open: resolved participants where known, plus projected
-  // candidates so unresolved knockout ties are searchable by their expected matchups (codes only — tiny).
+  // Lazy-load the live index on first open: matches (resolved + expected matchups) and players (everyone
+  // with a tally) — codes only, names localized client-side.
   const openMenu = useCallback(() => {
     setQuery(""); setActive(0); setOpen(true);
     if (!fetchedRef.current) {
       fetchedRef.current = true;
       fetch("/api/search-index")
         .then((r) => r.json())
-        .then((d) => setMatchData(d.matches ?? []))
+        .then((d) => { setMatchData(d.matches ?? []); setPlayerData(d.players ?? []); })
         .catch(() => { fetchedRef.current = false; });
     }
   }, []);
@@ -96,6 +98,14 @@ export function CommandMenu() {
         id: `venue:${v.slug}`, type: "venue", label: v.fifaName, sub: `${v.city} · ${v.key}`,
         href: `/venues/${v.slug}`, code: v.hostCode,
         keywords: `${v.fifaName} ${v.key} ${v.city} ${v.country}`.toLowerCase(),
+      });
+    }
+    for (const p of playerData) {
+      const team = t(`teams.${p.team}`);
+      out.push({
+        id: `player:${p.slug}`, type: "player", label: p.name, sub: team,
+        href: `/player/${p.slug}`, code: p.team,
+        keywords: `${p.name} ${team} ${p.team}`.toLowerCase(),
       });
     }
     const fmtShort = new Intl.DateTimeFormat(localeConfig(locale).intl, { month: "short", day: "numeric" });
@@ -143,7 +153,7 @@ export function CommandMenu() {
       }
     }
     return out;
-  }, [t, locale, matchData]);
+  }, [t, locale, matchData, playerData]);
 
   const results = useMemo<Item[]>(() => {
     const q = query.trim().toLowerCase();
@@ -271,7 +281,7 @@ export function CommandMenu() {
   );
 }
 
-const TYPE_RANK: Record<ItemType, number> = { page: 0, team: 1, group: 2, venue: 3, match: 4 };
+const TYPE_RANK: Record<ItemType, number> = { page: 0, team: 1, player: 2, group: 3, venue: 4, match: 5 };
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return <kbd className="border-border bg-muted/40 mr-0.5 inline-block rounded border px-1 font-mono text-[10px]">{children}</kbd>;
