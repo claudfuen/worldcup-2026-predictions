@@ -13,6 +13,7 @@ import { useT } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
 import { localeHref } from "@/lib/i18n/config";
 import { fifaVenue } from "@/lib/venues";
+import { VENUE_BY_KEY } from "@/lib/data/venues";
 
 const ROUND_KEY: Record<string, string> = {
   GROUP: "rounds.GROUP", R32: "rounds.R32", R16: "rounds.R16", QF: "rounds.QF", SF: "rounds.SF", "3P": "rounds.THIRD", FINAL: "rounds.FINAL",
@@ -146,7 +147,14 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
           ) : (
             <span className="text-muted-2 text-[11px]">{t("common.projected")}</span>
           )}
-          <div className="text-muted-2 hidden max-w-44 truncate text-[10px] sm:block">{fifaVenue(m.venue)}</div>
+          <div className="hidden max-w-44 truncate text-[10px] sm:block">
+            {(() => {
+              const slug = VENUE_BY_KEY[m.venue]?.slug;
+              return slug ? (
+                <Link href={localeHref(locale, `/venues/${slug}`)} className="text-muted-2 hover:text-primary relative z-10 underline-offset-2 hover:underline">{fifaVenue(m.venue)}</Link>
+              ) : <span className="text-muted-2">{fifaVenue(m.venue)}</span>;
+            })()}
+          </div>
         </div>
         {upcoming && <TicketLink matchNo={m.match} placement="schedule_row" variant="inline" className="relative z-10 -my-2 px-1 py-2" />}
       </div>

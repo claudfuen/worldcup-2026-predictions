@@ -12,6 +12,7 @@ import { ProvisionalStandings } from "@/components/provisional-standings";
 import { slugForCode } from "@/lib/slug";
 import { pct, forecastPct } from "@/lib/format";
 import { fifaVenue } from "@/lib/venues";
+import { VENUE_BY_KEY } from "@/lib/data/venues";
 import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { PenaltyShootout } from "@/components/penalty-shootout";
 import { TicketLink } from "@/components/ticket-link";
@@ -225,7 +226,13 @@ export function MatchFacts({ matchNo, initial, heat }: { matchNo: number; initia
     <div className="border-border bg-card/60 mt-3 rounded-2xl border p-4 backdrop-blur-sm sm:p-5 dark:bg-card/50">
       <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-4">
         <Fact label={t("match.factKickoff")} value={<LocalTime utc={m.utc} mode="datetime" />} />
-        <Fact label={t("match.factVenue")} value={t("match.venueCity", { venue: fifaVenue(m.venue), city: m.city })} />
+        <Fact label={t("match.factVenue")} value={(() => {
+          const slug = VENUE_BY_KEY[m.venue]?.slug;
+          const venue = fifaVenue(m.venue);
+          return slug ? (
+            <><Link href={localeHref(locale, `/venues/${slug}`)} className="hover:text-primary underline-offset-2 hover:underline">{venue}</Link><span className="text-muted-2">, {m.city}</span></>
+          ) : t("match.venueCity", { venue, city: m.city });
+        })()} />
         <Fact label={t("match.factStage")} value={
           <>
             {m.round === "GROUP" && m.group ? (
