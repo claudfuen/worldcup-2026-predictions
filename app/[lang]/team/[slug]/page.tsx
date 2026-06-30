@@ -22,6 +22,7 @@ import { BracketTeaser } from "@/components/bracket-teaser";
 import { GroupsPreview } from "@/components/groups-preview";
 import { TitleOdds } from "@/components/title-odds";
 import { decidedOnPens, pensScore } from "@/lib/penalties";
+import { hasReachedRound, isEliminated } from "@/lib/teamStatus";
 import { teamAdvanceDisplay } from "@/lib/view/advance";
 import { isClinched } from "@/lib/view/types";
 import { forecastPct, ordinal } from "@/lib/format";
@@ -66,6 +67,11 @@ const ROUND_KEYS: [keyof RoundVals, string][] = [
 ];
 type RoundVals = { advance: number; r16: number; qf: number; sf: number; final: number; title: number };
 
+// Compact round label for the all-matches list (group stage + knockout rounds).
+const ROUND_SHORT: Record<string, string> = {
+  GROUP: "rounds.shortGroup", R32: "rounds.shortR32", R16: "rounds.shortR16", QF: "rounds.shortQF", SF: "rounds.shortSF", "3P": "rounds.shortThird", FINAL: "rounds.shortFinal",
+};
+
 export default async function TeamPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const team = teamFromSlug(slug);
@@ -91,8 +97,10 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
   const isChampion = data.complete && data.champion === team.code;
   const groupView = groups.find((g) => g.group === team.group);
   const row = groupView?.teams.find((t) => t.code === team.code);
+  // Every match this team is actually in — group stage plus any knockout tie they've reached (resolved or
+  // played). Projected future ties live in the "Road to the final" section above, not here.
   const fixtures = overlaid
-    .filter((m) => m.round === "GROUP" && (m.home === team.code || m.away === team.code))
+    .filter((m) => m.home === team.code || m.away === team.code)
     .sort((a, b) => a.utc.localeCompare(b.utc));
   const hotByMatch = computeWatchability(overlaid, teams, groups).byMatch;
 
@@ -172,16 +180,17 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
             {ROUND_KEYS.map(([key, labelKey]) => {
               const label = t(labelKey);
               const v = (pred as unknown as RoundVals)[key];
-              const r32Clinched = key === "advance" && advanceClinched;
-              const r32Out = key === "advance" && advanceOut;
-              // Tournament over: the champion's reached rounds are facts. ✓ the rounds they actually made.
-              const reached = isChampion || (data.complete && v >= 0.5);
-              const cellWon = data.complete && reached;
+              // ✓ once it's a FACT (clinched R32 via the group, or resolved into a later round by actually
+              // winning), "out" once eliminated, else the capped Monte Carlo forecast — never 99% for a round
+              // the team has already reached.
+              const reached = isChampion || (key === "advance" ? advanceClinched : hasReachedRound(overlaid, team.code, key));
+              const teamOut = advanceOut || isEliminated(overlaid, team.code, pred.advance ?? 0);
+              const showOut = !reached && teamOut;
               return (
-                <div key={key} className="bg-card flex flex-col items-center gap-1 px-2 py-4" style={{ backgroundColor: heat(r32Clinched || cellWon ? 1 : v) }}>
+                <div key={key} className="bg-card flex flex-col items-center gap-1 px-2 py-4" style={{ backgroundColor: heat(reached ? 1 : v) }}>
                   <span className="text-muted-2 text-[10px] font-medium tracking-wide uppercase">{label}</span>
-                  <span className={`font-mono text-lg font-bold tabular-nums ${r32Clinched || cellWon ? "text-win" : key === "title" ? "text-primary" : ""}`}>
-                    {r32Clinched || cellWon ? <span className="inline-flex items-center justify-center leading-none">✓</span> : r32Out || (data.complete && v < 0.5) ? t("team.outShort") : forecastPct(v)}
+                  <span className={`font-mono text-lg font-bold tabular-nums ${reached ? "text-win" : key === "title" ? "text-primary" : ""}`}>
+                    {reached ? <span className="inline-flex items-center justify-center leading-none">✓</span> : showOut ? t("team.outShort") : forecastPct(v)}
                   </span>
                 </div>
               );
@@ -244,21 +253,27 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
 
       {fixtures.length > 0 && (
         <section className="lg:col-span-2">
-          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">{t("team.fixturesHeading", { team: lTeam.name })}</h2>
+          <h2 className="text-muted-foreground mb-3 font-mono text-xs font-semibold tracking-wide uppercase">{t("team.allMatchesHeading", { team: lTeam.name })}</h2>
           <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border">
             {fixtures.map((m) => {
               const final = m.status === "final";
               const live = m.status === "live";
-              const oppName = m.home === team.code ? m.awayName : m.homeName;
-              const oppCode = m.home === team.code ? m.away : m.home;
               const isHome = m.home === team.code;
+              // Resolved opponent, else the projected most-likely opponent (muted) for an upcoming knockout tie.
+              const oppProj = (isHome ? m.projAway : m.projHome)?.[0];
+              const oppResolved = !!(isHome ? m.away : m.home);
+              const oppCode = (isHome ? m.away : m.home) ?? oppProj?.code ?? null;
+              const oppName = (isHome ? m.awayName : m.homeName) ?? oppProj?.name ?? t("common.tbd");
               const ps = final && decidedOnPens(m) ? pensScore(m) : null;
               return (
                 <Link key={m.match} href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-muted/30 flex items-center gap-3 px-4 py-2.5 transition-colors">
-                  <span className="text-muted-2 w-14 shrink-0 font-mono text-[11px] sm:w-24"><LocalTime utc={m.utc} mode="day" /></span>
+                  <span className="text-muted-2 w-16 shrink-0 sm:w-24">
+                    <span className="block font-mono text-[11px] whitespace-nowrap" suppressHydrationWarning><LocalTime utc={m.utc} mode="day" /></span>
+                    <span className="block text-[10px] leading-tight">{t(ROUND_SHORT[m.round] ?? "")}{m.round === "GROUP" && m.group ? ` ${m.group}` : ""}</span>
+                  </span>
                   <span className="text-muted-foreground text-xs">{t("common.vs")}</span>
                   <Flag code={oppCode} size={18} />
-                  <span className="min-w-0 flex-1 truncate text-sm">{oppName}</span>
+                  <span className={`min-w-0 flex-1 truncate text-sm ${oppResolved ? "" : "text-muted-foreground"}`}>{oppName}</span>
                   {hotByMatch.get(m.match)?.hot && <HotBadge className="shrink-0" />}
                   {final || live ? (
                     <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
