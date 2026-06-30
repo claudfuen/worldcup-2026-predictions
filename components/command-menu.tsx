@@ -28,7 +28,26 @@ interface Item {
   sub?: string;
   href: string;
   code?: string; // flag (team code or host code)
-  keywords: string; // lowercased haystack
+  keywords: string; // normalized haystack (lowercased, accents stripped)
+  words?: string[]; // keyword tokens, for typo-tolerant matching (filled in a post-build pass)
+}
+
+// Accent-insensitive lowercase, so "mbappe" finds "Mbappé" and "turkiye" finds "Türkiye".
+const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+// True when two strings are within Levenshtein distance 1 — light typo tolerance (one insert/delete/substitute).
+function lev1(a: string, b: string): boolean {
+  if (a === b) return true;
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  if (la > lb) return lev1(b, a); // ensure a is the shorter/equal
+  let i = 0, j = 0, edits = 0;
+  while (i < la && j < lb) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++edits > 1) return false;
+    if (la === lb) { i++; j++; } else { j++; } // substitution vs insertion
+  }
+  return edits + (la - i) + (lb - j) <= 1;
 }
 
 const PAGES: { key: string; href: string }[] = [
@@ -152,18 +171,27 @@ export function CommandMenu() {
         });
       }
     }
+    // Normalize haystacks (accent-insensitive) and pre-split into word tokens for typo-tolerant matching.
+    for (const it of out) {
+      it.keywords = norm(it.keywords);
+      it.words = it.keywords.split(/[^a-z0-9]+/).filter(Boolean);
+    }
     return out;
   }, [t, locale, matchData, playerData]);
 
   const results = useMemo<Item[]>(() => {
-    const q = query.trim().toLowerCase();
+    const q = norm(query.trim());
     if (!q) return items.filter((i) => i.type === "page"); // empty state: jump-to-page list
-    const tokens = q.split(/\s+/);
+    const tokens = q.split(/\s+/).filter(Boolean);
+    // A token matches by substring, or — for tokens of 4+ chars — within one edit of a keyword word (so a
+    // small typo like "messy"/"haalnd" still finds it). Short tokens stay exact to avoid noisy matches.
+    const tokenMatch = (i: Item, tok: string) =>
+      i.keywords.includes(tok) || (tok.length >= 4 && (i.words ?? []).some((w) => w.length >= 3 && lev1(tok, w)));
     const scored = items
-      .filter((i) => tokens.every((tok) => i.keywords.includes(tok)))
+      .filter((i) => tokens.every((tok) => tokenMatch(i, tok)))
       .map((i) => {
-        // Rank: label-prefix > label-contains > keyword-only; then a stable type priority.
-        const label = i.label.toLowerCase();
+        // Rank: label-prefix > label-contains > keyword/fuzzy only; then a stable type priority.
+        const label = norm(i.label);
         const score = label.startsWith(q) ? 0 : label.includes(q) ? 1 : 2;
         return { i, score: score * 10 + TYPE_RANK[i.type] };
       })
