@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Flag } from "@/components/flag";
+import { PlayerAvatar } from "@/components/player-avatar";
+import { getPlayerImage } from "@/lib/playerImages";
 import { forecastPct } from "@/lib/format";
 import { slugForCode } from "@/lib/slug";
 import type { AwardEntry } from "@/lib/awards";
@@ -39,9 +41,10 @@ export async function AwardsBoard({ entries, metric, accent, limit = 20 }: { ent
   if (rows.length === 0) return <p className="text-muted-2 border-border bg-card rounded-2xl border px-4 py-6 text-center text-sm dark:inset-ring dark:inset-ring-white/5">{t("awards.boardEmpty")}</p>;
   const max = Math.max(...rows.map((e) => e.projected), 1);
   const [leader, ...rest] = rows;
+  const leaderImg = await getPlayerImage(leader.player, leader.teamCode).catch(() => null);
   return (
     <div>
-      <FeaturedLeader entry={leader} metric={metric} accent={accent} max={max} t={t} locale={locale} />
+      <FeaturedLeader entry={leader} image={leaderImg} metric={metric} accent={accent} max={max} t={t} locale={locale} />
       {rest.length > 0 && (
         <div className="border-border bg-card mt-3 rounded-2xl border p-1.5 dark:inset-ring dark:inset-ring-white/5">
           <ol start={2} className="divide-border/50 list-none divide-y">
@@ -59,7 +62,7 @@ function valueOf(e: AwardEntry, metric: "goals" | "assists") {
   return metric === "goals" ? e.goals : e.assists;
 }
 
-function FeaturedLeader({ entry, metric, accent, max, t, locale }: { entry: AwardEntry; metric: "goals" | "assists"; accent: Accent; max: number; t: TFunction; locale: Locale }) {
+function FeaturedLeader({ entry, image, metric, accent, max, t, locale }: { entry: AwardEntry; image: string | null; metric: "goals" | "assists"; accent: Accent; max: number; t: TFunction; locale: Locale }) {
   const a = ACCENT[accent];
   const value = valueOf(entry, metric);
   const unit = metric === "goals" ? t("awards.goalsAbbr") : t("awards.assistsAbbr");
@@ -71,7 +74,7 @@ function FeaturedLeader({ entry, metric, accent, max, t, locale }: { entry: Awar
     >
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.glow} to-40% to-transparent`} aria-hidden />
       <div className="relative flex items-start gap-3 sm:gap-4">
-        <span className="shrink-0"><Flag code={entry.teamCode} size={44} /></span>
+        <PlayerAvatar src={image} name={entry.player} teamCode={entry.teamCode} size={52} />
         <div className="min-w-0 flex-1">
           <div className={`font-mono text-[10px] font-semibold tracking-[0.12em] uppercase ${a.text}`}>{t("awards.leaderLabel")}</div>
           <div className="font-display group-hover:text-foreground/90 mt-0.5 truncate text-xl font-semibold tracking-tight sm:text-2xl">{entry.player}</div>
