@@ -13,6 +13,7 @@ import { LiveAutoRefresh } from "@/components/live-auto-refresh";
 import { LocalTime } from "@/components/local-time";
 import { AdvanceBadge } from "@/components/view/advance-badge";
 import { R32ByFinish } from "@/components/r32-by-finish";
+import { PathToFinal } from "@/components/path-to-final";
 import { HotBadge } from "@/components/hot-badge";
 import { computeWatchability } from "@/lib/watchability";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -189,7 +190,11 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         </section>
       )}
 
-      {pred && !advanceOut && <R32ByFinish matches={overlaid} group={team.group} pred={pred} />}
+      {pred && !advanceOut && <PathToFinal matches={overlaid} pred={pred} rank={rank} total={teams.length} />}
+
+      {/* The finish-scenario R32 breakdown only matters while the group is still in play; once it's decided
+          the path's R32 row already carries the locked opponent, so this would just repeat it. */}
+      {pred && !advanceOut && !groupView?.decided && <R32ByFinish matches={overlaid} group={team.group} pred={pred} />}
 
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-5">
       {groupView && (

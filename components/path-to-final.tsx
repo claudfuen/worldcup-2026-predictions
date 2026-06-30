@@ -1,0 +1,115 @@
+import Link from "next/link";
+import type { MatchInfo, TeamPrediction } from "@/lib/predictions";
+import { Flag } from "@/components/flag";
+import { LocalTime } from "@/components/local-time";
+import { forecastPct, ordinal } from "@/lib/format";
+import { fifaCity } from "@/lib/venues";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
+import { teamPathToFinal, type PathStep, type PathRound } from "@/lib/teamPath";
+import { getT, getLocale, getIntlLocale } from "@/lib/i18n/server";
+import { localeHref } from "@/lib/i18n/config";
+import type { TFunction } from "@/lib/i18n/server";
+
+// "Who would my team have to beat to reach the final?" — the team's single most-likely road through the
+// knockout bracket. Played rounds show the real result; clinched opponents show as definite; everything
+// else shows the most-likely opponent (lead emphasised) with alternatives + the chance of getting there.
+// An eliminated team's road simply stops at its exit, marked differently from a live run.
+
+const SHORT: Record<PathRound, string> = {
+  R32: "rounds.shortR32", R16: "rounds.shortR16", QF: "rounds.shortQF", SF: "rounds.shortSF", FINAL: "rounds.shortFinal",
+};
+const FULL: Record<PathRound, string> = {
+  R32: "rounds.R32", R16: "rounds.R16", QF: "rounds.QF", SF: "rounds.SF", FINAL: "rounds.FINAL",
+};
+
+export async function PathToFinal({ matches, pred, rank, total }: {
+  matches: MatchInfo[]; pred: TeamPrediction; rank: number; total: number;
+}) {
+  const t = await getT();
+  const locale = await getLocale();
+  const intl = await getIntlLocale();
+  const path = teamPathToFinal(matches, pred.code, pred as unknown as Record<string, number>);
+  if (!path || path.steps.length === 0) return null;
+
+  return (
+    <section className="mt-8">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 className="text-muted-foreground font-mono text-xs font-semibold tracking-wide uppercase">{t("team.pathHeading")}</h2>
+        <span className="text-muted-2 shrink-0 text-[11px]">{t("team.pathRankLine", { rank: ordinal(rank, intl), total })}</span>
+      </div>
+      <div className="border-border bg-card divide-border/50 divide-y overflow-hidden rounded-2xl border dark:inset-ring dark:inset-ring-white/5">
+        {path.steps.map((s) => (
+          <Link key={s.round} href={localeHref(locale, `/match/${s.match.match}`)} className="hover:bg-muted/20 block transition-colors">
+            <div className={`flex items-center gap-3 px-4 py-3 ${s.exit ? "bg-loss/[0.06]" : ""}`}>
+              <span className="bg-muted/40 text-muted-foreground w-11 shrink-0 rounded-md py-0.5 text-center font-mono text-[10px] font-semibold tracking-wide uppercase">{t(SHORT[s.round])}</span>
+              <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums">{reachCell(s, t)}</span>
+              <div className="min-w-0 flex-1">
+                <OpponentLine s={s} code={pred.code} t={t} />
+                <div className="text-muted-2 mt-0.5 truncate text-[10px]" suppressHydrationWarning>
+                  M{s.match.match} · <LocalTime utc={s.match.utc} mode="day" /> · {fifaCity(s.match.venue, s.match.city)}
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+      {path.champion ? (
+        <p className="text-contention mt-2 text-xs font-medium">{t("team.pathChampions")}</p>
+      ) : path.eliminatedAt ? (
+        <p className="text-muted-foreground mt-2 text-xs text-pretty">{t("team.pathEliminated", { round: t(FULL[path.eliminatedAt]) })}</p>
+      ) : (
+        <p className="text-muted-2 mt-2 text-xs text-pretty">{t("team.pathFootnote")}</p>
+      )}
+    </section>
+  );
+}
+
+// Did the team reach this round? A played win or a clinched slot is a ✓ (fact); an exit is "out"; otherwise
+// the Monte Carlo chance of getting there.
+function reachCell(s: PathStep, t: TFunction) {
+  if (s.exit) return <span className="text-loss font-semibold">{t("team.pathOut")}</span>;
+  if ((s.played && s.teamWon) || s.inThisRound) return <span className="text-win">✓</span>;
+  return <span className="text-muted-foreground">{forecastPct(s.reachProb)}</span>;
+}
+
+function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction }) {
+  const m = s.match;
+  // Definite opponent — played result or a mathematically clinched tie.
+  if (s.oppLocked) {
+    const teamHome = m.home === code;
+    const ps = s.played && decidedOnPens(m) ? pensScore(m) : null;
+    return (
+      <div className="flex items-center gap-1.5 text-sm">
+        <span className="text-muted-2 shrink-0 text-xs">{s.played ? (s.teamWon ? t("team.pathBeat") : t("team.pathLostTo")) : t("common.vs")}</span>
+        <Flag code={s.oppLocked.code} size={16} />
+        <span className={`min-w-0 truncate ${s.exit ? "text-muted-foreground" : "font-semibold"}`}>{s.oppLocked.name}</span>
+        {s.played ? (
+          <span className={`ms-auto shrink-0 font-mono text-xs tabular-nums ${s.teamWon ? "text-win" : "text-loss"}`}>
+            {teamHome ? m.homeScore : m.awayScore}–{teamHome ? m.awayScore : m.homeScore}
+            {ps && <span className="text-muted-2"> ({teamHome ? ps.home : ps.away}–{teamHome ? ps.away : ps.home} {t("common.pens")})</span>}
+          </span>
+        ) : (
+          <span className="text-win ms-auto shrink-0 text-[10px] font-semibold tracking-wide uppercase">{t("team.pathConfirmed")}</span>
+        )}
+      </div>
+    );
+  }
+  // Projected — lead opponent emphasised, alternatives muted underneath.
+  const [lead, ...alts] = s.oppCandidates;
+  if (!lead) return <div className="text-muted-2 text-sm">{t("common.vs")} {t("common.tbd")}</div>;
+  return (
+    <div className="text-sm">
+      <div className="flex items-center gap-1.5">
+        <span className="text-muted-2 shrink-0 text-xs">{t("common.vs")}</span>
+        <Flag code={lead.code} size={16} />
+        <span className="min-w-0 truncate font-semibold">{lead.name}</span>
+        <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs tabular-nums">{forecastPct(lead.prob)}</span>
+      </div>
+      {alts.length > 0 && (
+        <div className="text-muted-2 mt-0.5 truncate text-[11px]">
+          {t("team.pathOr")} {alts.map((a) => `${a.name} ${forecastPct(a.prob)}`).join(" · ")}
+        </div>
+      )}
+    </div>
+  );
+}
