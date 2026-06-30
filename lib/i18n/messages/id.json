@@ -67,6 +67,8 @@
     "stageGroupShort": "Grup",
     "stageGroupContext": "Fase grup · Pekan {matchday} · {played}/{total} pertandingan dimainkan",
     "stageKnockoutContext": "{round} · {played}/{total} dimainkan",
+    "tournamentProgress": "{pct}% selesai · {played} dari {total} pertandingan",
+    "tournamentProgressLabel": "Progres turnamen",
     "knockoutsBegin": "Babak gugur dimulai",
     "stageNext": "Selanjutnya",
     "watchHeading": "Pertandingan untuk ditonton",

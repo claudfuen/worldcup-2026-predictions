@@ -31,6 +31,12 @@ export async function TournamentStage({
   const cur = firstUndone === -1 ? phases.length - 1 : firstUndone;
   const curPhase = phases[cur];
 
+  // Overall tournament completion — every match, not just the current phase. Counted off the live-overlaid
+  // matches array so finals land here the moment they finish, ahead of the cron recompute.
+  const totalMatches = matches.length;
+  const playedMatches = matches.filter((m) => m.status === "final").length;
+  const pct = totalMatches ? Math.round((playedMatches / totalMatches) * 100) : 0;
+
   // Tournament over: a terminal "champions" line instead of a "what's next" that has no next.
   const finalM = matches.find((m) => m.round === "FINAL");
   const champion = finalM?.status === "final" && finalM.winner ? (finalM.winner === finalM.home ? finalM.homeName : finalM.awayName) : null;
@@ -51,21 +57,40 @@ export async function TournamentStage({
     );
   }
 
-  // A full-width strip: the phase tracker on the left, the live context on the right (md+). Stacks on mobile.
+  // A full-width strip: the phase tracker + live context up top, an overall-completion progress bar beneath.
   // Full-width (rather than a narrow aside tile) so it reads as a tournament-wide progress bar and leaves no gap.
   return (
-    <div className={`border-border bg-card flex flex-col gap-2 rounded-2xl border px-4 py-3 md:flex-row md:items-center md:justify-between md:gap-6 ${className}`}>
-      <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(to_right,transparent,#000_1.25rem,#000_calc(100%-1.25rem),transparent)] md:shrink-0 md:[mask-image:none]">
-        {phases.map((p, i) => (
-          <Fragment key={p.key}>
-            <span className={`font-mono text-[10px] font-semibold tracking-wide whitespace-nowrap uppercase ${i === cur ? "text-primary" : p.done ? "text-muted-foreground" : "text-muted-2"}`}>
-              {t(p.labelKey)}
-            </span>
-            {i < phases.length - 1 && <span className={`h-px w-5 shrink-0 ${p.done ? "bg-primary/40" : "bg-border"}`} />}
-          </Fragment>
-        ))}
+    <div className={`border-border bg-card flex flex-col gap-3 rounded-2xl border px-4 py-3 ${className}`}>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-6">
+        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(to_right,transparent,#000_1.25rem,#000_calc(100%-1.25rem),transparent)] md:shrink-0 md:[mask-image:none]">
+          {phases.map((p, i) => (
+            <Fragment key={p.key}>
+              <span className={`font-mono text-[10px] font-semibold tracking-wide whitespace-nowrap uppercase ${i === cur ? "text-primary" : p.done ? "text-muted-foreground" : "text-muted-2"}`}>
+                {t(p.labelKey)}
+              </span>
+              {i < phases.length - 1 && <span className={`h-px w-5 shrink-0 ${p.done ? "bg-primary/40" : "bg-border"}`} />}
+            </Fragment>
+          ))}
+        </div>
+        <p className="text-muted-2 text-xs md:text-right" suppressHydrationWarning>{context}</p>
       </div>
-      <p className="text-muted-2 text-xs md:text-right" suppressHydrationWarning>{context}</p>
+
+      {/* Overall completion — how far through the whole 104-match tournament we are. */}
+      <div className="flex items-center gap-3">
+        <div
+          className="bg-muted/40 relative h-1.5 flex-1 overflow-hidden rounded-full dark:inset-ring dark:inset-ring-white/5"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          aria-label={t("home.tournamentProgressLabel")}
+        >
+          <div className="bg-primary absolute inset-y-0 left-0 rounded-full transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-muted-2 shrink-0 font-mono text-[10px] font-semibold tabular-nums whitespace-nowrap">
+          {t("home.tournamentProgress", { pct, played: playedMatches, total: totalMatches })}
+        </span>
+      </div>
     </div>
   );
 }

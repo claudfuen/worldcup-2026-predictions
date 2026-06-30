@@ -67,6 +67,8 @@
     "stageGroupShort": "Группа",
     "stageGroupContext": "Групповой этап · {matchday}-й тур · сыграно {played}/{total} матчей",
     "stageKnockoutContext": "{round} · сыграно {played}/{total}",
+    "tournamentProgress": "{pct}% завершено · {played} из {total} матчей",
+    "tournamentProgressLabel": "Ход турнира",
     "knockoutsBegin": "Старт плей-офф",
     "stageNext": "Далее",
     "watchHeading": "Матчи, которые стоит посмотреть",

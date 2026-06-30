@@ -67,6 +67,8 @@
     "stageGroupShort": "مجموعة",
     "stageGroupContext": "دور المجموعات · الجولة {matchday} · {played}/{total} مباراة لُعبت",
     "stageKnockoutContext": "{round} · {played}/{total} لُعبت",
+    "tournamentProgress": "اكتمل {pct}% · {played} من {total} مباراة",
+    "tournamentProgressLabel": "تقدّم البطولة",
     "knockoutsBegin": "تبدأ الأدوار الإقصائية",
     "stageNext": "التالي",
     "watchHeading": "مباريات للمتابعة",

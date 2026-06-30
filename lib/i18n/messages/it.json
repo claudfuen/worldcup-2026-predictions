@@ -67,6 +67,8 @@
     "stageGroupShort": "Girone",
     "stageGroupContext": "Fase a gironi · Giornata {matchday} · {played}/{total} partite giocate",
     "stageKnockoutContext": "{round} · {played}/{total} giocate",
+    "tournamentProgress": "{pct}% completato · {played} di {total} partite",
+    "tournamentProgressLabel": "Avanzamento del torneo",
     "knockoutsBegin": "Inizio eliminazione diretta",
     "stageNext": "Prossima",
     "watchHeading": "Partite da non perdere",

@@ -67,6 +67,8 @@
     "stageGroupShort": "Grupo",
     "stageGroupContext": "Fase de grupos · Rodada {matchday} · {played}/{total} jogos disputados",
     "stageKnockoutContext": "{round} · {played}/{total} disputados",
+    "tournamentProgress": "{pct}% concluído · {played} de {total} jogos",
+    "tournamentProgressLabel": "Progresso do torneio",
     "knockoutsBegin": "Começam as eliminatórias",
     "stageNext": "A seguir",
     "watchHeading": "Jogos para assistir",

@@ -152,6 +152,8 @@
     "stageGroupShort": "Group",
     "stageGroupContext": "Group stage · Matchday {matchday} · {played}/{total} matches played",
     "stageKnockoutContext": "{round} · {played}/{total} played",
+    "tournamentProgress": "{pct}% complete · {played} of {total} matches",
+    "tournamentProgressLabel": "Tournament progress",
     "knockoutsBegin": "Knockouts begin",
     "stageNext": "Next",
     "watchHeading": "Matches to watch",

@@ -67,6 +67,8 @@
     "stageGroupShort": "조별리그",
     "stageGroupContext": "조별리그 · {matchday}차전 · {total}경기 중 {played}경기 진행",
     "stageKnockoutContext": "{round} · {total}경기 중 {played}경기 진행",
+    "tournamentProgress": "{pct}% 완료 · 전체 {total}경기 중 {played}경기",
+    "tournamentProgressLabel": "토너먼트 진행 상황",
     "knockoutsBegin": "토너먼트 시작",
     "stageNext": "다음",
     "watchHeading": "주목할 경기",

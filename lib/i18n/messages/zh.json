@@ -67,6 +67,8 @@
     "stageGroupShort": "小组",
     "stageGroupContext": "小组赛 · 第 {matchday} 轮 · 已赛 {played}/{total} 场",
     "stageKnockoutContext": "{round} · 已赛 {played}/{total} 场",
+    "tournamentProgress": "已完成 {pct}% · 共 {total} 场中已赛 {played} 场",
+    "tournamentProgressLabel": "赛事进度",
     "knockoutsBegin": "淘汰赛开始",
     "stageNext": "下一场",
     "watchHeading": "焦点赛事",

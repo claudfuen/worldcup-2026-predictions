@@ -67,6 +67,8 @@
     "stageGroupShort": "グループ",
     "stageGroupContext": "グループステージ · 第{matchday}節 · {total}試合中{played}試合消化",
     "stageKnockoutContext": "{round} · {total}試合中{played}試合消化",
+    "tournamentProgress": "{pct}% 完了 · 全{total}試合中{played}試合",
+    "tournamentProgressLabel": "大会の進行状況",
     "knockoutsBegin": "決勝トーナメント開始",
     "stageNext": "次",
     "watchHeading": "注目の試合",

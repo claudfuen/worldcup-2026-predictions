@@ -67,6 +67,8 @@
     "stageGroupShort": "ग्रुप",
     "stageGroupContext": "ग्रुप चरण · मैचडे {matchday} · {played}/{total} मैच खेले गए",
     "stageKnockoutContext": "{round} · {played}/{total} खेले गए",
+    "tournamentProgress": "{pct}% पूर्ण · {total} में से {played} मैच",
+    "tournamentProgressLabel": "टूर्नामेंट की प्रगति",
     "knockoutsBegin": "नॉकआउट शुरू",
     "stageNext": "अगला",
     "watchHeading": "देखने लायक मैच",
