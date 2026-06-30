@@ -1,11 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { useT } from "@/lib/i18n/provider";
+import { useLocale } from "@/lib/i18n/client";
+import { localeHref, type Locale } from "@/lib/i18n/config";
+import { playerSlug } from "@/lib/players";
 import type { MatchEvent } from "@/lib/matchEvents";
 
 type T = ReturnType<typeof useT>;
+
+// Placeholder slotted into a translated "assist: {name}" / "off: {name}" line so we can render JUST the name
+// as a link (locale-agnostic — works wherever {name} sits in the sentence). Private-use char, never in data.
+const NAME_SLOT = "";
+
+// A player's name, linked to their page when we can resolve a team code (every timeline participant has a
+// page — see aggregatePlayers). Falls back to plain text for the rare unresolved-team event.
+function PlayerName({ name, code, locale, className }: { name: string; code: string | null; locale: Locale; className?: string }) {
+  if (!code) return <span className={className}>{name}</span>;
+  return (
+    <Link href={localeHref(locale, `/player/${playerSlug(name, code)}`)} className={`${className ?? ""} hover:underline`}>
+      {name}
+    </Link>
+  );
+}
+
+// Render a translated template that contains a single linked name (e.g. "assist: <Name>").
+function LinkedLine({ template, name, code, locale }: { template: string; name: string; code: string | null; locale: Locale }) {
+  const [before, after = ""] = template.split(NAME_SLOT);
+  return (
+    <>
+      {before}
+      <PlayerName name={name} code={code} locale={locale} />
+      {after}
+    </>
+  );
+}
 
 // The match's goals / cards / substitutions as a centered timeline: a vertical spine carries the minute and
 // the running score, with each event on its own team's side (home left, away right). Team headers anchor the
@@ -23,6 +54,7 @@ export function MatchTimeline({
   scored?: boolean; // at least one goal was scored — distinguishes "0-0, nothing happened" from "feed has no detail"
 }) {
   const t = useT();
+  const locale = useLocale();
   const [showSubs, setShowSubs] = useState(false);
   const hasSubs = events.some((e) => e.kind === "sub");
 
@@ -75,7 +107,7 @@ export function MatchTimeline({
             <div className="bg-border/70 absolute inset-y-0 left-1/2 w-px -translate-x-1/2" aria-hidden />
             {shown.map(({ e, score, onHome }, i) => (
             <li key={i} className="grid grid-cols-[1fr_3rem_1fr] items-center gap-2 py-2 sm:grid-cols-[1fr_3.5rem_1fr] sm:gap-3">
-              <div className="flex justify-end">{onHome && <Event e={e} side="home" t={t} />}</div>
+              <div className="flex justify-end">{onHome && <Event e={e} side="home" t={t} locale={locale} />}</div>
               <div className="bg-card relative z-10 flex flex-col items-center gap-1 py-0.5">
                 <span className="text-muted-2 font-mono text-[10px] tabular-nums whitespace-nowrap">{e.minute}</span>
                 {score ? (
@@ -84,7 +116,7 @@ export function MatchTimeline({
                   <span className="bg-border size-1.5 rounded-full" aria-hidden />
                 )}
               </div>
-              <div className="flex justify-start">{!onHome && <Event e={e} side="away" t={t} />}</div>
+              <div className="flex justify-start">{!onHome && <Event e={e} side="away" t={t} locale={locale} />}</div>
             </li>
             ))}
           </ol>
@@ -94,7 +126,7 @@ export function MatchTimeline({
   );
 }
 
-function Event({ e, side, t }: { e: MatchEvent; side: "home" | "away"; t: T }) {
+function Event({ e, side, t, locale }: { e: MatchEvent; side: "home" | "away"; t: T; locale: Locale }) {
   const home = side === "home";
   const tag = e.goalType === "penalty" ? t("match.penaltyTag") : e.goalType === "own" ? t("match.ownGoalTag") : null;
   const icon =
@@ -113,11 +145,19 @@ function Event({ e, side, t }: { e: MatchEvent; side: "home" | "away"; t: T }) {
     <div className={`flex min-w-0 items-start gap-2 ${home ? "flex-row" : "flex-row-reverse"}`}>
       <div className={`min-w-0 ${home ? "text-right" : "text-left"}`}>
         <div className="truncate text-sm">
-          <span className={e.kind === "goal" ? "font-semibold" : "text-foreground/90"}>{e.player}</span>
+          <PlayerName name={e.player} code={e.teamCode} locale={locale} className={e.kind === "goal" ? "font-semibold" : "text-foreground/90"} />
           {tag && <span className="text-muted-2 ms-1 font-mono text-[10px] tracking-wide uppercase">({tag})</span>}
         </div>
-        {e.assist && <div className="text-muted-2 truncate text-[11px]">{t("match.assist", { name: e.assist })}</div>}
-        {e.playerOff && <div className="text-muted-2 truncate text-[11px]">{t("match.subOff", { name: e.playerOff })}</div>}
+        {e.assist && (
+          <div className="text-muted-2 truncate text-[11px]">
+            <LinkedLine template={t("match.assist", { name: NAME_SLOT })} name={e.assist} code={e.teamCode} locale={locale} />
+          </div>
+        )}
+        {e.playerOff && (
+          <div className="text-muted-2 truncate text-[11px]">
+            <LinkedLine template={t("match.subOff", { name: NAME_SLOT })} name={e.playerOff} code={e.teamCode} locale={locale} />
+          </div>
+        )}
       </div>
       <span className="mt-0.5 flex w-4 shrink-0 justify-center">{icon}</span>
     </div>

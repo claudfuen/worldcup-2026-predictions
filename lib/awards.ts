@@ -42,7 +42,7 @@ export interface PlayerInfo {
 export interface Awards {
   goldenBoot: AwardEntry[]; // sorted: goals desc, then assists, then projected
   assists: AwardEntry[]; // sorted: assists desc, then goals, then projected
-  players: PlayerInfo[]; // full-squad player universe (lineups ∪ scorers)
+  players: PlayerInfo[]; // full-squad universe: lineups ∪ everyone named in a timeline (scorers, assisters, carded, subbed)
   matchesCounted: number; // completed/live matches the tallies were aggregated from (transparency)
 }
 
@@ -267,6 +267,22 @@ async function aggregatePlayers(
     if (!lu) return;
     for (const p of lu.home) add(p.player, m.home!, p.position);
     for (const p of lu.away) add(p.player, m.away!, p.position);
+  });
+  // Guarantee a page for EVERYONE named in a match timeline — scorers, assisters, carded and substituted
+  // players — even if that match had no parsed lineup, or the event spells a name slightly differently than
+  // the squad list. Keyed by the event's own name so the deterministic slug always resolves (every name shown
+  // in a timeline links to a real page). These don't bump `appearances` — that's squad-list membership only.
+  const ensure = (name: string | undefined, teamCode: string | null | undefined) => {
+    if (!name || !teamCode) return;
+    const key = `${name}|${teamCode}`;
+    if (!map.has(key)) map.set(key, { name, teamCode, position: "", appearances: 0, goals: 0, assists: 0, penalties: 0 });
+  };
+  played.forEach((m, i) => {
+    for (const e of summaries[i].events) {
+      ensure(e.player, e.teamCode); // scorer / carded / sub coming on
+      ensure(e.assist, e.teamCode); // assist provider (same team)
+      ensure(e.playerOff, e.teamCode); // player going off (same team)
+    }
   });
   // Merge tallies (and include any scorer who somehow wasn't in a parsed lineup).
   for (const t of tallies) {
