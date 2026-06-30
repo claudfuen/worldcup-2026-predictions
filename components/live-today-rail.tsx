@@ -65,7 +65,7 @@ export function LiveTodayRail({ matches, hotReasons = {}, className = "", wide =
           <h2 className="text-live mb-2.5 flex items-center gap-2 font-mono text-[13px] font-semibold tracking-wide uppercase">
             <span className="bg-live size-2 animate-pulse rounded-full" />{t("common.liveNow")}
           </h2>
-          <div className={`grid gap-2.5 ${wide ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
+          <div className={`grid gap-2 ${wide ? "sm:grid-cols-2" : ""}`}>
             {live.slice(0, 6).map((m) => <MatchCard key={m.match} m={m} zone={zone} t={t} locale={locale} />)}
           </div>
         </div>
@@ -108,7 +108,7 @@ function RailSection({
           <Link href={localeHref(locale, "/schedule")} className="text-primary text-xs hover:underline">{t("home.fullSchedule")}</Link>
         )}
       </div>
-      <div className={`grid gap-2.5 ${wide ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
+      <div className={`grid gap-2 ${wide ? "sm:grid-cols-2" : ""}`}>
         {shown.map((m) => <MatchCard key={m.match} m={m} zone={zone} hotReason={hotReasons[m.match]} t={t} locale={locale} showDate={showDate} kickoff={kickoff} />)}
       </div>
       {matches.length > cap && (
@@ -130,8 +130,9 @@ function TeamLine({ code, name, strong, dim, value, valueClass = "" }: { code: s
   );
 }
 
-// A single match as a card: a meta line (time/date + status), the two teams stacked with their scores aligned,
-// and — for an upcoming match — a win-probability bar so the matchup balance reads at a glance.
+// A single match as a COMPACT row (Apple-Sports home-list style): a small status/time column, the two teams
+// stacked, and each team's value aligned right — its score (final/live) or its win/advance probability
+// (upcoming), with the winner/favorite bold. Two lines tall; reads as a tight chronological stack.
 function MatchCard({ m, zone, hotReason, t, locale, showDate = false, kickoff = false }: { m: MatchInfo; zone?: import("@/lib/format").Zone; hotReason?: string; t: TFunction; locale: Locale; showDate?: boolean; kickoff?: boolean }) {
   const live = m.status === "live";
   const final = m.status === "final";
@@ -144,49 +145,35 @@ function MatchCard({ m, zone, hotReason, t, locale, showDate = false, kickoff = 
   const awayWin = final && (m.winner ? m.winner === m.away : ps ? ps.away > ps.home : (m.awayScore ?? 0) > (m.homeScore ?? 0));
   const favHome = !final && !live && m.favorite?.code === homeCode;
   const favAway = !final && !live && m.favorite?.code === awayCode;
-  // win-probability split for an upcoming match (group W/D/L, else KO to-advance), for the bar.
-  const split = m.probs ? { h: m.probs.home, d: m.probs.draw, a: m.probs.away } : m.advance ? { h: m.advance.home, d: 0, a: m.advance.away } : null;
+  // Per-team win/advance probability for an upcoming match (group win%, else KO to-advance %).
+  const wp = m.probs ? { h: m.probs.home, a: m.probs.away } : m.advance ? { h: m.advance.home, a: m.advance.away } : null;
 
   const score = (n?: number, won?: boolean, pen?: number) =>
     n == null ? null : (
-      <span>
-        <span className={won ? "text-foreground font-bold" : "text-muted-foreground"}>{n}</span>
-        {pen != null && <span className="text-muted-2 text-[11px]"> ({pen})</span>}
+      <span className={live ? "text-live font-bold" : won ? "text-foreground font-bold" : "text-muted-foreground"}>
+        {n}{pen != null && <span className="text-muted-2 text-[11px] font-normal"> ({pen})</span>}
       </span>
     );
+  const odds = (p?: number, strong?: boolean) => (p == null ? null : <span className={strong ? "text-foreground/90 font-semibold" : "text-muted-2"}>{forecastPct(p)}</span>);
+  const homeVal = live || final ? score(m.homeScore, homeWin, ps?.home) : odds(wp?.h, favHome);
+  const awayVal = live || final ? score(m.awayScore, awayWin, ps?.away) : odds(wp?.a, favAway);
 
   return (
-    <Link href={localeHref(locale, `/match/${m.match}`)} className={`group bg-card flex flex-col rounded-xl border p-3 transition-colors ${live ? "border-live/40 hover:border-live/60" : "border-border hover:border-primary/50"} dark:inset-ring dark:inset-ring-white/5`}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-muted-2 font-mono text-[11px]" suppressHydrationWarning>
-          {showDate ? fmtDay(m.utc, zone) : fmtTime(m.utc, zone)}{kickoff ? ` · ${fmtTimeShort(m.utc, zone)}` : ""}
-        </span>
-        {hotReason != null ? (
-          <HotBadge reason={hotReason} className="shrink-0" />
-        ) : live ? (
-          <span className="text-live inline-flex shrink-0 items-center gap-1 font-mono text-[10px] font-bold tracking-wide uppercase"><span className="bg-live size-1.5 animate-pulse rounded-full" />{m.liveDetail ?? t("home.liveUpper")}</span>
+    <Link href={localeHref(locale, `/match/${m.match}`)} className={`group bg-card flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${live ? "border-live/40 hover:border-live/60" : "border-border hover:border-primary/50"} dark:inset-ring dark:inset-ring-white/5`}>
+      <div className="w-12 shrink-0 text-left">
+        {live ? (
+          <span className="text-live inline-flex items-center gap-1 font-mono text-[10px] font-bold tracking-wide" suppressHydrationWarning><span className="bg-live size-1.5 animate-pulse rounded-full" />{m.liveDetail ?? t("home.liveUpper")}</span>
         ) : final ? (
-          <span className="text-win shrink-0 font-mono text-[10px] font-semibold tracking-wide uppercase">{t("home.ft")}</span>
-        ) : null}
+          <span className="text-win font-mono text-[10px] font-semibold tracking-wide uppercase">{t("home.ft")}</span>
+        ) : (
+          <span className="text-muted-2 font-mono text-[11px] leading-tight" suppressHydrationWarning>{showDate ? fmtDay(m.utc, zone) : fmtTime(m.utc, zone)}{kickoff ? <><br />{fmtTimeShort(m.utc, zone)}</> : ""}</span>
+        )}
       </div>
-      <div className="space-y-1">
-        <TeamLine code={homeCode} name={homeName} strong={homeWin || favHome} dim={final && !homeWin} value={live || final ? score(m.homeScore, homeWin, ps?.home) : null} valueClass={live ? "text-live font-bold" : ""} />
-        <TeamLine code={awayCode} name={awayName} strong={awayWin || favAway} dim={final && !awayWin} value={live || final ? score(m.awayScore, awayWin, ps?.away) : null} valueClass={live ? "text-live font-bold" : ""} />
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <TeamLine code={homeCode} name={homeName} strong={homeWin || favHome} dim={final && !homeWin} value={homeVal} valueClass="text-sm" />
+        <TeamLine code={awayCode} name={awayName} strong={awayWin || favAway} dim={final && !awayWin} value={awayVal} valueClass="text-sm" />
       </div>
-      {!final && !live && split && (
-        <div className="mt-2.5">
-          <div className="bg-muted/50 flex h-1.5 w-full overflow-hidden rounded-full dark:inset-ring dark:inset-ring-white/5">
-            <span className="bg-primary/70" style={{ width: `${split.h * 100}%` }} />
-            {split.d > 0 && <span className="bg-muted-foreground/35" style={{ width: `${split.d * 100}%` }} />}
-            <span className="bg-data-cool/60" style={{ width: `${split.a * 100}%` }} />
-          </div>
-          {m.favorite && (
-            <div className="text-muted-2 mt-1.5 font-mono text-[10px] tabular-nums">
-              {t("home.preMatch", { name: m.favorite.name, pct: pct(m.favorite.winProb) })}
-            </div>
-          )}
-        </div>
-      )}
+      {hotReason != null && <HotBadge reason={hotReason} className="shrink-0 self-start" />}
     </Link>
   );
 }
