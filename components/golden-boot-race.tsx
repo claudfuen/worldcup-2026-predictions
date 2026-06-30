@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Flag } from "@/components/flag";
+import { playerSlug } from "@/lib/players";
 import { forecastPct } from "@/lib/format";
-import { slugForCode } from "@/lib/slug";
 import type { AwardEntry } from "@/lib/awards";
 import { getT, getLocale } from "@/lib/i18n/server";
 import { localeHref } from "@/lib/i18n/config";
@@ -26,7 +26,7 @@ export async function GoldenBootRace({ entries, className = "" }: { entries: Awa
           <ol className="divide-border/50 -mx-1.5 list-none divide-y">
             {top.map((e, i) => (
               <li key={`${e.player}-${e.teamCode}`}>
-                <Link href={localeHref(locale, `/team/${slugForCode(e.teamCode)}`)} className="hover:bg-muted/20 flex items-center gap-2.5 rounded-md px-1.5 py-2 transition-colors">
+                <Link href={localeHref(locale, `/player/${playerSlug(e.player, e.teamCode)}`)} className="hover:bg-muted/20 flex items-center gap-2.5 rounded-md px-1.5 py-2 transition-colors">
                   <span className="text-muted-2 w-3 text-right font-mono text-[11px] tabular-nums">{i + 1}</span>
                   <Flag code={e.teamCode} size={18} />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{e.player}</span>

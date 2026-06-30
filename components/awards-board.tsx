@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { getPlayerImage } from "@/lib/playerImages";
+import { playerSlug } from "@/lib/players";
 import { forecastPct } from "@/lib/format";
-import { slugForCode } from "@/lib/slug";
 import type { AwardEntry } from "@/lib/awards";
 import { getT, getLocale, type TFunction } from "@/lib/i18n/server";
 import { localeHref, type Locale } from "@/lib/i18n/config";
@@ -69,7 +69,7 @@ function FeaturedLeader({ entry, image, metric, accent, max, t, locale }: { entr
   const left = Math.round(entry.matchesLeft);
   return (
     <Link
-      href={localeHref(locale, `/team/${slugForCode(entry.teamCode)}`)}
+      href={localeHref(locale, `/player/${playerSlug(entry.player, entry.teamCode)}`)}
       className="group border-border bg-card relative block overflow-hidden rounded-2xl border p-4 transition-colors sm:p-5 dark:inset-ring dark:inset-ring-white/5"
     >
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.glow} to-40% to-transparent`} aria-hidden />
@@ -122,7 +122,7 @@ function Row({ entry, rank, metric, accent, max, t, locale }: { entry: AwardEntr
   return (
     <li>
       <Link
-        href={localeHref(locale, `/team/${slugForCode(entry.teamCode)}`)}
+        href={localeHref(locale, `/player/${playerSlug(entry.player, entry.teamCode)}`)}
         className={`hover:bg-muted/20 flex items-center gap-2.5 rounded-md px-1.5 py-2.5 transition-colors ${entry.eliminated ? "opacity-55" : ""}`}
       >
         <span className="text-muted-2 w-5 shrink-0 text-right font-mono text-xs tabular-nums">{rank}</span>
