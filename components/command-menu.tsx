@@ -16,6 +16,9 @@ import { Flag } from "@/components/flag";
 
 export const OPEN_COMMAND_EVENT = "wc:open-command";
 
+// Compact match record from /api/search-index (codes only; names localized client-side).
+interface RawMatch { n: number; round: string; utc: string; city: string; h: string | null; a: string | null; ph: string[]; pa: string[]; }
+
 type ItemType = "page" | "team" | "group" | "venue" | "match";
 interface Item {
   id: string;
@@ -51,10 +54,23 @@ export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  const [matchData, setMatchData] = useState<RawMatch[] | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const fetchedRef = useRef(false);
 
-  const openMenu = useCallback(() => { setQuery(""); setActive(0); setOpen(true); }, []);
+  // Lazy-load the live match index on first open: resolved participants where known, plus projected
+  // candidates so unresolved knockout ties are searchable by their expected matchups (codes only — tiny).
+  const openMenu = useCallback(() => {
+    setQuery(""); setActive(0); setOpen(true);
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetch("/api/search-index")
+        .then((r) => r.json())
+        .then((d) => setMatchData(d.matches ?? []))
+        .catch(() => { fetchedRef.current = false; });
+    }
+  }, []);
 
   // Build the search index once per locale (team/page labels are localized).
   const items = useMemo<Item[]>(() => {
@@ -83,20 +99,51 @@ export function CommandMenu() {
       });
     }
     const fmtShort = new Intl.DateTimeFormat(localeConfig(locale).intl, { month: "short", day: "numeric" });
-    for (const s of SCHEDULE) {
-      const roundLabel = t(ROUND_KEY[s.round] ?? "") || s.round;
-      const d = new Date(s.utc);
-      const dateLabel = fmtShort.format(d);
-      const iso = s.utc.slice(0, 10);
-      const label = s.home && s.away ? `${t(`teams.${s.home}`)} ${t("common.vs")} ${t(`teams.${s.away}`)}` : `${roundLabel} · ${t("cmd.matchN", { n: s.match })}`;
-      out.push({
-        id: `match:${s.match}`, type: "match", label, sub: `${roundLabel} · ${dateLabel}`,
-        href: `/match/${s.match}`,
-        keywords: `${label} ${roundLabel} ${dateLabel} ${iso} ${s.city} match ${s.match}`.toLowerCase(),
-      });
+    const nm = (c: string | null | undefined) => (c ? t(`teams.${c}`) : null);
+    const vs = t("common.vs");
+    if (matchData) {
+      // Live index: resolved teams where known, else the expected matchup (top projected pair). Every
+      // projected candidate goes into the keywords so a knockout tie is found by any likely participant.
+      for (const mm of matchData) {
+        const roundLabel = t(ROUND_KEY[mm.round] ?? "") || mm.round;
+        const dateLabel = fmtShort.format(new Date(mm.utc));
+        const iso = mm.utc.slice(0, 10);
+        const hN = nm(mm.h);
+        const aN = nm(mm.a);
+        const projNames = [...mm.ph, ...mm.pa].map(nm).filter(Boolean) as string[];
+        let label: string;
+        let sub: string;
+        if (hN && aN) {
+          label = `${hN} ${vs} ${aN}`;
+          sub = `${roundLabel} · ${dateLabel}`;
+        } else if (nm(mm.ph[0]) && nm(mm.pa[0])) {
+          label = `${nm(mm.ph[0])} ${vs} ${nm(mm.pa[0])}`;
+          sub = `${roundLabel} · ${dateLabel} · ${t("common.projected")}`;
+        } else {
+          label = `${roundLabel} · ${t("cmd.matchN", { n: mm.n })}`;
+          sub = dateLabel;
+        }
+        out.push({
+          id: `match:${mm.n}`, type: "match", label, sub, href: `/match/${mm.n}`,
+          keywords: `${hN ?? ""} ${aN ?? ""} ${projNames.join(" ")} ${roundLabel} ${dateLabel} ${iso} ${mm.city} match ${mm.n}`.toLowerCase(),
+        });
+      }
+    } else {
+      // Fallback before the live index loads: static schedule (group matchups + round/date for knockouts).
+      for (const s of SCHEDULE) {
+        const roundLabel = t(ROUND_KEY[s.round] ?? "") || s.round;
+        const dateLabel = fmtShort.format(new Date(s.utc));
+        const iso = s.utc.slice(0, 10);
+        const label = s.home && s.away ? `${nm(s.home)} ${vs} ${nm(s.away)}` : `${roundLabel} · ${t("cmd.matchN", { n: s.match })}`;
+        out.push({
+          id: `match:${s.match}`, type: "match", label, sub: `${roundLabel} · ${dateLabel}`,
+          href: `/match/${s.match}`,
+          keywords: `${label} ${roundLabel} ${dateLabel} ${iso} ${s.city} match ${s.match}`.toLowerCase(),
+        });
+      }
     }
     return out;
-  }, [t, locale]);
+  }, [t, locale, matchData]);
 
   const results = useMemo<Item[]>(() => {
     const q = query.trim().toLowerCase();
