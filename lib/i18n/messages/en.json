@@ -35,6 +35,10 @@
     "type_group": "Group",
     "type_venue": "Stadium",
     "type_match": "Match",
+    "secLive": "Live now",
+    "secFavorites": "Title favorites",
+    "secScorers": "Top scorers",
+    "secPages": "Jump to",
     "hintNav": "navigate",
     "hintOpen": "open",
     "hintClose": "close"

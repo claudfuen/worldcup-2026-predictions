@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPredictions } from "@/lib/getPredictions";
 import { getLiveMatches, overlayLive } from "@/lib/live";
-import { playerUniverse } from "@/lib/players";
+import { playerUniverse, playerSlug } from "@/lib/players";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,14 +24,22 @@ export async function GET() {
       round: m.round,
       utc: m.utc,
       city: m.city,
+      venue: m.venue,
+      group: m.group ?? null,
+      status: m.status,
       h: m.home,
       a: m.away,
       ph: (m.projHome ?? []).slice(0, 3).map((c) => c.code),
       pa: (m.projAway ?? []).slice(0, 3).map((c) => c.code),
     }));
     const players = playerUniverse(data.awards).map((p) => ({ name: p.player, team: p.teamCode, slug: p.slug }));
-    return NextResponse.json({ matches: out, players }, { headers: { "cache-control": "public, max-age=60" } });
+    // "Most-likely-searched" entities for the empty state: title favorites + the top scorers.
+    const suggest = {
+      teams: data.teams.slice(0, 6).map((tm) => tm.code),
+      players: data.awards.goldenBoot.filter((e) => e.goals > 0).slice(0, 6).map((e) => playerSlug(e.player, e.teamCode)),
+    };
+    return NextResponse.json({ matches: out, players, suggest }, { headers: { "cache-control": "public, max-age=60" } });
   } catch {
-    return NextResponse.json({ matches: [], players: [] });
+    return NextResponse.json({ matches: [], players: [], suggest: { teams: [], players: [] } });
   }
 }

@@ -5,8 +5,9 @@ import { useRouter, usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n/provider";
 import { splitLocale, localeHref, localeConfig } from "@/lib/i18n/config";
 import { TEAMS, GROUPS } from "@/lib/data/teams";
-import { VENUES } from "@/lib/data/venues";
+import { VENUES, VENUE_BY_KEY } from "@/lib/data/venues";
 import { SCHEDULE } from "@/lib/data/schedule";
+import { fifaVenue } from "@/lib/venues";
 import { slugForCode } from "@/lib/slug";
 import { Flag } from "@/components/flag";
 
@@ -17,7 +18,8 @@ import { Flag } from "@/components/flag";
 export const OPEN_COMMAND_EVENT = "wc:open-command";
 
 // Compact records from /api/search-index (codes only; names localized client-side).
-interface RawMatch { n: number; round: string; utc: string; city: string; h: string | null; a: string | null; ph: string[]; pa: string[]; }
+interface RawMatch { n: number; round: string; utc: string; city: string; venue: string; group: string | null; status: string; h: string | null; a: string | null; ph: string[]; pa: string[]; }
+interface Suggest { teams: string[]; players: string[] }
 interface RawPlayer { name: string; team: string; slug: string; }
 
 type ItemType = "page" | "team" | "player" | "group" | "venue" | "match";
@@ -65,6 +67,38 @@ const PAGES: { key: string; href: string }[] = [
 const ROUND_KEY: Record<string, string> = {
   GROUP: "rounds.GROUP", R32: "rounds.R32", R16: "rounds.R16", QF: "rounds.QF", SF: "rounds.SF", "3P": "rounds.THIRD", FINAL: "rounds.FINAL",
 };
+// English search aliases per round — so "qf", "quarter final", "last 8", "round of 16" all find the right ties
+// regardless of the active locale (these are additive to the localized round label).
+const ROUND_ALIAS: Record<string, string> = {
+  GROUP: "group stage",
+  R32: "round of 32 r32",
+  R16: "round of 16 r16 last 16",
+  QF: "quarter-final quarterfinal quarter final qf last 8",
+  SF: "semi-final semifinal semi final sf last 4",
+  "3P": "third place play-off bronze",
+  FINAL: "final",
+};
+// Alternate ways to ask for a page.
+const PAGE_ALIAS: Record<string, string> = {
+  "/": "home overview model call",
+  "/groups": "groups standings tables",
+  "/bracket": "bracket knockout draw road to the final",
+  "/schedule": "schedule fixtures matches results",
+  "/calendar": "calendar fixtures by day",
+  "/venues": "stadiums venues arenas grounds host cities",
+  "/awards": "awards golden boot top scorer playmaker assists",
+  "/scorecard": "scorecard accuracy calibration model record brier",
+  "/methodology": "methodology method how it works model elo",
+};
+// Common alternate country names not covered by the official name or 3-letter code.
+const TEAM_ALIAS: Record<string, string> = {
+  "United States": "usa america united states of america",
+  Netherlands: "holland dutch",
+  "South Korea": "korea",
+  "Ivory Coast": "cote divoire",
+  Czechia: "czech republic",
+  England: "three lions",
+};
 
 export function CommandMenu() {
   const t = useT();
@@ -76,6 +110,7 @@ export function CommandMenu() {
   const [active, setActive] = useState(0);
   const [matchData, setMatchData] = useState<RawMatch[] | null>(null);
   const [playerData, setPlayerData] = useState<RawPlayer[]>([]);
+  const [suggest, setSuggest] = useState<Suggest>({ teams: [], players: [] });
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const fetchedRef = useRef(false);
@@ -88,7 +123,7 @@ export function CommandMenu() {
       fetchedRef.current = true;
       fetch("/api/search-index")
         .then((r) => r.json())
-        .then((d) => { setMatchData(d.matches ?? []); setPlayerData(d.players ?? []); })
+        .then((d) => { setMatchData(d.matches ?? []); setPlayerData(d.players ?? []); if (d.suggest) setSuggest(d.suggest); })
         .catch(() => { fetchedRef.current = false; });
     }
   }, []);
@@ -98,14 +133,14 @@ export function CommandMenu() {
     const out: Item[] = [];
     for (const p of PAGES) {
       const label = t(p.key);
-      out.push({ id: `page:${p.href}`, type: "page", label, href: p.href, keywords: label.toLowerCase() });
+      out.push({ id: `page:${p.href}`, type: "page", label, href: p.href, keywords: `${label} ${PAGE_ALIAS[p.href] ?? ""}`.toLowerCase() });
     }
     for (const tm of TEAMS) {
       const name = t(`teams.${tm.code}`);
       out.push({
         id: `team:${tm.code}`, type: "team", label: name, sub: t("cmd.group", { letter: tm.group }),
         href: `/team/${slugForCode(tm.code)}`, code: tm.code,
-        keywords: `${name} ${tm.code} ${tm.group}`.toLowerCase(),
+        keywords: `${name} ${tm.code} group ${tm.group} ${TEAM_ALIAS[tm.name] ?? ""}`.toLowerCase(),
       });
     }
     for (const g of GROUPS) {
@@ -152,9 +187,12 @@ export function CommandMenu() {
           label = `${roundLabel} · ${t("cmd.matchN", { n: mm.n })}`;
           sub = dateLabel;
         }
+        const venueName = fifaVenue(mm.venue);
+        const venueAlias = VENUE_BY_KEY[mm.venue]?.aliases ?? "";
+        const groupKw = mm.group ? `group ${mm.group}` : "";
         out.push({
           id: `match:${mm.n}`, type: "match", label, sub, href: `/match/${mm.n}`,
-          keywords: `${hN ?? ""} ${aN ?? ""} ${projNames.join(" ")} ${roundLabel} ${dateLabel} ${iso} ${mm.city} match ${mm.n}`.toLowerCase(),
+          keywords: `${hN ?? ""} ${aN ?? ""} ${projNames.join(" ")} ${roundLabel} ${ROUND_ALIAS[mm.round] ?? ""} ${groupKw} ${dateLabel} ${iso} ${mm.city} ${mm.venue} ${venueName} ${venueAlias} match ${mm.n} m${mm.n}`,
         });
       }
     } else {
@@ -164,10 +202,13 @@ export function CommandMenu() {
         const dateLabel = fmtShort.format(new Date(s.utc));
         const iso = s.utc.slice(0, 10);
         const label = s.home && s.away ? `${nm(s.home)} ${vs} ${nm(s.away)}` : `${roundLabel} · ${t("cmd.matchN", { n: s.match })}`;
+        const venueName = fifaVenue(s.venue);
+        const venueAlias = VENUE_BY_KEY[s.venue]?.aliases ?? "";
+        const groupKw = s.group ? `group ${s.group}` : "";
         out.push({
           id: `match:${s.match}`, type: "match", label, sub: `${roundLabel} · ${dateLabel}`,
           href: `/match/${s.match}`,
-          keywords: `${label} ${roundLabel} ${dateLabel} ${iso} ${s.city} match ${s.match}`.toLowerCase(),
+          keywords: `${label} ${roundLabel} ${ROUND_ALIAS[s.round] ?? ""} ${groupKw} ${dateLabel} ${iso} ${s.city} ${s.venue} ${venueName} ${venueAlias} match ${s.match} m${s.match}`,
         });
       }
     }
@@ -179,27 +220,45 @@ export function CommandMenu() {
     return out;
   }, [t, locale, matchData, playerData]);
 
-  const results = useMemo<Item[]>(() => {
+  // Sectioned results: a single flat group when searching; a curated set of "most-likely-searched" groups
+  // (live now → title favorites → top scorers → key pages) for the empty state, so the default view is useful.
+  const sections = useMemo<{ key: string; header: string | null; items: Item[] }[]>(() => {
     const q = norm(query.trim());
-    if (!q) return items.filter((i) => i.type === "page"); // empty state: jump-to-page list
-    const tokens = q.split(/\s+/).filter(Boolean);
-    // A token matches by substring, or — for tokens of 4+ chars — within one edit of a keyword word (so a
-    // small typo like "messy"/"haalnd" still finds it). Short tokens stay exact to avoid noisy matches.
-    const tokenMatch = (i: Item, tok: string) =>
-      i.keywords.includes(tok) || (tok.length >= 4 && (i.words ?? []).some((w) => w.length >= 3 && lev1(tok, w)));
-    const scored = items
-      .filter((i) => tokens.every((tok) => tokenMatch(i, tok)))
-      .map((i) => {
-        // Rank: label-prefix > label-contains > keyword/fuzzy only; then a stable type priority.
-        const label = norm(i.label);
-        const score = label.startsWith(q) ? 0 : label.includes(q) ? 1 : 2;
-        return { i, score: score * 10 + TYPE_RANK[i.type] };
-      })
-      .sort((a, b) => a.score - b.score)
-      .slice(0, 40)
-      .map((s) => s.i);
-    return scored;
-  }, [items, query]);
+    if (q) {
+      // Drop matchup connectors ("Mexico v England" → mexico, england) — unless that's all the user typed.
+      const raw = q.split(/\s+/).filter(Boolean);
+      const stripped = raw.filter((tok) => !CONNECTORS.has(tok));
+      const tokens = stripped.length ? stripped : raw;
+      // A token matches by substring, or — for 4+ char tokens — within one edit of a keyword word (so a small
+      // typo like "messy"/"haalnd" still finds it). Short tokens stay exact to avoid noisy matches.
+      const tokenMatch = (i: Item, tok: string) =>
+        i.keywords.includes(tok) || (tok.length >= 4 && (i.words ?? []).some((w) => w.length >= 3 && lev1(tok, w)));
+      const scored = items
+        .filter((i) => tokens.every((tok) => tokenMatch(i, tok)))
+        .map((i) => {
+          const label = norm(i.label);
+          const score = label.startsWith(q) ? 0 : label.includes(q) ? 1 : 2;
+          return { i, score: score * 10 + TYPE_RANK[i.type] };
+        })
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 40)
+        .map((s) => s.i);
+      return [{ key: "results", header: null, items: scored }];
+    }
+    const byId = new Map(items.map((i) => [i.id, i] as const));
+    const pick = (ids: string[]) => ids.map((id) => byId.get(id)).filter((x): x is Item => !!x);
+    const out: { key: string; header: string | null; items: Item[] }[] = [];
+    const live = (matchData ?? []).filter((m) => m.status === "live").slice(0, 3);
+    if (live.length) out.push({ key: "live", header: t("cmd.secLive"), items: pick(live.map((m) => `match:${m.n}`)) });
+    const teams = pick(suggest.teams.map((c) => `team:${c}`));
+    if (teams.length) out.push({ key: "teams", header: t("cmd.secFavorites"), items: teams });
+    const scorers = pick(suggest.players.map((s) => `player:${s}`));
+    if (scorers.length) out.push({ key: "scorers", header: t("cmd.secScorers"), items: scorers });
+    out.push({ key: "pages", header: t("cmd.secPages"), items: pick(["/bracket", "/schedule", "/venues", "/awards"].map((h) => `page:${h}`)) });
+    return out.filter((s) => s.items.length);
+  }, [items, query, matchData, suggest, t]);
+
+  const results = useMemo<Item[]>(() => sections.flatMap((s) => s.items), [sections]);
 
   // Open/close: ⌘K toggles from anywhere; the nav trigger fires OPEN_COMMAND_EVENT. Re-bound on each
   // open change so the handler reads the current state (cheap — one window listener).
@@ -276,27 +335,38 @@ export function CommandMenu() {
           {results.length === 0 ? (
             <div className="text-muted-foreground px-4 py-8 text-center text-sm">{t("cmd.empty", { q: query })}</div>
           ) : (
-            results.map((item, idx) => (
-              <button
-                key={item.id}
-                type="button"
-                data-idx={idx}
-                role="option"
-                aria-selected={idx === active}
-                onMouseMove={() => setActive(idx)}
-                onClick={() => go(item)}
-                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left ${idx === active ? "bg-muted/60" : ""}`}
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center">
-                  {item.code ? <Flag code={item.code} size={18} /> : <TypeIcon type={item.type} />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="text-foreground block truncate text-sm font-medium">{item.label}</span>
-                  {item.sub && <span className="text-muted-2 block truncate text-xs">{item.sub}</span>}
-                </span>
-                <span className="text-muted-2 shrink-0 font-mono text-[10px] tracking-wide uppercase">{t(`cmd.type_${item.type}`)}</span>
-              </button>
-            ))
+            (() => {
+              let idx = -1; // flat index across sections, aligned with `results` for keyboard nav
+              return sections.map((sec) => (
+                <div key={sec.key} role="group">
+                  {sec.header && <div className="text-muted-2 px-4 pt-2.5 pb-1 font-mono text-[10px] font-semibold tracking-wide uppercase">{sec.header}</div>}
+                  {sec.items.map((item) => {
+                    const cur = ++idx;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        data-idx={cur}
+                        role="option"
+                        aria-selected={cur === active}
+                        onMouseMove={() => setActive(cur)}
+                        onClick={() => go(item)}
+                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left ${cur === active ? "bg-muted/60" : ""}`}
+                      >
+                        <span className="flex size-6 shrink-0 items-center justify-center">
+                          {item.code ? <Flag code={item.code} size={18} /> : <TypeIcon type={item.type} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="text-foreground block truncate text-sm font-medium">{item.label}</span>
+                          {item.sub && <span className="text-muted-2 block truncate text-xs">{item.sub}</span>}
+                        </span>
+                        <span className="text-muted-2 shrink-0 font-mono text-[10px] tracking-wide uppercase">{t(`cmd.type_${item.type}`)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ));
+            })()
           )}
         </div>
         <div className="border-border/70 text-muted-2 hidden items-center gap-4 border-t px-4 py-2 text-[10px] sm:flex">
@@ -310,6 +380,8 @@ export function CommandMenu() {
 }
 
 const TYPE_RANK: Record<ItemType, number> = { page: 0, team: 1, player: 2, group: 3, venue: 4, match: 5 };
+// Matchup connectors ignored in queries like "Mexico v England" / "spain vs argentina".
+const CONNECTORS = new Set(["v", "vs", "versus", "x"]);
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return <kbd className="border-border bg-muted/40 mr-0.5 inline-block rounded border px-1 font-mono text-[10px]">{children}</kbd>;
