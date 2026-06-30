@@ -1,43 +1,19 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { getPredictions } from "@/lib/getPredictions";
 import { decidedOnPens, pensScore } from "@/lib/penalties";
-import { ISO2 } from "@/lib/flags";
+import { flagDataUri, ogPct, OG_SIZE, OG_CONTENT_TYPE, OG_BG, OG_GREEN as GREEN, OG_COOL as COOL, OG_MUTED as MUTED } from "@/lib/og";
 
 // Dynamic per-match social card: the matchup (with big country flags) + the model's win probability
 // (or the final score).
 export const alt = "World Cup 2026 match prediction";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const size = OG_SIZE;
+export const contentType = OG_CONTENT_TYPE;
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-// A team's flag as an inlined data URI (Satori can't use the flag-icons CSS classes). Reads the bundled SVG;
-// falls back to the flag-icons CDN if the asset isn't in the serverless bundle. Returns null for TBD slots.
-async function flagDataUri(code?: string | null): Promise<string | null> {
-  const iso = code ? ISO2[code] : null;
-  if (!iso) return null;
-  let svg: string | null = null;
-  try {
-    svg = await readFile(join(process.cwd(), "node_modules/flag-icons/flags/4x3", `${iso}.svg`), "utf8");
-  } catch {
-    try {
-      const r = await fetch(`https://cdn.jsdelivr.net/npm/flag-icons@7/flags/4x3/${iso}.svg`);
-      if (r.ok) svg = await r.text();
-    } catch {
-      /* no flag — render the name only */
-    }
-  }
-  return svg ? `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}` : null;
-}
 
 const ROUND: Record<string, string> = {
   GROUP: "Group stage", R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", "3P": "Third-place play-off", FINAL: "Final",
 };
-const GREEN = "#5fe39a";
-const COOL = "#6db7e6";
-const MUTED = "#9fb3a8";
 
 function slotLabel(s?: string): string {
   if (!s) return "TBD";
@@ -72,14 +48,14 @@ export default async function Image({ params }: { params: Promise<{ match: strin
   // A one-line hook under the bar: the model's single likeliest scoreline for an upcoming match.
   const hook = !final && topScore ? `Most likely scoreline ${topScore.h}–${topScore.a}` : null;
   // A single-match win probability is a forecast, never a certainty - cap at 99% (mirrors forecastPct).
-  const pc = (v: number) => `${Math.max(1, Math.round(Math.min(v, 0.99) * 100))}%`;
+  const pc = ogPct;
 
   return new ImageResponse(
     (
       <div
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between",
-          padding: "64px 72px", background: "linear-gradient(135deg, #0a0f0b 0%, #0d1410 55%, #102417 100%)",
+          padding: "64px 72px", background: OG_BG,
           color: "#f7faf8", fontFamily: "sans-serif",
         }}
       >
