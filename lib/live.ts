@@ -189,14 +189,19 @@ export function liveActivity(matches: MatchInfo[], live: Awaited<ReturnType<type
 }
 
 // The score-ticker's contents, derived from a (live-overlaid) match list. Single source of truth so the
-// SSR layout and the /api/ticker poll endpoint always agree: LIVE now → next confirmed fixtures (both teams
-// known, so never a "TBD" knockout slot) → most recent finals (regardless of age, so a rest day is never blank).
+// SSR layout and the /api/ticker poll endpoint always agree. Tuned for RECENCY — what's relevant right now,
+// not a long tail of old results: LIVE now → recent finals (~last day) → next confirmed fixtures. On a rest
+// day (no recent finals) it falls back to the few most recent so the strip is never blank.
+const TICKER_RECENT_MS = 28 * 60 * 60_000; // ~last day (a touch over 24h to cover a match's full duration)
 export function selectTickerItems(matches: MatchInfo[]): MatchInfo[] {
+  const now = Date.now();
   const live = matches.filter((m) => m.status === "live");
   const upcoming = matches
     .filter((m) => m.status === "scheduled" && m.home && m.away)
     .sort((a, b) => a.utc.localeCompare(b.utc))
-    .slice(0, 6);
-  const finals = matches.filter((m) => m.status === "final").sort((a, b) => b.utc.localeCompare(a.utc)).slice(0, 10);
-  return [...live, ...upcoming, ...finals];
+    .slice(0, 5);
+  const allFinals = matches.filter((m) => m.status === "final").sort((a, b) => b.utc.localeCompare(a.utc));
+  const recent = allFinals.filter((m) => now - Date.parse(m.utc) < TICKER_RECENT_MS);
+  const finals = (recent.length ? recent : allFinals.slice(0, 4)).slice(0, 8);
+  return [...live, ...finals, ...upcoming];
 }
