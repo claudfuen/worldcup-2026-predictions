@@ -11,9 +11,10 @@ import { localeHref } from "@/lib/i18n/config";
 import type { TFunction } from "@/lib/i18n/server";
 
 // "Who would my team have to beat to reach the final?" — the team's single most-likely road through the
-// knockout bracket. Played rounds show the real result; clinched opponents show as definite; everything
-// else shows the most-likely opponent (lead emphasised) with alternatives + the chance of getting there.
-// An eliminated team's road simply stops at its exit, marked differently from a live run.
+// knockout bracket. Each row keeps two DIFFERENT certainties visually separate so neither is mistaken for
+// the other: the team's own progress is a labelled chip on the right ("✓ reached" / "62% to reach" / "out"),
+// while the OPPONENT side shows a lock icon when the tie is mathematically set (never a bare check). Played
+// rounds show the real result; an eliminated team's road stops at its exit, marked in loss tone.
 
 const SHORT: Record<PathRound, string> = {
   R32: "rounds.shortR32", R16: "rounds.shortR16", QF: "rounds.shortQF", SF: "rounds.shortSF", FINAL: "rounds.shortFinal",
@@ -42,13 +43,13 @@ export async function PathToFinal({ matches, pred, rank, total }: {
           <Link key={s.round} href={localeHref(locale, `/match/${s.match.match}`)} className="hover:bg-muted/20 block transition-colors">
             <div className={`flex items-center gap-3 px-4 py-3 ${s.exit ? "bg-loss/[0.06]" : ""}`}>
               <span className="bg-muted/40 text-muted-foreground w-11 shrink-0 rounded-md py-0.5 text-center font-mono text-[10px] font-semibold tracking-wide uppercase">{t(SHORT[s.round])}</span>
-              <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums">{reachCell(s, t)}</span>
               <div className="min-w-0 flex-1">
                 <OpponentLine s={s} code={pred.code} t={t} />
                 <div className="text-muted-2 mt-0.5 truncate text-[10px]" suppressHydrationWarning>
                   M{s.match.match} · <LocalTime utc={s.match.utc} mode="day" /> · {fifaCity(s.match.venue, s.match.city)}
                 </div>
               </div>
+              <ReachChip s={s} t={t} />
             </div>
           </Link>
         ))}
@@ -64,17 +65,30 @@ export async function PathToFinal({ matches, pred, rank, total }: {
   );
 }
 
-// Did the team reach this round? A played win or a clinched slot is a ✓ (fact); an exit is "out"; otherwise
-// the Monte Carlo chance of getting there.
-function reachCell(s: PathStep, t: TFunction) {
-  if (s.exit) return <span className="text-loss font-semibold">{t("team.pathOut")}</span>;
-  if ((s.played && s.teamWon) || s.inThisRound) return <span className="text-win">✓</span>;
-  return <span className="text-muted-foreground">{forecastPct(s.reachProb)}</span>;
+// The TEAM's own progress for this round — always team-oriented and labelled, so it can't be read as a
+// statement about the opponent. ✓ reached (a fact: clinched the round or won the tie), a % chance to reach,
+// or "out" at the exit.
+function ReachChip({ s, t }: { s: PathStep; t: TFunction }) {
+  if (s.exit) {
+    return <span className="text-loss shrink-0 rounded-md bg-loss/10 px-2 py-0.5 text-[11px] font-semibold">{t("team.pathOut")}</span>;
+  }
+  if ((s.played && s.teamWon) || s.inThisRound) {
+    return (
+      <span className="text-win shrink-0 rounded-md bg-win/10 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap">
+        <span aria-hidden>✓ </span>{t("team.pathReached")}
+      </span>
+    );
+  }
+  return (
+    <span className="text-muted-foreground shrink-0 text-right font-mono text-[11px] tabular-nums whitespace-nowrap">
+      {t("team.pathToReach", { pct: forecastPct(s.reachProb) })}
+    </span>
+  );
 }
 
 function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction }) {
   const m = s.match;
-  // Definite opponent — played result or a mathematically clinched tie.
+  // Definite opponent — played result, or a mathematically clinched tie (shown with a lock, never a check).
   if (s.oppLocked) {
     const teamHome = m.home === code;
     const ps = s.played && decidedOnPens(m) ? pensScore(m) : null;
@@ -89,12 +103,13 @@ function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction 
             {ps && <span className="text-muted-2"> ({teamHome ? ps.home : ps.away}–{teamHome ? ps.away : ps.home} {t("common.pens")})</span>}
           </span>
         ) : (
-          <span className="text-win ms-auto shrink-0 text-[10px] font-semibold tracking-wide uppercase">{t("team.pathConfirmed")}</span>
+          // Lock = the OPPONENT is mathematically set (distinct from the team's "reached" ✓ on the right).
+          <LockIcon title={t("team.pathOppConfirmed")} />
         )}
       </div>
     );
   }
-  // Projected — lead opponent emphasised, alternatives muted underneath.
+  // Projected — lead opponent emphasised, alternatives muted underneath. The % is "chance this is the opponent".
   const [lead, ...alts] = s.oppCandidates;
   if (!lead) return <div className="text-muted-2 text-sm">{t("common.vs")} {t("common.tbd")}</div>;
   return (
@@ -111,5 +126,16 @@ function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction 
         </div>
       )}
     </div>
+  );
+}
+
+function LockIcon({ title }: { title: string }) {
+  return (
+    <span className="text-muted-2 ms-auto shrink-0" title={title}>
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label={title}>
+        <rect x="5" y="11" width="14" height="9" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+    </span>
   );
 }
