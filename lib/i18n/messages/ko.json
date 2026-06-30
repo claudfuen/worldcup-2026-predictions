@@ -52,7 +52,10 @@
     "eliminated": "탈락",
     "champion": "우승",
     "tickets": "티켓",
-    "newTab": "새 탭에서 열림"
+    "newTab": "새 탭에서 열림",
+    "pens": "승부차기",
+    "wonOnPenalties": "승부차기 승리",
+    "penScore": "{home}–{away} 승부차기"
   },
   "home": {
     "modelsCall": "모델의 예측",

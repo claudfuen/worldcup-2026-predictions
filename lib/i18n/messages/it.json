@@ -52,7 +52,10 @@
     "eliminated": "Eliminata",
     "champion": "Campione",
     "tickets": "Biglietti",
-    "newTab": "si apre in una nuova scheda"
+    "newTab": "si apre in una nuova scheda",
+    "pens": "rig.",
+    "wonOnPenalties": "Vittoria ai rigori",
+    "penScore": "{home}–{away} rig."
   },
   "home": {
     "modelsCall": "Il verdetto del modello",

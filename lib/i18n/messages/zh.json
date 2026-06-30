@@ -52,7 +52,10 @@
     "eliminated": "已淘汰",
     "champion": "冠军",
     "tickets": "门票",
-    "newTab": "在新标签页中打开"
+    "newTab": "在新标签页中打开",
+    "pens": "点球",
+    "wonOnPenalties": "点球大战获胜",
+    "penScore": "{home}–{away} 点球"
   },
   "home": {
     "modelsCall": "模型预测",

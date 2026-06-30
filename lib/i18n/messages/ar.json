@@ -52,7 +52,10 @@
     "eliminated": "خارج المنافسة",
     "champion": "البطل",
     "tickets": "التذاكر",
-    "newTab": "يُفتح في علامة تبويب جديدة"
+    "newTab": "يُفتح في علامة تبويب جديدة",
+    "pens": "ترجيح",
+    "wonOnPenalties": "فاز بركلات الترجيح",
+    "penScore": "{home}–{away} ترجيح"
   },
   "home": {
     "modelsCall": "ترجيح النموذج",

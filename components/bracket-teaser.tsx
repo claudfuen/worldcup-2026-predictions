@@ -4,6 +4,7 @@ import { Countdown } from "@/components/countdown";
 import { forecastPct } from "@/lib/format";
 import { getT, getLocale } from "@/lib/i18n/server";
 import { localeHref } from "@/lib/i18n/config";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import type { MatchInfo, TeamPrediction } from "@/lib/predictions";
 
 // One honest glimpse of where the bracket is heading — the projected final pairing with each side's
@@ -23,6 +24,8 @@ export async function BracketTeaser({ matches, teams, className = "" }: { matche
   const setCount = r32.filter((m) => m.defined).length;
   const played = final.status === "final"; // the final has been played → show the result, not the projection
   const championName = played ? (final.winner === homeCode ? homeName : awayName) : null;
+  const onPens = decidedOnPens(final);
+  const ps = pensScore(final);
 
   return (
     <Link
@@ -35,7 +38,7 @@ export async function BracketTeaser({ matches, teams, className = "" }: { matche
       </div>
       <div className="flex flex-1 items-center gap-3">
         <FinalSide code={homeCode} name={homeName} reach={played ? undefined : reachOf.get(homeCode ?? "")} reachLabel={t("home.toFinal")} won={played && final.winner === homeCode} />
-        <span className="text-muted-2 shrink-0 text-sm font-semibold tabular-nums">{played ? <>{final.homeScore}<span className="text-muted-2">–</span>{final.awayScore}</> : t("common.vs")}</span>
+        <span className="text-muted-2 shrink-0 text-sm font-semibold tabular-nums">{played ? <>{final.homeScore}<span className="text-muted-2">–</span>{final.awayScore}{onPens && ps && <span className="text-muted-2 ms-1 text-[11px] font-normal">({t("common.penScore", { home: ps.home, away: ps.away })})</span>}</> : t("common.vs")}</span>
         <FinalSide code={awayCode} name={awayName} reach={played ? undefined : reachOf.get(awayCode ?? "")} reachLabel={t("home.toFinal")} align="right" won={played && final.winner === awayCode} />
       </div>
       <div className="border-border/50 mt-3 flex flex-col items-center gap-1 border-t pt-2.5 text-center">

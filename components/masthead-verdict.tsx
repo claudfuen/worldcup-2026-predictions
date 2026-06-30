@@ -4,12 +4,13 @@ import { forecastPct } from "@/lib/format";
 import { slugForCode } from "@/lib/slug";
 import { getT, getLocale, getIntlLocale } from "@/lib/i18n/server";
 import { localeHref } from "@/lib/i18n/config";
-import type { TeamPrediction } from "@/lib/predictions";
+import { decidedOnPens } from "@/lib/penalties";
+import type { MatchInfo, TeamPrediction } from "@/lib/predictions";
 
 // The masthead: the model's single pick to win it all, stated as a confident editorial CALL (never
 // definitive — it's a forecast). The hierarchy fix — the most-important insight is the largest thing on the
 // page. Guards the near-flat title race with a "too close to call" top-3 variant so it never overstates.
-export async function MastheadVerdict({ teams, iterations, complete, champion }: { teams: TeamPrediction[]; iterations: number; complete?: boolean; champion?: string }) {
+export async function MastheadVerdict({ teams, iterations, complete, champion, finalMatch }: { teams: TeamPrediction[]; iterations: number; complete?: boolean; champion?: string; finalMatch?: MatchInfo }) {
   const t = await getT();
   const locale = await getLocale();
   const intl = await getIntlLocale();
@@ -19,6 +20,11 @@ export async function MastheadVerdict({ teams, iterations, complete, champion }:
   // Tournament over: crown the actual champion (a settled fact, not a forecast — no probability).
   const champ = complete && champion ? teams.find((tm) => tm.code === champion) : undefined;
   if (champ) {
+    // If the final was settled on penalties, note it (champion's tally first). Falls back to the generic
+    // "crowned" line when the final was decided in regulation/extra time.
+    const finalOnPens = finalMatch && decidedOnPens(finalMatch) && finalMatch.homePens != null && finalMatch.awayPens != null;
+    const champPens = finalOnPens ? (finalMatch!.winner === finalMatch!.home ? finalMatch!.homePens! : finalMatch!.awayPens!) : null;
+    const oppPens = finalOnPens ? (finalMatch!.winner === finalMatch!.home ? finalMatch!.awayPens! : finalMatch!.homePens!) : null;
     return (
       <div>
         <div className="text-contention font-mono text-xs font-semibold tracking-wide uppercase">{t("home.championEyebrow")}</div>
@@ -31,7 +37,9 @@ export async function MastheadVerdict({ teams, iterations, complete, champion }:
         </h1>
         <div className="mt-3 flex items-center gap-2.5">
           <Flag code={champ.code} size={22} />
-          <span className="text-muted-foreground text-sm">{t("home.championLine")}</span>
+          <span className="text-muted-foreground text-sm">
+            {finalOnPens ? t("home.championOnPens", { score: `${champPens}–${oppPens}` }) : t("home.championLine")}
+          </span>
         </div>
       </div>
     );

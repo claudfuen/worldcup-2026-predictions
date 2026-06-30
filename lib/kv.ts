@@ -56,7 +56,9 @@ export const KV_CONFIGURED = Boolean(URL && TOKEN);
 //      so the KO match page leads with "to advance" instead of a regulation draw.
 // v18: payload gained `complete` (all matches played) + `champion` (final's winner) — the tournament-over
 //      signal the UI keys off for champion-crown / archive states.
-export const PRED_KEY = "predictions:v18";
+// v19: knockout matches gained `homePens`/`awayPens` — the penalty shootout tally (from ESPN's shootoutScore)
+//      for a tie settled on penalties, so the result shows "1–1 (4–3 pens)" instead of a bare draw everywhere.
+export const PRED_KEY = "predictions:v19";
 
 // Start-of-day snapshot of title/advance odds, for "moved since yesterday" deltas. Rolled once per ET day.
 export const BASELINE_KEY = "predictions:baseline:v1";

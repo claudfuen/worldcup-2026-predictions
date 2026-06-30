@@ -52,7 +52,10 @@
     "eliminated": "Tersingkir",
     "champion": "Juara",
     "tickets": "Tiket",
-    "newTab": "terbuka di tab baru"
+    "newTab": "terbuka di tab baru",
+    "pens": "penalti",
+    "wonOnPenalties": "Menang adu penalti",
+    "penScore": "{home}–{away} penalti"
   },
   "home": {
     "modelsCall": "Prediksi model",

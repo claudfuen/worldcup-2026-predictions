@@ -63,6 +63,11 @@ export interface MatchInfo {
   homeScore?: number;
   awayScore?: number;
   winner?: string; // advancing team of a completed knockout match (set even when decided on penalties)
+  // Penalty shootout tally (oriented home/away), set ONLY for a knockout tie decided on penalties. The
+  // regulation+ET score stays in homeScore/awayScore (a level draw); these carry e.g. 4 / 3. Use the
+  // helpers in lib/penalties.ts to read these consistently across the UI.
+  homePens?: number;
+  awayPens?: number;
   liveDetail?: string; // clock/state for in-progress matches, e.g. "45'+3'"
   liveMinute?: number; // parsed elapsed minute for an in-progress match (drives live win-probability)
   liveProbs?: { home: number; draw: number; away: number }; // CURRENT W/D/L given the live score + minute (render-time)
@@ -295,6 +300,7 @@ export async function computePredictions(iterations = 20000, seed = 20260611, li
         info.homeName = TEAM_BY_CODE[pl.home].name; info.awayName = TEAM_BY_CODE[pl.away].name;
         info.homeScore = pl.homeScore; info.awayScore = pl.awayScore;
         info.winner = pl.winner;
+        if (pl.homePens != null && pl.awayPens != null) { info.homePens = pl.homePens; info.awayPens = pl.awayPens; }
         info.status = "final";
       } else {
         // A slot resolves to a definite team when mathematically locked (clinched winner/runner-up) or when

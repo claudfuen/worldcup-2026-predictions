@@ -5,6 +5,7 @@ import { Flag } from "@/components/flag";
 import { useViewerZone } from "@/lib/useViewerZone";
 import { fmtTime, fmtTimeShort, fmtDay, fmtDayKey, pct, forecastPct } from "@/lib/format";
 import { HotBadge } from "@/components/hot-badge";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { useT, type TFunction } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
 import { localeHref, type Locale } from "@/lib/i18n/config";
@@ -210,7 +211,11 @@ function SlateRow({ m, zone, hotReason, t, locale, showDate = false, kickoff = f
       {hotReason != null && <HotBadge reason={hotReason} className="shrink-0" />}
       <span className="shrink-0 text-right text-[11px]">
         {final ? (
-          <span className="font-mono"><span className="text-foreground font-medium tabular-nums">{m.homeScore}–{m.awayScore}</span> <span className="text-win">{t("home.ft")}</span></span>
+          <span className="font-mono">
+            <span className="text-foreground font-medium tabular-nums">{m.homeScore}–{m.awayScore}</span>
+            {(() => { const ps = decidedOnPens(m) ? pensScore(m) : null; return ps ? <span className="text-muted-2 tabular-nums"> ({t("common.penScore", { home: ps.home, away: ps.away })})</span> : null; })()}
+            {" "}<span className="text-win">{t("home.ft")}</span>
+          </span>
         ) : kickoff ? (
           <span className="text-foreground/80 font-mono tabular-nums" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</span>
         ) : m.favorite ? (

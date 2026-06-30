@@ -20,6 +20,7 @@ import { ExploreSection } from "@/components/explore-section";
 import { BracketTeaser } from "@/components/bracket-teaser";
 import { GroupsPreview } from "@/components/groups-preview";
 import { TitleOdds } from "@/components/title-odds";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { teamAdvanceDisplay } from "@/lib/view/advance";
 import { isClinched } from "@/lib/view/types";
 import { forecastPct, ordinal } from "@/lib/format";
@@ -245,6 +246,8 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
               const live = m.status === "live";
               const oppName = m.home === team.code ? m.awayName : m.homeName;
               const oppCode = m.home === team.code ? m.away : m.home;
+              const isHome = m.home === team.code;
+              const ps = final && decidedOnPens(m) ? pensScore(m) : null;
               return (
                 <Link key={m.match} href={localeHref(locale, `/match/${m.match}`)} className="hover:bg-muted/30 flex items-center gap-3 px-4 py-2.5 transition-colors">
                   <span className="text-muted-2 w-14 shrink-0 font-mono text-[11px] sm:w-24"><LocalTime utc={m.utc} mode="day" /></span>
@@ -254,7 +257,8 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
                   {hotByMatch.get(m.match)?.hot && <HotBadge className="shrink-0" />}
                   {final || live ? (
                     <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
-                      {m.home === team.code ? m.homeScore : m.awayScore}–{m.home === team.code ? m.awayScore : m.homeScore}
+                      {isHome ? m.homeScore : m.awayScore}–{isHome ? m.awayScore : m.homeScore}
+                      {ps && <span className="text-muted-2 ms-1 text-[11px] font-normal">({isHome ? ps.home : ps.away}–{isHome ? ps.away : ps.home} {t("common.pens")})</span>}
                     </span>
                   ) : m.favorite && m.favorite.code === team.code ? (
                     <span className="text-muted-2 shrink-0 text-[11px]">{t("team.favored")}</span>

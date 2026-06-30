@@ -7,6 +7,7 @@ import { Flag } from "./flag";
 import { HotBadge } from "./hot-badge";
 import { TicketLink } from "./ticket-link";
 import { fmtTimeShort, fmtDay, fmtDayKey, pct } from "@/lib/format";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { useViewerZone } from "@/lib/useViewerZone";
 import { useT } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
@@ -104,8 +105,11 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
   const upcoming = !final && !live;
   // Full-row link as an overlay so we can also place a real ticket <a> in the row (anchors can't nest).
   // Interactive exceptions (the ticket link) sit above the overlay via relative z-10.
-  const homeWin = final && (m.homeScore ?? 0) > (m.awayScore ?? 0);
-  const awayWin = final && (m.awayScore ?? 0) > (m.homeScore ?? 0);
+  // Winner from the model's advancing flag where present (a penalty win is a level score, so a raw
+  // score-compare would mark neither side); fall back to the higher score for group matches.
+  const homeWin = final && (m.winner ? m.winner === m.home : (m.homeScore ?? 0) > (m.awayScore ?? 0));
+  const awayWin = final && (m.winner ? m.winner === m.away : (m.awayScore ?? 0) > (m.homeScore ?? 0));
+  const ps = final && decidedOnPens(m) ? pensScore(m) : null;
   return (
     <div className="hover:bg-muted/30 relative flex items-center gap-3 px-3 py-2.5 transition-colors sm:gap-4 sm:px-4">
       <Link href={localeHref(locale, `/match/${m.match}`)} className="absolute inset-0" aria-label={t("schedule.rowAria", { home: homeLabel, away: awayLabel })} />
@@ -121,8 +125,8 @@ function Row({ m, zone, hotReason }: { m: MatchInfo; zone?: import("@/lib/format
         </div>
         {showScore && (
           <div className="shrink-0 space-y-0.5 text-center font-mono text-sm tabular-nums">
-            <div className={homeWin ? "text-foreground font-bold" : "text-muted-foreground"}>{m.homeScore}</div>
-            <div className={awayWin ? "text-foreground font-bold" : "text-muted-foreground"}>{m.awayScore}</div>
+            <div className={homeWin ? "text-foreground font-bold" : "text-muted-foreground"}>{m.homeScore}{ps && <span className="text-muted-2 ms-0.5 text-[11px] font-normal">({ps.home})</span>}</div>
+            <div className={awayWin ? "text-foreground font-bold" : "text-muted-foreground"}>{m.awayScore}{ps && <span className="text-muted-2 ms-0.5 text-[11px] font-normal">({ps.away})</span>}</div>
           </div>
         )}
       </div>

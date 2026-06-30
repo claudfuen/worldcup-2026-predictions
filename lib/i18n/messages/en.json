@@ -134,7 +134,10 @@
     "eliminated": "Eliminated",
     "champion": "Champion",
     "tickets": "Tickets",
-    "newTab": "opens in a new tab"
+    "newTab": "opens in a new tab",
+    "pens": "pens",
+    "wonOnPenalties": "Won on penalties",
+    "penScore": "{home}–{away} pens"
   },
   "home": {
     "modelsCall": "The model's call",
@@ -144,6 +147,7 @@
     "championEyebrow": "2026 World Cup · Champions",
     "areChampions": "are World Cup champions.",
     "championLine": "Crowned at the 2026 FIFA World Cup.",
+    "championOnPens": "Won the final {score} on penalties.",
     "simsTagline": "{count} Monte Carlo simulations, replayed live from real results.",
     "moverLead": "Biggest move today:",
     "moverTail": "to {pct}.",

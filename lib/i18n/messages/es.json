@@ -52,7 +52,10 @@
     "eliminated": "Eliminado",
     "champion": "Campeón",
     "tickets": "Entradas",
-    "newTab": "se abre en una pestaña nueva"
+    "newTab": "se abre en una pestaña nueva",
+    "pens": "pen.",
+    "wonOnPenalties": "Ganó en los penaltis",
+    "penScore": "{home}–{away} pen."
   },
   "home": {
     "modelsCall": "El pronóstico del modelo",

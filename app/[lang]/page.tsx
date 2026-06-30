@@ -54,7 +54,7 @@ export default async function Page() {
 
       {/* The call — the hero, full width */}
       <header>
-        <MastheadVerdict teams={teams} iterations={data.iterations} complete={data.complete} champion={data.champion} />
+        <MastheadVerdict teams={teams} iterations={data.iterations} complete={data.complete} champion={data.champion} finalMatch={lMatches.find((mm) => mm.round === "FINAL")} />
         <MoverStrip teams={teams} />
       </header>
 

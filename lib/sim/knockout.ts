@@ -53,6 +53,7 @@ export function buildR32(groups: GroupOutcome, slotToTeam: Record<string, string
 
 export interface KOPlayed {
   home: string; away: string; homeScore: number; awayScore: number; winner: string;
+  homePens?: number; awayPens?: number; // shootout tally (oriented to the bracket's home/away) when the tie went to penalties
 }
 
 // Resolve the ACTUAL knockout results into the bracket: walk it forward from the (final) group outcome +
@@ -64,7 +65,7 @@ export interface KOPlayed {
 export function resolveKnockoutResults(
   groups: GroupOutcome,
   slotToTeam: Record<string, string>,
-  results: { homeCode: string; awayCode: string; homeGoals: number; awayGoals: number; winnerCode?: string | null }[],
+  results: { homeCode: string; awayCode: string; homeGoals: number; awayGoals: number; winnerCode?: string | null; homePens?: number; awayPens?: number }[],
 ): { winners: Record<number, string>; losers: Record<number, string>; played: Record<number, KOPlayed> } {
   const r32 = buildR32(groups, slotToTeam);
   const byPair = new Map(results.map((r) => [[r.homeCode, r.awayCode].sort().join("-"), r]));
@@ -85,7 +86,11 @@ export function resolveKnockoutResults(
     const winner = r.winnerCode === home || r.winnerCode === away ? r.winnerCode! : homeScore >= awayScore ? home : away;
     winners[m.match] = winner;
     losers[m.match] = winner === home ? away : home;
-    played[m.match] = { home, away, homeScore, awayScore, winner };
+    const pens =
+      r.homePens != null && r.awayPens != null
+        ? { homePens: sameOrient ? r.homePens : r.awayPens, awayPens: sameOrient ? r.awayPens : r.homePens }
+        : {};
+    played[m.match] = { home, away, homeScore, awayScore, winner, ...pens };
   }
   return { winners, losers, played };
 }

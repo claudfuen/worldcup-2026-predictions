@@ -52,7 +52,10 @@
     "eliminated": "बाहर",
     "champion": "चैंपियन",
     "tickets": "टिकट",
-    "newTab": "नए टैब में खुलता है"
+    "newTab": "नए टैब में खुलता है",
+    "pens": "पेन",
+    "wonOnPenalties": "पेनल्टी पर जीते",
+    "penScore": "{home}–{away} पेन"
   },
   "home": {
     "modelsCall": "मॉडल का फ़ैसला",

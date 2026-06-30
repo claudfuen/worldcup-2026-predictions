@@ -7,6 +7,7 @@ import { Flag } from "./flag";
 import { slugForCode } from "@/lib/slug";
 import { pct, fmtDay } from "@/lib/format";
 import { fifaCity } from "@/lib/venues";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { useViewerZone } from "@/lib/useViewerZone";
 import { useT } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
@@ -199,15 +200,24 @@ function Side({ m, side, big }: { m: MatchInfo; side: "home" | "away"; big?: boo
     const score = side === "home" ? m.homeScore : m.awayScore;
     const isWinner = played && !!m.winner && m.winner === resolved;
     const isLoser = played && !!m.winner && m.winner !== resolved;
-    const onPens = played && m.homeScore != null && m.homeScore === m.awayScore;
+    const onPens = decidedOnPens(m);
+    const ps = pensScore(m); // shootout tally, once known
+    const pen = side === "home" ? m.homePens : m.awayPens;
     return (
       <div className={`flex items-center ${big ? "gap-2.5 px-3 py-2.5" : "gap-2 px-2.5 py-2"}`}>
         <Flag code={resolved} size={big ? 24 : 20} />
         <span className={`min-w-0 flex-1 truncate ${big ? "text-sm" : "text-[13px]"} ${isLoser ? "text-muted-foreground line-through" : "font-semibold"}`}>{name}</span>
         {played ? (
           <span className="flex shrink-0 items-center gap-1">
-            {isWinner && onPens && <span className="text-win/70 font-mono text-[9px] font-semibold tracking-wide uppercase" title={t("bracket.wonOnPenalties")}>{t("bracket.pens")}</span>}
             <span className={`font-mono font-bold tabular-nums ${big ? "text-sm" : "text-xs"} ${isWinner ? "text-win" : "text-muted-foreground"}`}>{score}</span>
+            {/* Shootout: the pen tally per side (e.g. "1 (4)"), winner-tinted. Before the tally lands, a
+                "pens" badge on the winner still flags how the tie was settled. */}
+            {onPens && ps != null && (
+              <span className={`font-mono text-[10px] tabular-nums ${isWinner ? "text-win/80" : "text-muted-foreground/70"}`} title={t("common.wonOnPenalties")}>({pen})</span>
+            )}
+            {onPens && ps == null && isWinner && (
+              <span className="text-win/70 font-mono text-[9px] font-semibold tracking-wide uppercase" title={t("common.wonOnPenalties")}>{t("common.pens")}</span>
+            )}
           </span>
         ) : live ? (
           // In progress: show the current goals (no winner highlight yet — undecided until full time).

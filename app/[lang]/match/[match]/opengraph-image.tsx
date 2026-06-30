@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getPredictions } from "@/lib/getPredictions";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { ISO2 } from "@/lib/flags";
 
 // Dynamic per-match social card: the matchup (with big country flags) + the model's win probability
@@ -65,6 +66,7 @@ export default async function Image({ params }: { params: Promise<{ match: strin
   const round = m ? ROUND[m.round] : "World Cup 2026";
   const group = m?.group ? ` · Group ${m.group}` : "";
   const final = m?.status === "final";
+  const pens = final && m && decidedOnPens(m) ? pensScore(m) : null; // shootout tally for a tie settled on penalties
   const probs = m?.probs;
   const topScore = m?.topScores?.[0];
   // A one-line hook under the bar: the model's single likeliest scoreline for an upcoming match.
@@ -98,6 +100,7 @@ export default async function Image({ params }: { params: Promise<{ match: strin
               <div style={{ display: "flex", fontSize: 44, fontWeight: 600, color: MUTED }}>vs</div>
             )}
             <div style={{ display: "flex", fontSize: 22, color: MUTED, marginTop: 8 }}>{final ? "Full time" : "Match " + (m?.match ?? match)}</div>
+            {pens && <div style={{ display: "flex", fontSize: 24, color: GREEN, fontWeight: 600, marginTop: 4 }}>{pens.home}–{pens.away} pens</div>}
           </div>
           <div style={{ display: "flex", flexDirection: "column", flex: 1, alignItems: "flex-start", gap: 22 }}>
             {awayFlag && <img src={awayFlag} style={flagStyle} />}

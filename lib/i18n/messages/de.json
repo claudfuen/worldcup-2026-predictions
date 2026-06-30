@@ -52,7 +52,10 @@
     "eliminated": "Ausgeschieden",
     "champion": "Weltmeister",
     "tickets": "Tickets",
-    "newTab": "öffnet in neuem Tab"
+    "newTab": "öffnet in neuem Tab",
+    "pens": "i. E.",
+    "wonOnPenalties": "Im Elfmeterschießen gewonnen",
+    "penScore": "{home}–{away} i. E."
   },
   "home": {
     "modelsCall": "Die Einschätzung des Modells",

@@ -52,7 +52,10 @@
     "eliminated": "敗退",
     "champion": "優勝",
     "tickets": "チケット",
-    "newTab": "新しいタブで開きます"
+    "newTab": "新しいタブで開きます",
+    "pens": "PK",
+    "wonOnPenalties": "PK戦で勝利",
+    "penScore": "{home}–{away} PK"
   },
   "home": {
     "modelsCall": "モデルの予想",

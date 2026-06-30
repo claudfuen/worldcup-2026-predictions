@@ -49,7 +49,24 @@ export function overlayLive(matches: MatchInfo[], live: Awaited<ReturnType<typeo
     const homeScore = orient ? l.homeGoals : l.awayGoals;
     const awayScore = orient ? l.awayGoals : l.homeGoals;
     if (l.state === "post") {
-      return { ...m, status: "final" as const, homeScore, awayScore };
+      // Just finished: for a knockout, also carry the advancing team and (if it went to a shootout) the
+      // penalty tally — oriented to this match's home/away — so the result shows correctly the instant it
+      // lands, ahead of the cron recompute. Group matches have no winner/pens.
+      const ko = m.round !== "GROUP";
+      const pens =
+        ko && l.homePens != null && l.awayPens != null
+          ? { homePens: orient ? l.homePens : l.awayPens, awayPens: orient ? l.awayPens : l.homePens }
+          : {};
+      const winner = ko
+        ? l.winnerCode === m.home || l.winnerCode === m.away
+          ? l.winnerCode
+          : homeScore !== awayScore
+            ? homeScore > awayScore
+              ? m.home
+              : m.away
+            : undefined
+        : undefined;
+      return { ...m, status: "final" as const, homeScore, awayScore, ...(winner ? { winner } : {}), ...pens };
     }
     return { ...m, status: "live" as const, homeScore, awayScore, liveDetail: l.detail, liveMinute: l.minute ?? undefined };
   });

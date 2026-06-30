@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { MatchInfo, SlotCandidate } from "@/lib/predictions";
 import { Flag } from "./flag";
 import { fmtTimeShort, fmtDay, fmtDayKey, pct } from "@/lib/format";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { useViewerZone } from "@/lib/useViewerZone";
 import { useT, type TFunction } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
@@ -210,8 +211,9 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
   const awayCode = m.away ?? m.projAway?.[0]?.code ?? null;
   const homeName = m.homeName ?? m.projHome?.[0]?.name ?? m.slotHome ?? t("common.tbd");
   const awayName = m.awayName ?? m.projAway?.[0]?.name ?? m.slotAway ?? t("common.tbd");
-  const homeWin = final && (m.homeScore ?? 0) > (m.awayScore ?? 0);
-  const awayWin = final && (m.awayScore ?? 0) > (m.homeScore ?? 0);
+  const homeWin = final && (m.winner ? m.winner === m.home : (m.homeScore ?? 0) > (m.awayScore ?? 0));
+  const awayWin = final && (m.winner ? m.winner === m.away : (m.awayScore ?? 0) > (m.homeScore ?? 0));
+  const ps = final && decidedOnPens(m) ? pensScore(m) : null;
   return (
     <Link
       href={localeHref(locale, `/match/${m.match}`)}
@@ -230,9 +232,9 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
         <span className="shrink-0 truncate">{m.group ? `${m.group} · ` : ""}M{m.match}</span>
       </div>
       <div className="px-2 pt-1 pb-1">
-        <Side resolved={!!m.home} code={homeCode} name={homeName} score={final || live ? m.homeScore : undefined} win={homeWin} cands={m.projHome} knockout={m.round !== "GROUP"} />
+        <Side resolved={!!m.home} code={homeCode} name={homeName} score={final || live ? m.homeScore : undefined} pen={ps?.home} win={homeWin} cands={m.projHome} knockout={m.round !== "GROUP"} />
         <div className="border-border/40 my-1 border-t" />
-        <Side resolved={!!m.away} code={awayCode} name={awayName} score={final || live ? m.awayScore : undefined} win={awayWin} cands={m.projAway} knockout={m.round !== "GROUP"} />
+        <Side resolved={!!m.away} code={awayCode} name={awayName} score={final || live ? m.awayScore : undefined} pen={ps?.away} win={awayWin} cands={m.projAway} knockout={m.round !== "GROUP"} />
       </div>
       <div className="text-muted-2 border-border/40 truncate border-t px-2 py-1 text-[10px]">{fifaVenue(m.venue)}</div>
     </Link>
@@ -242,7 +244,7 @@ function MatchCard({ m, zone, locale, t }: { m: MatchInfo; zone: import("@/lib/f
 // One side of a card: a resolved/clinched team (single line + score) OR — for an unresolved knockout
 // slot — the top-3 candidate teams ranked by probability, so the potential fillers stay visible with a
 // clear hierarchy (#1 emphasized, the rest muted).
-function Side({ resolved, code, name, score, win, cands, knockout }: { resolved: boolean; code: string | null; name: string; score?: number; win?: boolean; cands?: SlotCandidate[]; knockout?: boolean }) {
+function Side({ resolved, code, name, score, pen, win, cands, knockout }: { resolved: boolean; code: string | null; name: string; score?: number; pen?: number; win?: boolean; cands?: SlotCandidate[]; knockout?: boolean }) {
   // Clinched knockout participant: certain, so it gets the SAME prominence as the candidate lead (bold,
   // larger flag) — but no probability bar, which reads as "settled" next to the candidates' bars.
   if (resolved && knockout) {
@@ -250,7 +252,7 @@ function Side({ resolved, code, name, score, win, cands, knockout }: { resolved:
       <div className="flex items-center gap-1.5 px-0.5 py-px">
         <Flag code={code} size={15} />
         <span className="text-foreground min-w-0 flex-1 truncate text-[13px] font-semibold">{name}</span>
-        {score != null && <span className={`shrink-0 font-mono text-[12px] tabular-nums ${win ? "text-foreground font-bold" : "text-muted-foreground"}`}>{score}</span>}
+        {score != null && <span className={`shrink-0 font-mono text-[12px] tabular-nums ${win ? "text-foreground font-bold" : "text-muted-foreground"}`}>{score}{pen != null && <span className="text-muted-2 ms-0.5 text-[10px] font-normal">({pen})</span>}</span>}
       </div>
     );
   }

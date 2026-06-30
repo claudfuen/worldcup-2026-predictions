@@ -52,7 +52,10 @@
     "eliminated": "Eliminado",
     "champion": "Campeão",
     "tickets": "Ingressos",
-    "newTab": "abre em uma nova aba"
+    "newTab": "abre em uma nova aba",
+    "pens": "pên",
+    "wonOnPenalties": "Venceu nos pênaltis",
+    "penScore": "{home}–{away} pên"
   },
   "home": {
     "modelsCall": "O palpite do modelo",

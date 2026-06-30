@@ -31,6 +31,19 @@ export interface FetchedMatch {
   homeGoals: number;
   awayGoals: number;
   winnerCode?: string | null; // the team ESPN marks as advancing — set for knockouts, incl. penalty wins (regulation score is a draw)
+  // Penalty shootout tally (ESPN `shootoutScore`), oriented to home/away. Present ONLY when a knockout tie
+  // was settled on penalties; the final figure regardless of standard or sudden-death rounds. The regulation
+  // (incl. extra time) score stays in homeGoals/awayGoals — a level draw when it goes to a shootout.
+  homePens?: number;
+  awayPens?: number;
+}
+
+// Read a competitor's penalty shootout tally if ESPN reports one (number or numeric string), else null.
+function shootout(c: { shootoutScore?: string | number } | undefined): number | null {
+  const v = c?.shootoutScore;
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 // Fetch all COMPLETED matches (full-time only) across the tournament window.
@@ -49,6 +62,8 @@ export async function fetchResults(): Promise<FetchedMatch[]> {
     const ht = TEAM_BY_ESPN[home.team.displayName];
     const at = TEAM_BY_ESPN[away.team.displayName];
     if (!ht || !at) continue;
+    const hp = shootout(home);
+    const ap = shootout(away);
     out.push({
       date: e.date,
       homeCode: ht.code,
@@ -57,6 +72,7 @@ export async function fetchResults(): Promise<FetchedMatch[]> {
       homeGoals: Number(home.score),
       awayGoals: Number(away.score),
       winnerCode: home.winner ? ht.code : away.winner ? at.code : null,
+      ...(hp != null && ap != null ? { homePens: hp, awayPens: ap } : {}),
     });
   }
   out.sort((a, b) => a.date.localeCompare(b.date));
@@ -75,6 +91,9 @@ export interface LiveMatch {
   minute: number | null; // parsed elapsed minute (HT=45, "63'"->63, "45'+2'"->47), for live conditioning
   eventId: string; // ESPN event id, so callers can pull the match summary (goals/cards/stats) directly
   eloAdj?: number; // in-game Elo nudge (red cards + shot/possession dominance), home-perspective; filled in later
+  winnerCode?: string | null; // ESPN's advancing flag — lets a just-finished knockout show its winner before the cron recompute
+  homePens?: number; // penalty shootout tally (oriented home/away), set only for a just-finished tie decided on penalties
+  awayPens?: number;
 }
 
 // Parse ESPN's soccer clock into an ELAPSED minute used for live win-probability conditioning. ESPN gives
@@ -120,6 +139,8 @@ export async function fetchLive(): Promise<LiveMatch[]> {
     const ht = TEAM_BY_ESPN[home.team.displayName];
     const at = TEAM_BY_ESPN[away.team.displayName];
     if (!ht || !at) continue;
+    const hp = shootout(home);
+    const ap = shootout(away);
     out.push({
       homeCode: ht.code,
       awayCode: at.code,
@@ -131,6 +152,8 @@ export async function fetchLive(): Promise<LiveMatch[]> {
       detail: comp.status?.type?.shortDetail ?? comp.status?.type?.detail ?? comp.status?.displayClock ?? (state === "post" ? "FT" : "LIVE"),
       minute: state === "post" ? 90 : parseLiveMinute(comp.status?.displayClock, comp.status?.type?.shortDetail ?? comp.status?.type?.detail, comp.status?.period),
       eventId: e.id,
+      winnerCode: home.winner ? ht.code : away.winner ? at.code : null,
+      ...(hp != null && ap != null ? { homePens: hp, awayPens: ap } : {}),
     });
   }
   return out;
@@ -222,6 +245,6 @@ interface EspnEvent {
   date: string;
   competitions?: {
     status?: { displayClock?: string; period?: number; type?: { state?: string; detail?: string; shortDetail?: string } };
-    competitors?: { homeAway?: string; score?: string | number; winner?: boolean; team: { displayName: string } }[];
+    competitors?: { homeAway?: string; score?: string | number; shootoutScore?: string | number; winner?: boolean; team: { displayName: string } }[];
   }[];
 }

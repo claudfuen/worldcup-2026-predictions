@@ -12,6 +12,7 @@ import { ProvisionalStandings } from "@/components/provisional-standings";
 import { slugForCode } from "@/lib/slug";
 import { pct, forecastPct } from "@/lib/format";
 import { fifaVenue } from "@/lib/venues";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { TicketLink } from "@/components/ticket-link";
 import { hasTickets, TICKET_PROVIDER } from "@/lib/tickets";
 import type { MatchInfo } from "@/lib/predictions";
@@ -73,8 +74,11 @@ function prettySlot(t: TFunction, s?: string): string {
 }
 
 function shareTextFor(t: TFunction, m: MatchInfo, state: State, homeName?: string, awayName?: string): string {
-  if (state === "final")
-    return t("match.shareFinal", { home: homeName, homeScore: m.homeScore, awayScore: m.awayScore, away: awayName, round: roundName(t, m.round) });
+  if (state === "final") {
+    const base = t("match.shareFinal", { home: homeName, homeScore: m.homeScore, awayScore: m.awayScore, away: awayName, round: roundName(t, m.round) });
+    const ps = pensScore(m);
+    return decidedOnPens(m) && ps ? `${base} (${t("common.penScore", { home: ps.home, away: ps.away })})` : base;
+  }
   if (m.favorite && m.home && m.away)
     return t("match.shareFavorite", { favorite: nm(t, m.favorite.code) ?? m.favorite.name, pct: Math.round(m.favorite.winProb * 100), home: homeName, away: awayName });
   return t("match.shareUpcoming", {
@@ -122,6 +126,11 @@ export function MatchHero({ matchNo, initial, iterations, homeRank, awayRank, ho
   const state = stateOf(m);
   const homeName = nm(t, m.home);
   const awayName = nm(t, m.away);
+  // Knockout settled on penalties: the regulation/ET score stays the headline, the shootout tally an
+  // annotation. `ps` is null until ESPN's tally lands (then only the "pens" tag shows).
+  const onPens = decidedOnPens(m);
+  const ps = pensScore(m);
+  const penLabel = ps ? t("common.penScore", { home: ps.home, away: ps.away }) : t("common.pens");
   // Rank chip under each team: defaults to our Elo rank; tap toggles to the FIFA ranking. Shared across both
   // sides so a tap flips them together (compare in the same system).
   const [rankMode, setRankMode] = useState<"elo" | "fifa">("elo");
@@ -153,7 +162,12 @@ export function MatchHero({ matchNo, initial, iterations, homeRank, awayRank, ho
               <span className="text-muted-2 font-mono text-xs font-semibold tracking-[0.15em] uppercase">{t("common.vs")}</span>
             )}
             {state === "final" ? (
-              <span className="text-muted-foreground font-mono text-[11px] font-semibold tracking-[0.1em] uppercase">{t("match.fullTime")}</span>
+              <span className="flex flex-col items-center gap-1">
+                <span className="text-muted-foreground font-mono text-[11px] font-semibold tracking-[0.1em] uppercase">{t("match.fullTime")}</span>
+                {onPens && (
+                  <span className="text-win font-mono text-[11px] font-semibold tracking-[0.06em] uppercase" title={t("common.wonOnPenalties")}>{penLabel}</span>
+                )}
+              </span>
             ) : state === "live" ? (
               <span className="text-live inline-flex items-center gap-1.5 text-xs font-semibold">
                 <span className="bg-live size-1.5 animate-pulse rounded-full" />{m.liveDetail}
@@ -266,6 +280,10 @@ export function MatchBody({ matchNo, initial, proseText }: { matchNo: number; in
   const state = stateOf(m);
   const homeName = nm(t, m.home);
   const awayName = nm(t, m.away);
+  // Knockout settled on penalties — annotate the full-time result (see also MatchHero).
+  const onPens = decidedOnPens(m);
+  const ps = pensScore(m);
+  const penLabel = ps ? t("common.penScore", { home: ps.home, away: ps.away }) : t("common.pens");
 
   const matchFacts = m.home && m.away && (
     <>
@@ -291,12 +309,12 @@ export function MatchBody({ matchNo, initial, proseText }: { matchNo: number; in
                 <WinProbBar home={m.probs.home} draw={m.probs.draw} away={m.probs.away} homeName={homeName!} awayName={awayName!} />
                 <p className="text-muted-2 mt-4 text-xs">
                   {m.xg && <>{t("match.expectedGoalsPrefix", { home: m.xg.home.toFixed(1), away: m.xg.away.toFixed(1) })} </>}
-                  {t("match.actualResult")} <span className="text-foreground/80 font-medium">{m.homeScore}–{m.awayScore}</span>.
+                  {t("match.actualResult")} <span className="text-foreground/80 font-medium">{m.homeScore}–{m.awayScore}{onPens ? ` (${penLabel})` : ""}</span>.
                 </p>
               </>
             ) : (
               <p className="text-muted-foreground text-sm">
-                {t("match.fullTimeLabel")} <span className="text-foreground font-medium">{homeName} {m.homeScore}–{m.awayScore} {awayName}</span>.
+                {t("match.fullTimeLabel")} <span className="text-foreground font-medium">{homeName} {m.homeScore}–{m.awayScore} {awayName}{onPens ? ` (${penLabel})` : ""}</span>.
               </p>
             )}
           </div>

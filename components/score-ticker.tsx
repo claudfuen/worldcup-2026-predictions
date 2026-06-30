@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Flag } from "@/components/flag";
 import { LocalTime } from "@/components/local-time";
 import type { MatchInfo } from "@/lib/predictions";
+import { decidedOnPens, pensScore } from "@/lib/penalties";
 import { useT, type TFunction } from "@/lib/i18n/provider";
 import { useLocale } from "@/lib/i18n/client";
 import { localeHref, type Locale } from "@/lib/i18n/config";
@@ -52,6 +53,7 @@ function TickerItem({ m, t, locale }: { m: MatchInfo; t: TFunction; locale: Loca
   const homeWon = m.winner != null && m.winner === m.home;
   const awayWon = m.winner != null && m.winner === m.away;
   const nameCls = (won: boolean) => (final ? (won ? "text-foreground" : "text-muted-foreground") : "text-foreground/90");
+  const ps = final && decidedOnPens(m) ? pensScore(m) : null; // shootout tally for the trailing annotation
   return (
     <Link
       href={localeHref(locale, `/match/${m.match}`)}
@@ -65,6 +67,7 @@ function TickerItem({ m, t, locale }: { m: MatchInfo; t: TFunction; locale: Loca
       ) : (
         <span className="text-muted-2 px-0.5">{t("scoreTicker.v")}</span>
       )}
+      {ps && <span className="text-muted-2 font-mono text-[10px] tabular-nums" title={t("common.wonOnPenalties")}>({ps.home}<span>–</span>{ps.away})</span>}
       <span className={`font-medium ${nameCls(awayWon)}`}>{m.away}</span>
       <Flag code={m.away} size={13} />
       <span className={`ml-0.5 font-mono text-[10px] font-semibold tracking-wide uppercase ${live ? "text-live" : final ? "text-win" : "text-data-cool"}`}>

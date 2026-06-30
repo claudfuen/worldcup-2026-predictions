@@ -52,7 +52,10 @@
     "eliminated": "Éliminé",
     "champion": "Champion",
     "tickets": "Billets",
-    "newTab": "ouvre dans un nouvel onglet"
+    "newTab": "ouvre dans un nouvel onglet",
+    "pens": "t.a.b.",
+    "wonOnPenalties": "Vainqueur aux tirs au but",
+    "penScore": "{home}–{away} t.a.b."
   },
   "home": {
     "modelsCall": "Le verdict du modèle",

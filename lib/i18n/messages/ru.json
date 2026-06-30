@@ -52,7 +52,10 @@
     "eliminated": "Выбыли",
     "champion": "Чемпион",
     "tickets": "Билеты",
-    "newTab": "откроется в новой вкладке"
+    "newTab": "откроется в новой вкладке",
+    "pens": "пен.",
+    "wonOnPenalties": "Победа по пенальти",
+    "penScore": "{home}–{away} пен."
   },
   "home": {
     "modelsCall": "Вердикт модели",
