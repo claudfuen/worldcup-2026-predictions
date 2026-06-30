@@ -49,7 +49,9 @@ export async function PathToFinal({ matches, pred, rank, total }: {
                   M{s.match.match} · <LocalTime utc={s.match.utc} mode="day" /> · {fifaCity(s.match.venue, s.match.city)}
                 </div>
               </div>
-              <ReachChip s={s} t={t} />
+              <div className="flex w-20 shrink-0 justify-end sm:w-24">
+                <ReachChip s={s} t={t} />
+              </div>
             </div>
           </Link>
         ))}
@@ -98,7 +100,7 @@ function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction 
         <Flag code={s.oppLocked.code} size={16} />
         <span className={`min-w-0 truncate ${s.exit ? "text-muted-foreground" : "font-semibold"}`}>{s.oppLocked.name}</span>
         {s.played ? (
-          <span className={`ms-auto shrink-0 font-mono text-xs tabular-nums ${s.teamWon ? "text-win" : "text-loss"}`}>
+          <span className={`shrink-0 font-mono text-xs tabular-nums ${s.teamWon ? "text-win" : "text-loss"}`}>
             {teamHome ? m.homeScore : m.awayScore}–{teamHome ? m.awayScore : m.homeScore}
             {ps && <span className="text-muted-2"> ({teamHome ? ps.home : ps.away}–{teamHome ? ps.away : ps.home} {t("common.pens")})</span>}
           </span>
@@ -118,7 +120,7 @@ function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction 
         <span className="text-muted-2 shrink-0 text-xs">{t("common.vs")}</span>
         <Flag code={lead.code} size={16} />
         <span className="min-w-0 truncate font-semibold">{lead.name}</span>
-        <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs tabular-nums">{forecastPct(lead.prob)}</span>
+        <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">{forecastPct(lead.prob)}</span>
       </div>
       {alts.length > 0 && (
         <div className="text-muted-2 mt-0.5 truncate text-[11px]">
@@ -131,7 +133,7 @@ function OpponentLine({ s, code, t }: { s: PathStep; code: string; t: TFunction 
 
 function LockIcon({ title }: { title: string }) {
   return (
-    <span className="text-muted-2 ms-auto shrink-0" title={title}>
+    <span className="text-muted-2 shrink-0" title={title}>
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label={title}>
         <rect x="5" y="11" width="14" height="9" rx="2" />
         <path d="M8 11V7a4 4 0 0 1 8 0v4" />
