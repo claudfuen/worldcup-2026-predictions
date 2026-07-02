@@ -34,7 +34,12 @@ export async function MatchesToWatch({
   const t = await getT();
   const locale = await getLocale();
   const { picks } = computeWatchability(matches, teams, groups);
-  const plan = picks.filter((p) => p.hot).sort((a, b) => a.match.utc.localeCompare(b.match.utc));
+  // Only carry games BEYOND the next day or so — the live rail already leads with today/tomorrow (with the
+  // same hot badges), so this section is the forward-looking plan, not a duplicate of what's imminent.
+  const now = Date.now();
+  const plan = picks
+    .filter((p) => p.hot && Date.parse(p.match.utc) - now > 36 * 3_600_000)
+    .sort((a, b) => a.match.utc.localeCompare(b.match.utc));
   if (plan.length === 0) return null;
 
   return (

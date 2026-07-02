@@ -10,7 +10,6 @@ import { BracketTeaser } from "@/components/bracket-teaser";
 import { GroupsPreview } from "@/components/groups-preview";
 import { GoldenBootRace } from "@/components/golden-boot-race";
 import { StadiumSpotlight } from "@/components/stadium-spotlight";
-import { PlayersToWatch } from "@/components/players-to-watch";
 import { LaunchRail } from "@/components/launch-rail";
 import { computeWatchability } from "@/lib/watchability";
 import { getT } from "@/lib/i18n/server";
@@ -52,33 +51,31 @@ export default async function Page() {
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={hasLive} />
 
-      {/* The call — the hero, full width: the model's pick + the title race + the day's movement, fused into
-          one display-scale contender leaderboard on a lit featured pane. */}
+      {/* ACT I — THE CALL: the hero (model's pick + title race + the day's movement, fused into one
+          display-scale contender leaderboard) with the tournament-stage bridge rule beneath it. */}
       <header>
         <MastheadVerdict teams={teams} iterations={data.iterations} complete={data.complete} champion={data.champion} finalMatch={lMatches.find((mm) => mm.round === "FINAL")} />
       </header>
+      <TournamentStage matches={lMatches} matchesPlayed={groupPlayed} totalGroupMatches={data.totalGroupMatches} className="mt-6" />
 
-      {/* TIER 2 — the live heartbeat, right under the call: a bento of Recent → Today → Tomorrow, Today the
-          emphasized centre column so the eye lands on what's happening now / next. */}
-      <LiveTodayRail matches={lMatches} hotReasons={hotReasons} className="mt-8" />
+      {/* ACT II — RIGHT NOW: the live heartbeat (Today emphasized), closing on the venue spotlight. */}
+      <section className="border-border/60 mt-14 border-t pt-6 sm:mt-16">
+        <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{t("home.actNow")}</h2>
+        <LiveTodayRail matches={lMatches} hotReasons={hotReasons} className="mt-5" />
+        <StadiumSpotlight matches={lMatches} className="mt-4" />
+      </section>
 
-      {/* Where the whole tournament is — a quiet "zoom out" progress strip between the matches and the venue */}
-      <TournamentStage matches={lMatches} matchesPlayed={groupPlayed} totalGroupMatches={data.totalGroupMatches} className="mt-8" />
-
-      {/* Where it's being played — the next/live venue, over a real photo of the stadium */}
-      <StadiumSpotlight matches={lMatches} className="mt-8" />
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <BracketTeaser matches={lMatches} teams={teams} />
-        {!groupStageOver && <GroupsPreview groups={lGroups} />}
-        <GoldenBootRace entries={awards.goldenBoot} />
-      </div>
-
-      {/* The faces of the tournament — top scorers as a headshot rail */}
-      <PlayersToWatch entries={awards.goldenBoot} className="mt-8" />
-
-      {/* What to watch next — the curated plan */}
-      <MatchesToWatch matches={lMatches} teams={teams} groups={lGroups} className="mt-8" />
+      {/* ACT III — THE ROAD AHEAD: where the bracket is heading, the season-long races, and the games worth
+          planning for. Grid widens to 3 columns only when the groups tile is present. */}
+      <section className="border-border/60 mt-14 border-t pt-6 sm:mt-16">
+        <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{t("home.actAhead")}</h2>
+        <div className={`mt-5 grid gap-4 sm:grid-cols-2 ${groupStageOver ? "" : "lg:grid-cols-3"}`}>
+          <BracketTeaser matches={lMatches} teams={teams} />
+          {!groupStageOver && <GroupsPreview groups={lGroups} />}
+          <GoldenBootRace entries={awards.goldenBoot} />
+        </div>
+        <MatchesToWatch matches={lMatches} teams={teams} groups={lGroups} className="mt-8" />
+      </section>
 
       <LaunchRail teams={teams} iterations={data.iterations} className="mt-12" />
     </main>

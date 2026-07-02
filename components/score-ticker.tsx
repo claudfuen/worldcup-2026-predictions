@@ -31,7 +31,7 @@ export function ScoreTicker({ initialItems, hasLive }: { initialItems: MatchInfo
   if (items.length === 0) return null;
   const dur = Math.max(40, items.length * 6); // scale duration with count → consistent scroll speed
   return (
-    <div className="border-border/60 bg-background/70 sticky top-14 z-40 overflow-hidden border-b backdrop-blur-xl">
+    <div className="border-border/60 bg-background/70 z-40 overflow-hidden border-b backdrop-blur-xl md:sticky md:top-14">
       <div
         className="ticker-track flex w-max [animation:ticker_var(--d)_linear_infinite] hover:[animation-play-state:paused]"
         style={{ "--d": `${dur}s` } as React.CSSProperties}
