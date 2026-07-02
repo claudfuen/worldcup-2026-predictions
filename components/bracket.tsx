@@ -184,10 +184,16 @@ function Node({ m, hasTicket, big, final, championCode }: { m: MatchInfo; hasTic
             blank result card — so the divider carries the kickoff time, framing it clearly as an upcoming
             fixture (played matches show scores here instead; race slots show the % list). */}
         {upcoming ? (
-          <div className="flex items-center gap-2 px-2.5 py-0.5">
-            <span className="border-border/70 flex-1 border-t" aria-hidden />
-            <span className="text-muted-foreground shrink-0 font-mono text-[10px] tracking-wide tabular-nums" suppressHydrationWarning>{fmtTimeShort(m.utc, zone)}</span>
-            <span className="border-border/70 flex-1 border-t" aria-hidden />
+          <div className="flex items-center gap-2 px-2.5 py-1">
+            <span className="border-border/60 flex-1 border-t" aria-hidden />
+            <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 font-mono text-[11px] tabular-nums" suppressHydrationWarning>
+              <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7.5V12l3 1.5" />
+              </svg>
+              {fmtTimeShort(m.utc, zone)}
+            </span>
+            <span className="border-border/60 flex-1 border-t" aria-hidden />
           </div>
         ) : (
           <div className="border-border border-t" />
