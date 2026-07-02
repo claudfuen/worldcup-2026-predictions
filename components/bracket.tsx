@@ -164,7 +164,12 @@ function Node({ m, hasTicket, big, final, championCode }: { m: MatchInfo; hasTic
       }`}
     >
       <div className={`flex items-center justify-between gap-1 ${final ? "text-primary/90" : "text-muted-foreground"} ${big ? "px-2.5 pt-2 pb-1 text-[10px]" : "px-2 pt-1.5 pb-1 text-[9px]"}`}>
-        <span className="truncate" suppressHydrationWarning>{final ? t("rounds.FINAL") : `M${m.match}`} · {fmtDay(m.utc, zone)}<span className="hidden sm:inline"> · {fifaCity(m.venue, m.city)}</span></span>
+        <span className="truncate" suppressHydrationWarning>
+          {final ? t("rounds.FINAL") : `M${m.match}`}
+          {/* For an upcoming tie the full date+time lives together on the divider (below), so the header drops
+              the weekday and just carries the venue — no split, no redundancy. */}
+          {upcoming ? <> · {fifaCity(m.venue, m.city)}</> : <> · {fmtDay(m.utc, zone)}<span className="hidden sm:inline"> · {fifaCity(m.venue, m.city)}</span></>}
+        </span>
         <span className="flex shrink-0 items-center gap-1.5">
           {m.status === "live" ? (
             <span className="text-live inline-flex items-center gap-1 font-semibold"><span className="bg-live size-1 animate-pulse rounded-full" />{m.liveDetail}</span>
@@ -184,16 +189,14 @@ function Node({ m, hasTicket, big, final, championCode }: { m: MatchInfo; hasTic
             blank result card — so the divider carries the kickoff time, framing it clearly as an upcoming
             fixture (played matches show scores here instead; race slots show the % list). */}
         {upcoming ? (
-          <div className="flex items-center gap-2 px-2.5 py-1">
-            <span className="border-border/60 flex-1 border-t" aria-hidden />
-            <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 font-mono text-[11px] tabular-nums" suppressHydrationWarning>
-              <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <div className="flex items-center justify-center px-2.5 py-1.5">
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-[11px] tabular-nums whitespace-nowrap" suppressHydrationWarning>
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-2 shrink-0" aria-hidden>
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7.5V12l3 1.5" />
               </svg>
-              {fmtTimeShort(m.utc, zone)}
+              {fmtDay(m.utc, zone)} · {fmtTimeShort(m.utc, zone)}
             </span>
-            <span className="border-border/60 flex-1 border-t" aria-hidden />
           </div>
         ) : (
           <div className="border-border border-t" />
