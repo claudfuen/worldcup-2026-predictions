@@ -1,4 +1,4 @@
-import type { MetadataRoute } from "next";
+import type { MetadataRoute } from "next"
 
 // PWA manifest — enables "Add to Home Screen" on Android + iOS. Icons come from app/icon.tsx +
 // app/apple-icon.tsx (Next file conventions → next/og), referenced by their canonical URLs.
@@ -20,12 +20,20 @@ export default function manifest(): MetadataRoute.Manifest {
     // already added it even when they're browsing in a normal tab (not the standalone app).
     prefer_related_applications: false,
     related_applications: [
-      { platform: "webapp", url: "https://worldcup2026predictions.app/manifest.webmanifest" },
+      {
+        platform: "webapp",
+        url: "https://worldcup2026predictions.app/manifest.webmanifest",
+      },
     ],
     icons: [
       { src: "/icon", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      {
+        src: "/icon",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
       { src: "/apple-icon", sizes: "180x180", type: "image/png" },
     ],
-  };
+  }
 }

@@ -1,31 +1,37 @@
 // Minimal Upstash Redis REST client (Vercel KV). Uses the REST command endpoint.
-const URL = process.env.KV_REST_API_URL;
-const TOKEN = process.env.KV_REST_API_TOKEN;
+const URL = process.env.KV_REST_API_URL
+const TOKEN = process.env.KV_REST_API_TOKEN
 
 async function cmd(args: (string | number)[]): Promise<unknown> {
-  if (!URL || !TOKEN) throw new Error("KV env not configured (KV_REST_API_URL / KV_REST_API_TOKEN)");
+  if (!URL || !TOKEN)
+    throw new Error(
+      "KV env not configured (KV_REST_API_URL / KV_REST_API_TOKEN)"
+    )
   const r = await fetch(URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(args),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error(`KV ${r.status}: ${await r.text()}`);
-  const j = (await r.json()) as { result?: unknown };
-  return j.result;
+  })
+  if (!r.ok) throw new Error(`KV ${r.status}: ${await r.text()}`)
+  const j = (await r.json()) as { result?: unknown }
+  return j.result
 }
 
 export async function kvSetJSON(key: string, value: unknown): Promise<void> {
-  await cmd(["SET", key, JSON.stringify(value)]);
+  await cmd(["SET", key, JSON.stringify(value)])
 }
 
 export async function kvGetJSON<T>(key: string): Promise<T | null> {
-  const r = await cmd(["GET", key]);
-  if (r == null) return null;
-  return JSON.parse(r as string) as T;
+  const r = await cmd(["GET", key])
+  if (r == null) return null
+  return JSON.parse(r as string) as T
 }
 
-export const KV_CONFIGURED = Boolean(URL && TOKEN);
+export const KV_CONFIGURED = Boolean(URL && TOKEN)
 
 // Bump when the payload shape changes so stale cached data is ignored.
 // v4: removed per-user `myMatches` from the shared payload (now stored per-user in Postgres).
@@ -69,19 +75,19 @@ export const KV_CONFIGURED = Boolean(URL && TOKEN);
 //      slot on its most-likely road to the final, so the projected bracket and the champion card agree.
 // v25: knockout-result ingestion fix — a cross-group KO tie on the last group day (e.g. M73 SA–Canada on
 //      06-28) was dropped by the date-only koResults filter and never marked final; invalidate stale cache.
-export const PRED_KEY = "predictions:v25";
+export const PRED_KEY = "predictions:v25"
 
 // Start-of-day snapshot of title/advance odds, for "moved since yesterday" deltas. Rolled once per ET day.
-export const BASELINE_KEY = "predictions:baseline:v1";
+export const BASELINE_KEY = "predictions:baseline:v1"
 
 // Signature of the live/just-finished match state from the previous cron tick (with a timestamp). Lets the
 // frequent cron skip the heavy Monte Carlo when nothing has changed, and recompute the instant a live score,
 // clock minute, or full-time result moves. Versioned with PRED_KEY so a deploy forces a fresh recompute.
-export const LIVE_SIG_KEY = "predictions:livesig:v11";
+export const LIVE_SIG_KEY = "predictions:livesig:v11"
 
 // Short-lived cache of the raw ESPN live scoreboard, shared across requests so a traffic spike during a
 // match can't hammer ESPN (bounded to a few calls per minute regardless of concurrent visitors).
-export const LIVE_FEED_KEY = "live:scoreboard:v1";
+export const LIVE_FEED_KEY = "live:scoreboard:v1"
 
 // Per-match timeline + stats from ESPN's summary endpoint (suffixed with the match number). Short TTL for
 // live matches, hours for finished ones — set by the caller; this is just the key prefix.
@@ -91,15 +97,15 @@ export const LIVE_FEED_KEY = "live:scoreboard:v1";
 // v5: positions classified by descriptive name (subs/unknown no longer mislabeled "FW"); lineups gained
 //     subbedIn/subbedOut for per-match player logs (started / came on / unused, minutes, cards).
 // v6: "Sweeper" now classifies as DF (was unset) — bump so cached summaries refetch with the fix.
-export const MATCH_EVENTS_KEY = "match:summary:v6";
+export const MATCH_EVENTS_KEY = "match:summary:v6"
 
 // Canonical squad positions (name|code -> GK/DF/MF/FW) from ESPN's per-team roster — fills positions for
 // players who only ever appear as substitutes (a benched player has no resolvable matchday position).
 // v1: initial. Long TTL inside the loader; versioned so a shape change forces a refresh.
-export const SQUAD_POS_KEY = "squad:positions:v1";
+export const SQUAD_POS_KEY = "squad:positions:v1"
 
 // Per-player headshot URL (or null) resolved from TheSportsDB, keyed by player slug. Long TTL — photos are
 // stable; misses re-check sooner (a player's photo may get added). Suffixed with the slug by the caller.
 // v2: only genuine no-matches are cached as null now (transient 429/5xx no longer poison the cache) — bump to
 //     drop any false misses written under v1.
-export const PLAYER_IMG_KEY = "player:img:v2";
+export const PLAYER_IMG_KEY = "player:img:v2"

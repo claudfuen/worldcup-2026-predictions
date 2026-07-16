@@ -1,6 +1,11 @@
 // AUTO-GENERATED, red-team verified. 2026 WC knockout bracket (match numbers + feeders).
 // Slot refs: '1X'/'2X' = winner/runner-up group X; '3:G1,G2..' = third from one of listed groups; 'W##'/'L##' = winner/loser of match.
-export interface KMatch { match: number; round: string; home: string; away: string }
+export interface KMatch {
+  match: number
+  round: string
+  home: string
+  away: string
+}
 export const KNOCKOUT: KMatch[] = [
   { match: 73, round: "R32", home: "2A", away: "2B" },
   { match: 74, round: "R32", home: "1E", away: "3:A,B,C,D,F" },
@@ -34,5 +39,14 @@ export const KNOCKOUT: KMatch[] = [
   { match: 102, round: "SF", home: "W99", away: "W100" },
   { match: 103, round: "3P", home: "L101", away: "L102" },
   { match: 104, round: "F", home: "W101", away: "W102" },
-];
-export const THIRD_HOST_SLOTS = ["1A", "1B", "1D", "1E", "1G", "1I", "1K", "1L"] as const;
+]
+export const THIRD_HOST_SLOTS = [
+  "1A",
+  "1B",
+  "1D",
+  "1E",
+  "1G",
+  "1I",
+  "1K",
+  "1L",
+] as const

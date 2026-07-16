@@ -19,11 +19,11 @@ const FIFA_VENUE: Record<string, string> = {
   "MetLife Stadium": "New York New Jersey Stadium",
   "NRG Stadium": "Houston Stadium",
   "SoFi Stadium": "Los Angeles Stadium",
-};
+}
 
 /** FIFA official 2026 tournament name for a stadium (falls back to the stored name if unmapped). */
 export function fifaVenue(venue: string): string {
-  return FIFA_VENUE[venue] ?? venue;
+  return FIFA_VENUE[venue] ?? venue
 }
 
 // FIFA's official host CITY for each stadium — the recognizable metro a casual browser knows, not the
@@ -46,9 +46,9 @@ const FIFA_CITY: Record<string, string> = {
   "MetLife Stadium": "New York New Jersey",
   "NRG Stadium": "Houston",
   "SoFi Stadium": "Los Angeles",
-};
+}
 
 /** FIFA official 2026 host city for a stadium (falls back to the stored municipality if unmapped). */
 export function fifaCity(venue: string, fallbackCity: string): string {
-  return FIFA_CITY[venue] ?? fallbackCity;
+  return FIFA_CITY[venue] ?? fallbackCity
 }

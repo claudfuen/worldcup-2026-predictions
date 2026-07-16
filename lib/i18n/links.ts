@@ -1,5 +1,10 @@
-import type { Metadata } from "next";
-import { ACTIVE_LOCALES, DEFAULT_LOCALE, localeHref, type Locale } from "./config";
+import type { Metadata } from "next"
+import {
+  ACTIVE_LOCALES,
+  DEFAULT_LOCALE,
+  localeHref,
+  type Locale,
+} from "./config"
 
 /**
  * Centralized canonical + hreflang alternates for a page.
@@ -11,11 +16,14 @@ import { ACTIVE_LOCALES, DEFAULT_LOCALE, localeHref, type Locale } from "./confi
  *
  * Paths are relative; `metadataBase` (set in the root layout) makes them absolute.
  */
-export function buildAlternates(pathNoLocale: string, currentLocale: Locale): Metadata["alternates"] {
-  const languages: Record<string, string> = {};
+export function buildAlternates(
+  pathNoLocale: string,
+  currentLocale: Locale
+): Metadata["alternates"] {
+  const languages: Record<string, string> = {}
   for (const l of ACTIVE_LOCALES) {
-    languages[l.hreflang] = localeHref(l.id, pathNoLocale);
+    languages[l.hreflang] = localeHref(l.id, pathNoLocale)
   }
-  languages["x-default"] = localeHref(DEFAULT_LOCALE, pathNoLocale);
-  return { canonical: localeHref(currentLocale, pathNoLocale), languages };
+  languages["x-default"] = localeHref(DEFAULT_LOCALE, pathNoLocale)
+  return { canonical: localeHref(currentLocale, pathNoLocale), languages }
 }

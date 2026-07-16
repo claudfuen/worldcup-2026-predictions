@@ -17,15 +17,16 @@ const VENUE_COUNTRY: Record<string, "MEX" | "USA" | "CAN"> = {
   "Levi's Stadium": "USA",
   "AT&T Stadium": "USA",
   "GEHA Field at Arrowhead Stadium": "USA",
-};
-const HIGH_ALTITUDE = new Set(["Estadio Azteca", "Estadio Akron"]);
+}
+const HIGH_ALTITUDE = new Set(["Estadio Azteca", "Estadio Akron"])
 
 // Elo-point boost for `code` if it is the host nation of the match's venue country.
 export function hostEloBoost(code: string, venue: string): number {
-  const country = VENUE_COUNTRY[venue];
-  if (!country) return 0;
-  if (code === "MEX" && country === "MEX") return HIGH_ALTITUDE.has(venue) ? 90 : 60;
-  if (code === "USA" && country === "USA") return 50;
-  if (code === "CAN" && country === "CAN") return 50;
-  return 0;
+  const country = VENUE_COUNTRY[venue]
+  if (!country) return 0
+  if (code === "MEX" && country === "MEX")
+    return HIGH_ALTITUDE.has(venue) ? 90 : 60
+  if (code === "USA" && country === "USA") return 50
+  if (code === "CAN" && country === "CAN") return 50
+  return 0
 }

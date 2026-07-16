@@ -1,40 +1,75 @@
-import Link from "next/link";
-import { Flag } from "@/components/flag";
-import { forecastPct } from "@/lib/format";
-import type { GroupTeamView } from "@/lib/predictions";
-import { getT, getLocale } from "@/lib/i18n/server";
-import { localeHref } from "@/lib/i18n/config";
+import Link from "next/link"
+import { Flag } from "@/components/flag"
+import { forecastPct } from "@/lib/format"
+import type { GroupTeamView } from "@/lib/predictions"
+import { getT, getLocale } from "@/lib/i18n/server"
+import { localeHref } from "@/lib/i18n/config"
 
 // A real glimpse INTO a single group: the live table (all four teams, zone-coloured) as a preview card that
 // links to the full /group/X page. Used on a match page (the match's own group) so a search lander sees the
 // surrounding group race, not just a text pill.
-export async function GroupStandingMini({ group, teams, className = "" }: { group: string; teams: GroupTeamView[]; className?: string }) {
-  const t = await getT();
-  const locale = await getLocale();
+export async function GroupStandingMini({
+  group,
+  teams,
+  className = "",
+}: {
+  group: string
+  teams: GroupTeamView[]
+  className?: string
+}) {
+  const t = await getT()
+  const locale = await getLocale()
   return (
     <Link
       href={localeHref(locale, `/group/${group.toLowerCase()}`)}
-      className={`group border-border bg-card hover:border-primary/50 hover:bg-surface-raised dark:inset-ring dark:inset-ring-white/5 hover:dark:inset-ring-primary/30 flex flex-col rounded-2xl border p-4 transition-colors ${className}`}
+      className={`group flex flex-col rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/50 hover:bg-surface-raised dark:inset-ring dark:inset-ring-white/5 hover:dark:inset-ring-primary/30 ${className}`}
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-muted-foreground font-mono text-xs font-semibold tracking-wide uppercase">{t("groups.groupLabel", { group })}</h3>
-        <span className="text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden>→</span>
+        <h3 className="font-mono text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          {t("groups.groupLabel", { group })}
+        </h3>
+        <span
+          className="text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+          aria-hidden
+        >
+          →
+        </span>
       </div>
       <div className="flex-1 space-y-1">
         {teams.map((team, i) => {
-          const elim = team.status === "eliminated";
-          const zone = i <= 1 ? "border-l-win" : i === 2 ? "border-l-contention" : "border-l-transparent";
+          const elim = team.status === "eliminated"
+          const zone =
+            i <= 1
+              ? "border-l-win"
+              : i === 2
+                ? "border-l-contention"
+                : "border-l-transparent"
           return (
-            <div key={team.code} className={`flex items-center gap-2 border-l-2 py-1 pl-2 ${zone} ${elim ? "opacity-45" : ""}`}>
-              <span className="text-muted-2 w-3 text-center font-mono text-[11px]">{i + 1}</span>
+            <div
+              key={team.code}
+              className={`flex items-center gap-2 border-l-2 py-1 pl-2 ${zone} ${elim ? "opacity-45" : ""}`}
+            >
+              <span className="w-3 text-center font-mono text-[11px] text-muted-2">
+                {i + 1}
+              </span>
               <Flag code={team.code} size={16} />
-              <span className={`min-w-0 flex-1 truncate text-[13px] ${i < 2 ? "font-medium" : "text-foreground/70"} ${elim ? "line-through" : ""}`}>{team.name}</span>
-              <span className="text-muted-2 shrink-0 font-mono text-[11px] tabular-nums">{team.played > 0 ? t("groups.points", { count: team.pts }) : forecastPct(team.advance)}</span>
+              <span
+                className={`min-w-0 flex-1 truncate text-[13px] ${i < 2 ? "font-medium" : "text-foreground/70"} ${elim ? "line-through" : ""}`}
+              >
+                {team.name}
+              </span>
+              <span className="shrink-0 font-mono text-[11px] text-muted-2 tabular-nums">
+                {team.played > 0
+                  ? t("groups.points", { count: team.pts })
+                  : forecastPct(team.advance)}
+              </span>
             </div>
-          );
+          )
         })}
       </div>
-      <div className="border-border/50 text-muted-2 mt-3 border-t pt-2.5 text-xs">{t("groups.fullStandings")}</div>
+      <div className="mt-3 border-t border-border/50 pt-2.5 text-xs text-muted-2">
+        {t("groups.fullStandings")}
+      </div>
     </Link>
-  );
+  )
 }

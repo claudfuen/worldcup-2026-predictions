@@ -1,11 +1,11 @@
-"use client";
-import useSWR from "swr";
+"use client"
+import useSWR from "swr"
 
 const fetcher = async (url: string) => {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${r.status}`);
-  return r.json();
-};
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`${r.status}`)
+  return r.json()
+}
 
 // Adaptive client polling for anything that shows live results. SSR provides the first paint (`fallbackData`),
 // then SWR revalidates on an interval that depends on the data. Hidden tabs don't poll (SWR's refreshWhenHidden
@@ -18,11 +18,17 @@ export function useLivePoll<T>(
   key: string,
   fallbackData: T,
   isLive: (data: T | undefined) => boolean,
-  opts?: { liveMs?: number; idleMs?: number; interval?: (data: T | undefined) => number },
+  opts?: {
+    liveMs?: number
+    idleMs?: number
+    interval?: (data: T | undefined) => number
+  }
 ): T {
-  const liveMs = opts?.liveMs ?? 12_000;
-  const idleMs = opts?.idleMs ?? 60_000;
-  const interval = opts?.interval ?? ((latest: T | undefined) => (isLive(latest) ? liveMs : idleMs));
+  const liveMs = opts?.liveMs ?? 12_000
+  const idleMs = opts?.idleMs ?? 60_000
+  const interval =
+    opts?.interval ??
+    ((latest: T | undefined) => (isLive(latest) ? liveMs : idleMs))
   const { data } = useSWR<T>(key, fetcher, {
     fallbackData,
     refreshInterval: interval,
@@ -30,6 +36,6 @@ export function useLivePoll<T>(
     revalidateOnReconnect: true,
     keepPreviousData: true,
     dedupingInterval: 5_000,
-  });
-  return data ?? fallbackData;
+  })
+  return data ?? fallbackData
 }

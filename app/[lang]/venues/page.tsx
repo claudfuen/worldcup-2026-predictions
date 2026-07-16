@@ -1,71 +1,98 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getPredictions } from "@/lib/getPredictions";
-import { getLiveMatches, overlayLive, liveActivity } from "@/lib/live";
-import { LiveAutoRefresh } from "@/components/live-auto-refresh";
-import { RelatedLinks } from "@/components/related-links";
-import { VenueMap } from "@/components/venue-map";
-import { Flag } from "@/components/flag";
-import { VENUES, COUNTRIES, type Venue } from "@/lib/data/venues";
-import { VENUE_PHOTOS } from "@/lib/data/venuePhotos";
-import type { MatchInfo } from "@/lib/predictions";
-import { getT, getLocale, getIntlLocale } from "@/lib/i18n/server";
-import { buildAlternates } from "@/lib/i18n/links";
-import { localeHref } from "@/lib/i18n/config";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { getPredictions } from "@/lib/getPredictions"
+import { getLiveMatches, overlayLive, liveActivity } from "@/lib/live"
+import { LiveAutoRefresh } from "@/components/live-auto-refresh"
+import { RelatedLinks } from "@/components/related-links"
+import { VenueMap } from "@/components/venue-map"
+import { Flag } from "@/components/flag"
+import { VENUES, COUNTRIES, type Venue } from "@/lib/data/venues"
+import { VENUE_PHOTOS } from "@/lib/data/venuePhotos"
+import type { MatchInfo } from "@/lib/predictions"
+import { getT, getLocale, getIntlLocale } from "@/lib/i18n/server"
+import { buildAlternates } from "@/lib/i18n/links"
+import { localeHref } from "@/lib/i18n/config"
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT();
-  const locale = await getLocale();
-  const title = t("venues.metaTitle");
-  const description = t("venues.metaDesc");
+  const t = await getT()
+  const locale = await getLocale()
+  const title = t("venues.metaTitle")
+  const description = t("venues.metaDesc")
   return {
     title: { absolute: title },
     description,
     alternates: buildAlternates("/venues", locale),
-    openGraph: { title, description, url: localeHref(locale, "/venues"), type: "website" },
+    openGraph: {
+      title,
+      description,
+      url: localeHref(locale, "/venues"),
+      type: "website",
+    },
     twitter: { card: "summary_large_image", title, description },
-  };
+  }
 }
 
 const ROUND_SHORT: Record<string, string> = {
-  GROUP: "rounds.shortGroup", R32: "rounds.shortR32", R16: "rounds.shortR16", QF: "rounds.shortQF", SF: "rounds.shortSF", "3P": "rounds.shortThird", FINAL: "rounds.shortFinal",
-};
-const ROUND_ORDER = ["GROUP", "R32", "R16", "QF", "SF", "3P", "FINAL"];
+  GROUP: "rounds.shortGroup",
+  R32: "rounds.shortR32",
+  R16: "rounds.shortR16",
+  QF: "rounds.shortQF",
+  SF: "rounds.shortSF",
+  "3P": "rounds.shortThird",
+  FINAL: "rounds.shortFinal",
+}
+const ROUND_ORDER = ["GROUP", "R32", "R16", "QF", "SF", "3P", "FINAL"]
 
 export default async function VenuesPage() {
-  const t = await getT();
-  const locale = await getLocale();
-  const intl = await getIntlLocale();
-  const [data, live] = await Promise.all([getPredictions(), getLiveMatches()]);
-  const matches = overlayLive(data.matches, live);
+  const t = await getT()
+  const locale = await getLocale()
+  const intl = await getIntlLocale()
+  const [data, live] = await Promise.all([getPredictions(), getLiveMatches()])
+  const matches = overlayLive(data.matches, live)
 
-  const byVenue = new Map<string, MatchInfo[]>();
+  const byVenue = new Map<string, MatchInfo[]>()
   for (const m of matches) {
-    const arr = byVenue.get(m.venue) ?? [];
-    arr.push(m);
-    byVenue.set(m.venue, arr);
+    const arr = byVenue.get(m.venue) ?? []
+    arr.push(m)
+    byVenue.set(m.venue, arr)
   }
-  const counts: Record<string, number> = {};
-  for (const v of VENUES) counts[v.slug] = (byVenue.get(v.key) ?? []).length;
+  const counts: Record<string, number> = {}
+  for (const v of VENUES) counts[v.slug] = (byVenue.get(v.key) ?? []).length
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={liveActivity(data.matches, live)} />
       <header className="mb-6 max-w-3xl">
-        <div className="text-primary font-mono text-xs font-semibold tracking-wide uppercase">{t("venues.eyebrow")}</div>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">{t("venues.heading")}</h1>
-        <p className="text-muted-foreground mt-2 text-base text-pretty">{t("venues.lede")}</p>
+        <div className="font-mono text-xs font-semibold tracking-wide text-primary uppercase">
+          {t("venues.eyebrow")}
+        </div>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          {t("venues.heading")}
+        </h1>
+        <p className="mt-2 text-base text-pretty text-muted-foreground">
+          {t("venues.lede")}
+        </p>
       </header>
 
       <VenueMap counts={counts} locale={locale} />
-      <div className="text-muted-2 mt-2 mb-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
+      <div className="mt-2 mb-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-2">
         {COUNTRIES.map((c) => (
           <span key={c} className="inline-flex items-center gap-1.5">
-            <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: c === "USA" ? "var(--win)" : c === "Mexico" ? "var(--contention)" : "var(--data-cool)" }} />
+            <span
+              className="inline-block size-2.5 rounded-full"
+              style={{
+                backgroundColor:
+                  c === "USA"
+                    ? "var(--win)"
+                    : c === "Mexico"
+                      ? "var(--contention)"
+                      : "var(--data-cool)",
+              }}
+            />
             {t(`teams.${c === "USA" ? "USA" : c === "Mexico" ? "MEX" : "CAN"}`)}
           </span>
         ))}
@@ -73,79 +100,145 @@ export default async function VenuesPage() {
       </div>
 
       {COUNTRIES.map((country) => {
-        const list = VENUES.filter((v) => v.country === country);
+        const list = VENUES.filter((v) => v.country === country)
         return (
           <section key={country} className="mb-10">
             <div className="mb-3 flex items-center gap-2">
-              <Flag code={country === "USA" ? "USA" : country === "Mexico" ? "MEX" : "CAN"} size={20} />
-              <h2 className="text-muted-foreground font-mono text-xs font-semibold tracking-wide uppercase">
-                {t(`teams.${country === "USA" ? "USA" : country === "Mexico" ? "MEX" : "CAN"}`)} · {t("venues.venuesCount", { n: list.length })}
+              <Flag
+                code={
+                  country === "USA"
+                    ? "USA"
+                    : country === "Mexico"
+                      ? "MEX"
+                      : "CAN"
+                }
+                size={20}
+              />
+              <h2 className="font-mono text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {t(
+                  `teams.${country === "USA" ? "USA" : country === "Mexico" ? "MEX" : "CAN"}`
+                )}{" "}
+                · {t("venues.venuesCount", { n: list.length })}
               </h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {list.map((v) => (
-                <VenueCard key={v.slug} v={v} matches={byVenue.get(v.key) ?? []} locale={locale} intl={intl} t={t} />
+                <VenueCard
+                  key={v.slug}
+                  v={v}
+                  matches={byVenue.get(v.key) ?? []}
+                  locale={locale}
+                  intl={intl}
+                  t={t}
+                />
               ))}
             </div>
           </section>
-        );
+        )
       })}
 
       <RelatedLinks
         links={[
-          { label: t("venues.relatedSchedule"), href: localeHref(locale, "/schedule"), hint: t("venues.relatedScheduleHint") },
-          { label: t("venues.relatedBracket"), href: localeHref(locale, "/bracket") },
-          { label: t("venues.relatedCalendar"), href: localeHref(locale, "/calendar") },
+          {
+            label: t("venues.relatedSchedule"),
+            href: localeHref(locale, "/schedule"),
+            hint: t("venues.relatedScheduleHint"),
+          },
+          {
+            label: t("venues.relatedBracket"),
+            href: localeHref(locale, "/bracket"),
+          },
+          {
+            label: t("venues.relatedCalendar"),
+            href: localeHref(locale, "/calendar"),
+          },
         ]}
       />
     </main>
-  );
+  )
 }
 
-function VenueCard({ v, matches, locale, intl, t }: { v: Venue; matches: MatchInfo[]; locale: string; intl: string; t: (k: string, p?: Record<string, string | number>) => string }) {
-  const played = matches.filter((m) => m.status === "final").length;
-  const rounds = ROUND_ORDER.filter((r) => matches.some((m) => m.round === r));
-  const hostsFinal = matches.some((m) => m.round === "FINAL");
-  const photo = VENUE_PHOTOS[v.slug];
+function VenueCard({
+  v,
+  matches,
+  locale,
+  intl,
+  t,
+}: {
+  v: Venue
+  matches: MatchInfo[]
+  locale: string
+  intl: string
+  t: (k: string, p?: Record<string, string | number>) => string
+}) {
+  const played = matches.filter((m) => m.status === "final").length
+  const rounds = ROUND_ORDER.filter((r) => matches.some((m) => m.round === r))
+  const hostsFinal = matches.some((m) => m.round === "FINAL")
+  const photo = VENUE_PHOTOS[v.slug]
   // Card grid uses the smaller re-hosted thumbnail (cardUrl); the full image (url) is for the detail hero / OG.
-  const thumb = photo?.cardUrl;
+  const thumb = photo?.cardUrl
   return (
     <Link
       href={localeHref(locale as never, `/venues/${v.slug}`)}
-      className={`group border-border bg-card hover:border-primary/50 dark:inset-ring dark:inset-ring-white/5 flex flex-col overflow-hidden rounded-2xl border transition-colors ${hostsFinal ? "border-contention/45" : ""}`}
+      className={`group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-primary/50 dark:inset-ring dark:inset-ring-white/5 ${hostsFinal ? "border-contention/45" : ""}`}
     >
-      <div className="bg-muted relative aspect-[16/9] w-full overflow-hidden">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
         {thumb && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt={v.fifaName} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
+          <img
+            src={thumb}
+            alt={v.fifaName}
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          />
         )}
-        <div className="from-card/70 absolute inset-0 bg-gradient-to-t to-transparent to-40%" aria-hidden />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-card/70 to-transparent to-40%"
+          aria-hidden
+        />
         {hostsFinal && (
-          <span className="text-contention border-contention/40 absolute top-2 right-2 rounded-md border bg-[var(--card)]/85 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wide uppercase">{t("venues.final")}</span>
+          <span className="absolute top-2 right-2 rounded-md border border-contention/40 bg-[var(--card)]/85 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wide text-contention uppercase">
+            {t("venues.final")}
+          </span>
         )}
       </div>
       <div className="flex flex-1 flex-col p-4">
-      <div className="min-w-0">
-        <div className="truncate text-base font-semibold tracking-tight">{v.fifaName}</div>
-        <div className="text-muted-2 mt-0.5 truncate text-xs">{v.key}</div>
-      </div>
-      <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-        <span>{v.city}</span>
-        <span className="text-muted-2">·</span>
-        <span className="tabular-nums">{t("venues.capacity", { cap: v.capacity.toLocaleString(intl) })}</span>
-      </div>
-      <div className="border-border/50 mt-3 flex items-center justify-between border-t pt-3">
-        <span className="text-foreground/90 font-mono text-xs tabular-nums">
-          {t("venues.matchesCount", { n: matches.length })}
-          {played > 0 && <span className="text-muted-2"> · {t("venues.playedCount", { n: played })}</span>}
-        </span>
-        <span className="flex shrink-0 flex-wrap justify-end gap-1">
-          {rounds.map((r) => (
-            <span key={r} className={`rounded px-1 py-0.5 font-mono text-[9px] font-semibold tracking-wide uppercase ${r === "FINAL" ? "text-contention bg-contention/10" : "text-muted-foreground bg-muted/50"}`}>{t(ROUND_SHORT[r])}</span>
-          ))}
-        </span>
-      </div>
+        <div className="min-w-0">
+          <div className="truncate text-base font-semibold tracking-tight">
+            {v.fifaName}
+          </div>
+          <div className="mt-0.5 truncate text-xs text-muted-2">{v.key}</div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span>{v.city}</span>
+          <span className="text-muted-2">·</span>
+          <span className="tabular-nums">
+            {t("venues.capacity", { cap: v.capacity.toLocaleString(intl) })}
+          </span>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
+          <span className="font-mono text-xs text-foreground/90 tabular-nums">
+            {t("venues.matchesCount", { n: matches.length })}
+            {played > 0 && (
+              <span className="text-muted-2">
+                {" "}
+                · {t("venues.playedCount", { n: played })}
+              </span>
+            )}
+          </span>
+          <span className="flex shrink-0 flex-wrap justify-end gap-1">
+            {rounds.map((r) => (
+              <span
+                key={r}
+                className={`rounded px-1 py-0.5 font-mono text-[9px] font-semibold tracking-wide uppercase ${r === "FINAL" ? "bg-contention/10 text-contention" : "bg-muted/50 text-muted-foreground"}`}
+              >
+                {t(ROUND_SHORT[r])}
+              </span>
+            ))}
+          </span>
+        </div>
       </div>
     </Link>
-  );
+  )
 }

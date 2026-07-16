@@ -65,7 +65,8 @@
     "metaTitle": "World Cup 2026 Title Odds — Champion Probability for Every Team",
     "metaDesc": "Live champion odds for every 2026 World Cup team from 20,000 Monte Carlo simulations.",
     "metaDescLeader": "{team} lead the 2026 World Cup title race at {pct} to lift the trophy. Live champion odds for every team, from 20,000 simulations.",
-    "metaDescWon": "{team} won the 2026 World Cup. The final title-race standings from the model."
+    "metaDescWon": "{team} won the 2026 World Cup. The final title-race standings from the model.",
+    "inFinal": "in the final"
   },
   "venues": {
     "metaTitle": "World Cup 2026 Stadiums — All 16 Host Venues, Matches & Results",
@@ -312,7 +313,9 @@
     "lastNight": "Last night",
     "versusShort": "v",
     "ft": "FT",
-    "projectedLower": "projected"
+    "projectedLower": "projected",
+    "theFinal": "The final",
+    "inFinal": "In the final"
   },
   "watch": {
     "roundOf32": "Round of 32",

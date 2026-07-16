@@ -1,4 +1,4 @@
-import { STUBHUB_BY_MATCH } from "./data/ticketLinks";
+import { STUBHUB_BY_MATCH } from "./data/ticketLinks"
 
 /**
  * Centralized ticket-link layer. EVERYTHING about outbound ticket links lives here so the whole
@@ -11,7 +11,7 @@ import { STUBHUB_BY_MATCH } from "./data/ticketLinks";
  * The per-match destination URLs were verified against our schedule (venue city + local date, 104/104).
  */
 
-export const TICKET_PROVIDER = "StubHub";
+export const TICKET_PROVIDER = "StubHub"
 
 // ── AFFILIATE SWAP POINT ────────────────────────────────────────────────────────────────────────────
 // `camref` ties our clicks to our StubHub/Partnerize publisher account. It is NOT a secret (it appears
@@ -26,9 +26,10 @@ export const TICKET_PROVIDER = "StubHub";
 // "affiliate", and rel flips to "sponsored". Until then we emit clean (UTM-tagged) StubHub links.
 // NEXT_PUBLIC_ (not a secret — the camref appears in every outbound URL) so it resolves in BOTH server
 // components AND the client ones (e.g. <TicketLink> renders inside the client schedule list).
-const CAMREF_FALLBACK = ""; // paste camref here as an alternative to the env var
-const CAMREF = (process.env.NEXT_PUBLIC_STUBHUB_CAMREF || CAMREF_FALLBACK).trim() || null;
-const AFFILIATE_ACTIVE = CAMREF !== null;
+const CAMREF_FALLBACK = "" // paste camref here as an alternative to the env var
+const CAMREF =
+  (process.env.NEXT_PUBLIC_STUBHUB_CAMREF || CAMREF_FALLBACK).trim() || null
+const AFFILIATE_ACTIVE = CAMREF !== null
 
 /**
  * Wrap a clean destination URL in our Partnerize (prf.hn) tracked click-through:
@@ -39,9 +40,9 @@ const AFFILIATE_ACTIVE = CAMREF !== null;
  *   raw "&" would otherwise break the prf.hn parse.
  */
 function affiliateWrap(dest: string, placement: string): string {
-  if (!CAMREF) return dest;
-  const pubref = placement.replace(/[^a-zA-Z0-9]/g, "").slice(0, 60) || "site";
-  return `https://stubhub.prf.hn/click/camref:${CAMREF}/pubref:${pubref}/destination:${encodeURIComponent(dest)}`;
+  if (!CAMREF) return dest
+  const pubref = placement.replace(/[^a-zA-Z0-9]/g, "").slice(0, 60) || "site"
+  return `https://stubhub.prf.hn/click/camref:${CAMREF}/pubref:${pubref}/destination:${encodeURIComponent(dest)}`
 }
 // ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -51,27 +52,27 @@ const UTM = {
   source: "worldcup2026predictions",
   medium: AFFILIATE_ACTIVE ? "affiliate" : "referral",
   campaign: "match_tickets",
-};
+}
 
 /** rel for outbound commercial ticket links — "sponsored" once affiliate is live, else "nofollow". */
 export const TICKET_REL = AFFILIATE_ACTIVE
   ? "sponsored noopener noreferrer"
-  : "nofollow noopener noreferrer";
+  : "nofollow noopener noreferrer"
 
 /** Does this match have a known ticket deep link? */
 export function hasTickets(matchNo: number): boolean {
-  return !!STUBHUB_BY_MATCH[matchNo];
+  return !!STUBHUB_BY_MATCH[matchNo]
 }
 
 function buildDest(matchNo: number, placement: string): string | null {
-  const base = STUBHUB_BY_MATCH[matchNo];
-  if (!base) return null;
-  const u = new URL(base);
-  u.searchParams.set("utm_source", UTM.source);
-  u.searchParams.set("utm_medium", UTM.medium);
-  u.searchParams.set("utm_campaign", UTM.campaign);
-  u.searchParams.set("utm_content", placement); // WHERE the click came from (be mindful of placement)
-  return u.toString();
+  const base = STUBHUB_BY_MATCH[matchNo]
+  if (!base) return null
+  const u = new URL(base)
+  u.searchParams.set("utm_source", UTM.source)
+  u.searchParams.set("utm_medium", UTM.medium)
+  u.searchParams.set("utm_campaign", UTM.campaign)
+  u.searchParams.set("utm_content", placement) // WHERE the click came from (be mindful of placement)
+  return u.toString()
 }
 
 /**
@@ -81,7 +82,7 @@ function buildDest(matchNo: number, placement: string): string | null {
  *                  surface on both our analytics and StubHub's affiliate reporting.
  */
 export function ticketUrl(matchNo: number, placement: string): string | null {
-  const dest = buildDest(matchNo, placement);
-  if (!dest) return null;
-  return affiliateWrap(dest, placement);
+  const dest = buildDest(matchNo, placement)
+  if (!dest) return null
+  return affiliateWrap(dest, placement)
 }

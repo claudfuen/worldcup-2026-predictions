@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState, useEffect, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 
 // Lightweight, dependency-free hover/focus/tap tooltip. The panel is portalled to <body> and positioned
 // with `position: fixed` from the trigger's bounding box, so it escapes the `overflow-x-auto` clipping that
@@ -17,68 +17,92 @@ import { createPortal } from "react-dom";
 //   const tip = useHoverTip();
 //   <tr {...tip.triggerProps} {...tip.tapProps}> … {tip.open && <HoverTipPanel pos={tip.pos}>…</HoverTipPanel>} </tr>
 
-type TipPos = { left: number; top?: number; bottom?: number };
+type TipPos = { left: number; top?: number; bottom?: number }
 
-const PANEL_W = 256; // matches the panel's w-64
+const PANEL_W = 256 // matches the panel's w-64
 
 function place(el: Element): TipPos {
-  const r = el.getBoundingClientRect();
-  const left = Math.max(8, Math.min(r.left, window.innerWidth - PANEL_W - 8)); // panel + margin
-  const below = r.bottom < window.innerHeight * 0.6; // flip above in the lower viewport so it stays on-screen
+  const r = el.getBoundingClientRect()
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - PANEL_W - 8)) // panel + margin
+  const below = r.bottom < window.innerHeight * 0.6 // flip above in the lower viewport so it stays on-screen
   if (below) {
     // Keep the panel's bottom on-screen on short viewports, mirroring the left-edge guard.
-    const top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - 8));
-    return { left, top };
+    const top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - 8))
+    return { left, top }
   }
-  return { left, bottom: window.innerHeight - r.top + 6 };
+  return { left, bottom: window.innerHeight - r.top + 6 }
 }
 
 export function useHoverTip() {
-  const [pos, setPos] = useState<TipPos | null>(null);
-  const [pinned, setPinned] = useState(false); // opened by tap; stays until an outside tap / scroll dismisses
+  const [pos, setPos] = useState<TipPos | null>(null)
+  const [pinned, setPinned] = useState(false) // opened by tap; stays until an outside tap / scroll dismisses
 
-  const show = (e: { currentTarget: Element }) => { if (!pinned) setPos(place(e.currentTarget)); };
-  const hide = () => { if (!pinned) setPos(null); };
+  const show = (e: { currentTarget: Element }) => {
+    if (!pinned) setPos(place(e.currentTarget))
+  }
+  const hide = () => {
+    if (!pinned) setPos(null)
+  }
   const toggle = (e: { currentTarget: Element }) => {
-    const next = !pinned;
-    setPinned(next);
-    setPos(next ? place(e.currentTarget) : null);
-  };
+    const next = !pinned
+    setPinned(next)
+    setPos(next ? place(e.currentTarget) : null)
+  }
 
   // While pinned, the next outside pointer or any scroll dismisses it. Deferred so the opening tap itself
   // doesn't immediately close it.
   useEffect(() => {
-    if (!pinned) return;
-    const close = () => { setPinned(false); setPos(null); };
+    if (!pinned) return
+    const close = () => {
+      setPinned(false)
+      setPos(null)
+    }
     const id = setTimeout(() => {
-      document.addEventListener("pointerdown", close, { once: true });
-      window.addEventListener("scroll", close, { once: true, passive: true });
-    }, 0);
+      document.addEventListener("pointerdown", close, { once: true })
+      window.addEventListener("scroll", close, { once: true, passive: true })
+    }, 0)
     return () => {
-      clearTimeout(id);
-      document.removeEventListener("pointerdown", close);
-      window.removeEventListener("scroll", close);
-    };
-  }, [pinned]);
+      clearTimeout(id)
+      document.removeEventListener("pointerdown", close)
+      window.removeEventListener("scroll", close)
+    }
+  }, [pinned])
 
   return {
     pos,
     open: pos != null,
-    triggerProps: { onMouseEnter: show, onMouseLeave: hide, onFocus: show, onBlur: hide },
+    triggerProps: {
+      onMouseEnter: show,
+      onMouseLeave: hide,
+      onFocus: show,
+      onBlur: hide,
+    },
     tapProps: { onClick: toggle },
-  };
+  }
 }
 
-export function HoverTipPanel({ pos, children }: { pos: TipPos | null; children: ReactNode }) {
-  if (!pos || typeof document === "undefined") return null;
+export function HoverTipPanel({
+  pos,
+  children,
+}: {
+  pos: TipPos | null
+  children: ReactNode
+}) {
+  if (!pos || typeof document === "undefined") return null
   return createPortal(
     <div
       role="tooltip"
-      style={{ position: "fixed", left: pos.left, top: pos.top, bottom: pos.bottom, zIndex: 60 }}
-      className="border-border-strong bg-surface-raised/95 pointer-events-none w-64 rounded-xl border p-3 text-xs shadow-xl ring-1 ring-black/40 dark:shadow-none backdrop-blur supports-[backdrop-filter]:bg-surface-raised/85"
+      style={{
+        position: "fixed",
+        left: pos.left,
+        top: pos.top,
+        bottom: pos.bottom,
+        zIndex: 60,
+      }}
+      className="pointer-events-none w-64 rounded-xl border border-border-strong bg-surface-raised/95 p-3 text-xs shadow-xl ring-1 ring-black/40 backdrop-blur supports-[backdrop-filter]:bg-surface-raised/85 dark:shadow-none"
     >
       {children}
     </div>,
-    document.body,
-  );
+    document.body
+  )
 }

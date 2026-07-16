@@ -1,4 +1,4 @@
-import type { TFunction } from "./server";
+import type { TFunction } from "./server"
 import type {
   PredictionsPayload,
   MatchInfo,
@@ -7,7 +7,7 @@ import type {
   ThirdPlaceEntry,
   SlotCandidate,
   OpponentProb,
-} from "@/lib/predictions";
+} from "@/lib/predictions"
 
 // Localize team display NAMES in a payload (and its derived structures) via the `teams.<code>` catalog.
 // Every name in the payload is paired with a team code, so this is a pure code→localized-name remap.
@@ -17,22 +17,38 @@ import type {
 // renders, right before passing them to components. getT() falls back to English per-key, so an
 // unlaunched/partial locale still shows the English name rather than a missing key.
 
-const cand = (t: TFunction) => (c: SlotCandidate): SlotCandidate => ({ ...c, name: t(`teams.${c.code}`) });
-const opp = (t: TFunction) => (o: OpponentProb): OpponentProb => ({ ...o, name: t(`teams.${o.code}`) });
+const cand =
+  (t: TFunction) =>
+  (c: SlotCandidate): SlotCandidate => ({ ...c, name: t(`teams.${c.code}`) })
+const opp =
+  (t: TFunction) =>
+  (o: OpponentProb): OpponentProb => ({ ...o, name: t(`teams.${o.code}`) })
 
-export function localizeTeams(teams: TeamPrediction[], t: TFunction): TeamPrediction[] {
-  return teams.map((x) => ({ ...x, name: t(`teams.${x.code}`) }));
+export function localizeTeams(
+  teams: TeamPrediction[],
+  t: TFunction
+): TeamPrediction[] {
+  return teams.map((x) => ({ ...x, name: t(`teams.${x.code}`) }))
 }
 
-export function localizeTeam(team: TeamPrediction, t: TFunction): TeamPrediction {
-  return { ...team, name: t(`teams.${team.code}`) };
+export function localizeTeam(
+  team: TeamPrediction,
+  t: TFunction
+): TeamPrediction {
+  return { ...team, name: t(`teams.${team.code}`) }
 }
 
 export function localizeGroups(groups: GroupView[], t: TFunction): GroupView[] {
-  return groups.map((g) => ({ ...g, teams: g.teams.map((x) => ({ ...x, name: t(`teams.${x.code}`) })) }));
+  return groups.map((g) => ({
+    ...g,
+    teams: g.teams.map((x) => ({ ...x, name: t(`teams.${x.code}`) })),
+  }))
 }
 
-export function localizeMatches(matches: MatchInfo[], t: TFunction): MatchInfo[] {
+export function localizeMatches(
+  matches: MatchInfo[],
+  t: TFunction
+): MatchInfo[] {
   return matches.map((m) => ({
     ...m,
     homeName: m.home ? t(`teams.${m.home}`) : m.homeName,
@@ -44,34 +60,44 @@ export function localizeMatches(matches: MatchInfo[], t: TFunction): MatchInfo[]
       homeName: t(`teams.${mu.home}`),
       awayName: t(`teams.${mu.away}`),
     })),
-    favorite: m.favorite ? { ...m.favorite, name: t(`teams.${m.favorite.code}`) } : m.favorite,
-  }));
+    favorite: m.favorite
+      ? { ...m.favorite, name: t(`teams.${m.favorite.code}`) }
+      : m.favorite,
+  }))
 }
 
 export function localizeMatch(m: MatchInfo, t: TFunction): MatchInfo {
-  return localizeMatches([m], t)[0];
+  return localizeMatches([m], t)[0]
 }
 
-export function localizeThird(entries: ThirdPlaceEntry[], t: TFunction): ThirdPlaceEntry[] {
+export function localizeThird(
+  entries: ThirdPlaceEntry[],
+  t: TFunction
+): ThirdPlaceEntry[] {
   return entries.map((e) => ({
     ...e,
     name: t(`teams.${e.code}`),
-    opponent: e.opponent ? { ...e.opponent, name: t(`teams.${e.opponent.code}`) } : e.opponent,
+    opponent: e.opponent
+      ? { ...e.opponent, name: t(`teams.${e.opponent.code}`) }
+      : e.opponent,
     opponents: e.opponents?.map(opp(t)),
-  }));
+  }))
 }
 
 export function localizeR32Opponents(
   rec: Record<string, OpponentProb[]>,
-  t: TFunction,
+  t: TFunction
 ): Record<string, OpponentProb[]> {
-  const out: Record<string, OpponentProb[]> = {};
-  for (const [k, v] of Object.entries(rec)) out[k] = v.map(opp(t));
-  return out;
+  const out: Record<string, OpponentProb[]> = {}
+  for (const [k, v] of Object.entries(rec)) out[k] = v.map(opp(t))
+  return out
 }
 
 /** Localize an entire payload's names in one call (teams, groups, matches, thirdPlaceRace, r32Opponents). */
-export function localizePayload(p: PredictionsPayload, t: TFunction): PredictionsPayload {
+export function localizePayload(
+  p: PredictionsPayload,
+  t: TFunction
+): PredictionsPayload {
   return {
     ...p,
     teams: localizeTeams(p.teams, t),
@@ -79,5 +105,5 @@ export function localizePayload(p: PredictionsPayload, t: TFunction): Prediction
     matches: localizeMatches(p.matches, t),
     thirdPlaceRace: localizeThird(p.thirdPlaceRace, t),
     r32Opponents: localizeR32Opponents(p.r32Opponents, t),
-  };
+  }
 }

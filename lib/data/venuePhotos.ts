@@ -1,6 +1,189 @@
 // AUTO-GENERATED. Stadium photos re-hosted on Vercel Blob from Wikimedia Commons originals. Attribution
 // (artist/license/source) is preserved from the source and MUST stay displayed. `url` = full, `cardUrl` =
 // smaller grid thumbnail. Re-run scripts/upload-assets-to-blob.ts venues to refresh.
-export interface VenuePhoto { slug: string; url: string; cardUrl: string; artist: string; license: string; licenseUrl: string; source: string }
+export interface VenuePhoto {
+  slug: string
+  url: string
+  cardUrl: string
+  artist: string
+  license: string
+  licenseUrl: string
+  source: string
+}
 
-export const VENUE_PHOTOS: Record<string, VenuePhoto> = {"new-york-new-jersey":{"slug":"new-york-new-jersey","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/new-york-new-jersey.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/new-york-new-jersey-card.jpg","artist":"Anthony Quintano from Hillsborough, NJ, United States","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0","source":"https://commons.wikimedia.org/wiki/File:Metlife_stadium_%28Aerial_view%29.jpg"},"dallas":{"slug":"dallas","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/dallas.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/dallas-card.jpg","artist":"Michael Barera","license":"CC BY-SA 4.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/4.0","source":"https://commons.wikimedia.org/wiki/File:Arlington_June_2020_4_%28AT%26T_Stadium%29.jpg"},"houston":{"slug":"houston","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/houston.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/houston-card.jpg","artist":"Carlos.dkfi","license":"CC0","licenseUrl":"http://creativecommons.org/publicdomain/zero/1.0/deed.en","source":"https://commons.wikimedia.org/wiki/File:Nrg_stadium.jpg"},"kansas-city":{"slug":"kansas-city","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/kansas-city.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/kansas-city-card.jpg","artist":"Ichabod","license":"CC BY-SA 3.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/3.0","source":"https://commons.wikimedia.org/wiki/File:Aerial_view_of_Arrowhead_Stadium_08-31-2013.jpg"},"atlanta":{"slug":"atlanta","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/atlanta.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/atlanta-card.jpg","artist":"Atlanta Falcons","license":"CC BY 3.0","licenseUrl":"https://creativecommons.org/licenses/by/3.0","source":"https://commons.wikimedia.org/wiki/File:Mercedes_Benz_Stadium_time_lapse_capture_2017-08-13.jpg"},"philadelphia":{"slug":"philadelphia","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/philadelphia.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/philadelphia-card.jpg","artist":"Ron Reiring","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0","source":"https://commons.wikimedia.org/wiki/File:Lincoln_Financial_Field_%28Aerial_view%29.jpg"},"seattle":{"slug":"seattle","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/seattle.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/seattle-card.jpg","artist":"SounderBruce","license":"CC BY-SA 4.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/4.0","source":"https://commons.wikimedia.org/wiki/File:2026_FIFA_World_Cup_-_Belgium_v._Egypt_in_Seattle_-_04.jpg"},"san-francisco-bay-area":{"slug":"san-francisco-bay-area","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/san-francisco-bay-area.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/san-francisco-bay-area-card.jpg","artist":"U.S. Customs and Border Protection","license":"Public domain","licenseUrl":"","source":"https://commons.wikimedia.org/wiki/File:Levi%27s_Stadium_in_February_2016_prior_to_Super_Bowl_50_%2824398261729%29.jpg"},"los-angeles":{"slug":"los-angeles","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/los-angeles.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/los-angeles-card.jpg","artist":"Troutfarm27","license":"CC BY-SA 4.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/4.0","source":"https://commons.wikimedia.org/wiki/File:SoFi_Stadium_2023.jpg"},"boston":{"slug":"boston","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/boston.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/boston-card.jpg","artist":"Art N.","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0","source":"https://commons.wikimedia.org/wiki/File:Gillette_Stadium_%28Top_View%29.jpg"},"miami":{"slug":"miami","url":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg/1280px-Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg","cardUrl":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg/1280px-Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg","artist":"elisfkc2","license":"CC BY-SA 2.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/2.0","source":"https://commons.wikimedia.org/wiki/File:Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg"},"mexico-city":{"slug":"mexico-city","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/mexico-city.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/mexico-city-card.jpg","artist":"ProtoplasmaKid","license":"CC BY 4.0","licenseUrl":"https://creativecommons.org/licenses/by/4.0","source":"https://commons.wikimedia.org/wiki/File:Vista_a%C3%A9rea_del_Estadio_Azteca_-_2026_-_02.jpg"},"monterrey":{"slug":"monterrey","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/monterrey.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/monterrey-card.jpg","artist":"Arne Müseler","license":"CC BY-SA 3.0 de","licenseUrl":"https://creativecommons.org/licenses/by-sa/3.0/de/deed.en","source":"https://commons.wikimedia.org/wiki/File:Mexico_Guadalupe_Monterrey_Estadio_BBVA_Bancomer_fifa_world_cup_2026_6.JPG"},"guadalajara":{"slug":"guadalajara","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/guadalajara.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/guadalajara-card.jpg","artist":"Alejan98","license":"CC0","licenseUrl":"http://creativecommons.org/publicdomain/zero/1.0/deed.en","source":"https://commons.wikimedia.org/wiki/File:Estadio_Akron_02-07-2022_cabecera_sur_lado_derecho_%283%29.jpg"},"vancouver":{"slug":"vancouver","url":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/vancouver.jpg","cardUrl":"https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/vancouver-card.jpg","artist":"GoToVan","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0","source":"https://commons.wikimedia.org/wiki/File:BC_Place_2015_Women%27s_FIFA_World_Cup.jpg"},"toronto":{"slug":"toronto","url":"https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Toronto_BMO_Field_in_2024.jpg/1280px-Toronto_BMO_Field_in_2024.jpg","cardUrl":"https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Toronto_BMO_Field_in_2024.jpg/1280px-Toronto_BMO_Field_in_2024.jpg","artist":"H4stings","license":"CC BY-SA 4.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/4.0","source":"https://commons.wikimedia.org/wiki/File:Toronto_BMO_Field_in_2024.jpg"}};
+export const VENUE_PHOTOS: Record<string, VenuePhoto> = {
+  "new-york-new-jersey": {
+    slug: "new-york-new-jersey",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/new-york-new-jersey.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/new-york-new-jersey-card.jpg",
+    artist: "Anthony Quintano from Hillsborough, NJ, United States",
+    license: "CC BY 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/2.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Metlife_stadium_%28Aerial_view%29.jpg",
+  },
+  dallas: {
+    slug: "dallas",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/dallas.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/dallas-card.jpg",
+    artist: "Michael Barera",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Arlington_June_2020_4_%28AT%26T_Stadium%29.jpg",
+  },
+  houston: {
+    slug: "houston",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/houston.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/houston-card.jpg",
+    artist: "Carlos.dkfi",
+    license: "CC0",
+    licenseUrl: "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    source: "https://commons.wikimedia.org/wiki/File:Nrg_stadium.jpg",
+  },
+  "kansas-city": {
+    slug: "kansas-city",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/kansas-city.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/kansas-city-card.jpg",
+    artist: "Ichabod",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Aerial_view_of_Arrowhead_Stadium_08-31-2013.jpg",
+  },
+  atlanta: {
+    slug: "atlanta",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/atlanta.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/atlanta-card.jpg",
+    artist: "Atlanta Falcons",
+    license: "CC BY 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/3.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Mercedes_Benz_Stadium_time_lapse_capture_2017-08-13.jpg",
+  },
+  philadelphia: {
+    slug: "philadelphia",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/philadelphia.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/philadelphia-card.jpg",
+    artist: "Ron Reiring",
+    license: "CC BY 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/2.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Lincoln_Financial_Field_%28Aerial_view%29.jpg",
+  },
+  seattle: {
+    slug: "seattle",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/seattle.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/seattle-card.jpg",
+    artist: "SounderBruce",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:2026_FIFA_World_Cup_-_Belgium_v._Egypt_in_Seattle_-_04.jpg",
+  },
+  "san-francisco-bay-area": {
+    slug: "san-francisco-bay-area",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/san-francisco-bay-area.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/san-francisco-bay-area-card.jpg",
+    artist: "U.S. Customs and Border Protection",
+    license: "Public domain",
+    licenseUrl: "",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Levi%27s_Stadium_in_February_2016_prior_to_Super_Bowl_50_%2824398261729%29.jpg",
+  },
+  "los-angeles": {
+    slug: "los-angeles",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/los-angeles.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/los-angeles-card.jpg",
+    artist: "Troutfarm27",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:SoFi_Stadium_2023.jpg",
+  },
+  boston: {
+    slug: "boston",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/boston.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/boston-card.jpg",
+    artist: "Art N.",
+    license: "CC BY 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/2.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Gillette_Stadium_%28Top_View%29.jpg",
+  },
+  miami: {
+    slug: "miami",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg/1280px-Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg",
+    cardUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg/1280px-Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg",
+    artist: "elisfkc2",
+    license: "CC BY-SA 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Hard_Rock_Stadium_for_Super_Bowl_LIV_%2849606710103%29.jpg",
+  },
+  "mexico-city": {
+    slug: "mexico-city",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/mexico-city.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/mexico-city-card.jpg",
+    artist: "ProtoplasmaKid",
+    license: "CC BY 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Vista_a%C3%A9rea_del_Estadio_Azteca_-_2026_-_02.jpg",
+  },
+  monterrey: {
+    slug: "monterrey",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/monterrey.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/monterrey-card.jpg",
+    artist: "Arne Müseler",
+    license: "CC BY-SA 3.0 de",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Mexico_Guadalupe_Monterrey_Estadio_BBVA_Bancomer_fifa_world_cup_2026_6.JPG",
+  },
+  guadalajara: {
+    slug: "guadalajara",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/guadalajara.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/guadalajara-card.jpg",
+    artist: "Alejan98",
+    license: "CC0",
+    licenseUrl: "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Estadio_Akron_02-07-2022_cabecera_sur_lado_derecho_%283%29.jpg",
+  },
+  vancouver: {
+    slug: "vancouver",
+    url: "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/vancouver.jpg",
+    cardUrl:
+      "https://qzybdfrq7wxaljtl.public.blob.vercel-storage.com/venues/vancouver-card.jpg",
+    artist: "GoToVan",
+    license: "CC BY 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/2.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:BC_Place_2015_Women%27s_FIFA_World_Cup.jpg",
+  },
+  toronto: {
+    slug: "toronto",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Toronto_BMO_Field_in_2024.jpg/1280px-Toronto_BMO_Field_in_2024.jpg",
+    cardUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Toronto_BMO_Field_in_2024.jpg/1280px-Toronto_BMO_Field_in_2024.jpg",
+    artist: "H4stings",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Toronto_BMO_Field_in_2024.jpg",
+  },
+}

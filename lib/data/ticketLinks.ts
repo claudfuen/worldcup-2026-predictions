@@ -111,5 +111,4 @@ export const STUBHUB_BY_MATCH: Record<number, string> = {
   102: "https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/",
   103: "https://www.stubhub.com/world-cup-miami-tickets-7-18-2026/event/153023903/",
   104: "https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/",
-};
-
+}

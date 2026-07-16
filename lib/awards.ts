@@ -3,28 +3,28 @@
 // they're deterministic. As well as the live standing, we forecast where each race FINISHES: a player's
 // goals (or assists) are projected forward over the matches their team is still expected to play, and a
 // seeded Monte Carlo turns that into a P(win the award) and a projected final tally.
-import type { MatchInfo } from "./predictions";
-import type { TeamProb } from "./sim/simulate";
-import type { MatchSummary } from "./matchEvents";
-import type { LiveMatch } from "./espn";
-import { overlayLive } from "./live";
-import { mulberry32, samplePoisson } from "./sim/rng";
+import type { MatchInfo } from "./predictions"
+import type { TeamProb } from "./sim/simulate"
+import type { MatchSummary } from "./matchEvents"
+import type { LiveMatch } from "./espn"
+import { overlayLive } from "./live"
+import { mulberry32, samplePoisson } from "./sim/rng"
 
 export interface AwardEntry {
-  player: string;
-  teamCode: string;
-  value: number; // the award metric NOW: goals (Golden Boot) or assists (Playmaker)
-  goals: number; // raw, for display on either board
-  assists: number;
-  penalties: number; // penalty goals (subset of goals) — shown so a pen-heavy tally is transparent
-  matches: number; // team matches the tally was accrued over (the rate denominator)
-  matchesLeft: number; // EXPECTED remaining matches the team plays (group + probability-weighted KO depth) —
+  player: string
+  teamCode: string
+  value: number // the award metric NOW: goals (Golden Boot) or assists (Playmaker)
+  goals: number // raw, for display on either board
+  assists: number
+  penalties: number // penalty goals (subset of goals) — shown so a pen-heavy tally is transparent
+  matches: number // team matches the tally was accrued over (the rate denominator)
+  matchesLeft: number // EXPECTED remaining matches the team plays (group + probability-weighted KO depth) —
   // the upside lever: a player on a deep-run team has more games left to add to their tally
-  projected: number; // forecast FINAL value (mean), incl. goals still to come
-  winProb: number; // P(finishes the tournament top of this race), incl. ties split
-  eliminated: boolean; // mathematically out: team has no matches left AND already below the leader (frozen
+  projected: number // forecast FINAL value (mean), incl. goals still to come
+  winProb: number // P(finishes the tournament top of this race), incl. ties split
+  eliminated: boolean // mathematically out: team has no matches left AND already below the leader (frozen
   // tally that someone has already beaten). A definitive state, not a probability.
-  clinched: boolean; // won the award — only possible once the tournament is over (no matches left for ANYONE,
+  clinched: boolean // won the award — only possible once the tournament is over (no matches left for ANYONE,
   // since an active player can always score more). At that point the top tally, broken by the secondary metric,
   // has clinched. Mid-tournament this is always false; that's the asymmetry with `eliminated`.
 }
@@ -32,84 +32,110 @@ export interface AwardEntry {
 // Every player who has featured in a matchday squad (incl. goalkeepers) — the universe for player pages
 // and search, not just scorers. Tallies are merged in so a page shows goals/assists where any.
 export interface PlayerInfo {
-  name: string;
-  teamCode: string;
-  position: string; // GK / DF / MF / FW (empty if unknown)
-  appearances: number; // matchday squads the player was named in
-  goals: number;
-  assists: number;
-  penalties: number;
+  name: string
+  teamCode: string
+  position: string // GK / DF / MF / FW (empty if unknown)
+  appearances: number // matchday squads the player was named in
+  goals: number
+  assists: number
+  penalties: number
 }
 
 export interface Awards {
-  goldenBoot: AwardEntry[]; // sorted: goals desc, then assists, then projected
-  assists: AwardEntry[]; // sorted: assists desc, then goals, then projected
-  players: PlayerInfo[]; // full-squad universe: lineups ∪ everyone named in a timeline (scorers, assisters, carded, subbed)
-  matchesCounted: number; // completed/live matches the tallies were aggregated from (transparency)
+  goldenBoot: AwardEntry[] // sorted: goals desc, then assists, then projected
+  assists: AwardEntry[] // sorted: assists desc, then goals, then projected
+  players: PlayerInfo[] // full-squad universe: lineups ∪ everyone named in a timeline (scorers, assisters, carded, subbed)
+  matchesCounted: number // completed/live matches the tallies were aggregated from (transparency)
 }
 
 // Forecast knobs. A player's future per-match rate is an empirical-Bayes estimate: their tally regressed
 // toward an attacker prior with strength α (in pseudo-matches). Early-tournament rates are very noisy — a
 // 5-in-2 hot start shouldn't extrapolate to a record-shattering total — so the prior is deliberately heavy
 // and the rate is capped at a realistic elite ceiling (few players sustain ~1 goal/match over a tournament).
-const PRIOR_GOAL_RATE = 0.4;
-const PRIOR_ASSIST_RATE = 0.28;
-const PRIOR_STRENGTH = 4;
-const RATE_CAP = 0.9; // max sustained per-match rate the forecast will extrapolate
-const MC_ITERS = 20_000;
-const FORECAST_SEED = 20260611;
+const PRIOR_GOAL_RATE = 0.4
+const PRIOR_ASSIST_RATE = 0.28
+const PRIOR_STRENGTH = 4
+const RATE_CAP = 0.9 // max sustained per-match rate the forecast will extrapolate
+const MC_ITERS = 20_000
+const FORECAST_SEED = 20260611
 
-type Tally = { player: string; teamCode: string; goals: number; penalties: number; assists: number };
+type Tally = {
+  player: string
+  teamCode: string
+  goals: number
+  penalties: number
+  assists: number
+}
 
 // Aggregate goals + assists per (player, team) from every completed/live match. Own goals are excluded (they
 // don't credit the scorer); penalties count toward the Golden Boot and are tracked separately for display.
 export async function aggregateScorers(
   matches: MatchInfo[],
-  getSummary: (m: MatchInfo) => Promise<MatchSummary>,
+  getSummary: (m: MatchInfo) => Promise<MatchSummary>
 ): Promise<{ tallies: Tally[]; matchesCounted: number }> {
-  const played = matches.filter((m) => (m.status === "final" || m.status === "live") && m.home && m.away);
-  const summaries = await Promise.all(played.map((m) => getSummary(m).catch(() => ({ events: [], stats: null }) as MatchSummary)));
-  const byKey = new Map<string, Tally>();
+  const played = matches.filter(
+    (m) => (m.status === "final" || m.status === "live") && m.home && m.away
+  )
+  const summaries = await Promise.all(
+    played.map((m) =>
+      getSummary(m).catch(() => ({ events: [], stats: null }) as MatchSummary)
+    )
+  )
+  const byKey = new Map<string, Tally>()
   const get = (player: string, teamCode: string) => {
-    const key = `${player}|${teamCode}`;
-    let t = byKey.get(key);
-    if (!t) { t = { player, teamCode, goals: 0, penalties: 0, assists: 0 }; byKey.set(key, t); }
-    return t;
-  };
+    const key = `${player}|${teamCode}`
+    let t = byKey.get(key)
+    if (!t) {
+      t = { player, teamCode, goals: 0, penalties: 0, assists: 0 }
+      byKey.set(key, t)
+    }
+    return t
+  }
   for (const s of summaries) {
     for (const e of s.events) {
-      if (e.kind !== "goal" || !e.teamCode || !e.player) continue;
-      if (e.goalType === "own") continue; // own goals don't credit the scorer toward the Golden Boot
-      const t = get(e.player, e.teamCode);
-      t.goals++;
-      if (e.goalType === "penalty") t.penalties++;
-      if (e.assist) get(e.assist, e.teamCode).assists++;
+      if (e.kind !== "goal" || !e.teamCode || !e.player) continue
+      if (e.goalType === "own") continue // own goals don't credit the scorer toward the Golden Boot
+      const t = get(e.player, e.teamCode)
+      t.goals++
+      if (e.goalType === "penalty") t.penalties++
+      if (e.assist) get(e.assist, e.teamCode).assists++
     }
   }
-  return { tallies: [...byKey.values()], matchesCounted: played.length };
+  return { tallies: [...byKey.values()], matchesCounted: played.length }
 }
 
 // Per-team match accounting: matches already played (the rate denominator), group matches still to come, and
 // KNOCKOUT matches already played. The last one matters because the sim's reach-probabilities (advance/r16/…)
 // count a round with prob 1 once the team is conditioned into it — i.e. they include KO matches the team has
 // ALREADY played — so remaining KO = expected-total-KO minus KO-already-played.
-function teamMatchCounts(matches: MatchInfo[]): { played: Map<string, number>; groupRemaining: Map<string, number>; koPlayed: Map<string, number> } {
-  const played = new Map<string, number>();
-  const groupPlayed = new Map<string, number>();
-  const koPlayed = new Map<string, number>();
-  const bump = (m: Map<string, number>, c?: string | null) => c && m.set(c, (m.get(c) ?? 0) + 1);
+function teamMatchCounts(matches: MatchInfo[]): {
+  played: Map<string, number>
+  groupRemaining: Map<string, number>
+  koPlayed: Map<string, number>
+} {
+  const played = new Map<string, number>()
+  const groupPlayed = new Map<string, number>()
+  const koPlayed = new Map<string, number>()
+  const bump = (m: Map<string, number>, c?: string | null) =>
+    c && m.set(c, (m.get(c) ?? 0) + 1)
   for (const m of matches) {
-    const counts = m.status === "final" || m.status === "live";
-    if (!counts || !m.home || !m.away) continue;
-    bump(played, m.home);
-    bump(played, m.away);
-    if (m.round === "GROUP") { bump(groupPlayed, m.home); bump(groupPlayed, m.away); }
-    else { bump(koPlayed, m.home); bump(koPlayed, m.away); }
+    const counts = m.status === "final" || m.status === "live"
+    if (!counts || !m.home || !m.away) continue
+    bump(played, m.home)
+    bump(played, m.away)
+    if (m.round === "GROUP") {
+      bump(groupPlayed, m.home)
+      bump(groupPlayed, m.away)
+    } else {
+      bump(koPlayed, m.home)
+      bump(koPlayed, m.away)
+    }
   }
-  const groupRemaining = new Map<string, number>();
+  const groupRemaining = new Map<string, number>()
   // Every team plays 3 group matches; whatever isn't played/in-progress yet still lies ahead.
-  for (const c of played.keys()) groupRemaining.set(c, Math.max(0, 3 - (groupPlayed.get(c) ?? 0)));
-  return { played, groupRemaining, koPlayed };
+  for (const c of played.keys())
+    groupRemaining.set(c, Math.max(0, 3 - (groupPlayed.get(c) ?? 0)))
+  return { played, groupRemaining, koPlayed }
 }
 
 // The distribution of how many KNOCKOUT matches a team still plays, derived from the sim's round-reach
@@ -119,56 +145,72 @@ function teamMatchCounts(matches: MatchInfo[]): { played: Map<string, number>; g
 // knockout stage begins. A team plays a match in every round it reaches; everyone who reaches the semifinal then plays
 // a 5th match (final OR third-place playoff), so the only reachable counts are {0,1,2,3,5}.
 function koDepthDist(t: TeamProb): { k: number; p: number }[] {
-  const adv = t.advance, r16 = t.r16, qf = t.qf, sf = t.sf;
+  const adv = t.advance,
+    r16 = t.r16,
+    qf = t.qf,
+    sf = t.sf
   const dist = [
     { k: 0, p: 1 - adv },
     { k: 1, p: adv - r16 },
     { k: 2, p: r16 - qf },
     { k: 3, p: qf - sf },
     { k: 5, p: sf },
-  ].map((d) => ({ k: d.k, p: Math.max(0, d.p) }));
-  const total = dist.reduce((s, d) => s + d.p, 0) || 1;
-  return dist.map((d) => ({ k: d.k, p: d.p / total }));
+  ].map((d) => ({ k: d.k, p: Math.max(0, d.p) }))
+  const total = dist.reduce((s, d) => s + d.p, 0) || 1
+  return dist.map((d) => ({ k: d.k, p: d.p / total }))
 }
 
 function expectedKoMatches(t: TeamProb): number {
-  return t.advance + t.r16 + t.qf + 2 * t.sf;
+  return t.advance + t.r16 + t.qf + 2 * t.sf
 }
 
 type Cand = {
-  player: string;
-  teamCode: string;
-  value: number; // goals or assists
-  rate: number; // shrunk per-match rate
-  groupRemaining: number;
-  depth: { k: number; p: number }[];
-  expRemaining: number;
-};
+  player: string
+  teamCode: string
+  value: number // goals or assists
+  rate: number // shrunk per-match rate
+  groupRemaining: number
+  depth: { k: number; p: number }[]
+  expRemaining: number
+}
 
 // Run the seeded Monte Carlo over one race (Golden Boot or assists). Each iteration draws every candidate's
 // remaining team matches (group + a sampled KO depth) and their goals/assists in those matches (Poisson at
 // the shrunk rate), then credits the win to the final leader (ties split). Returns winProb per candidate.
 function simulateRace(cands: Cand[], rand: () => number): Map<number, number> {
-  const wins = new Array(cands.length).fill(0);
+  const wins = new Array(cands.length).fill(0)
   for (let it = 0; it < MC_ITERS; it++) {
-    let best = -1, bestIdx: number[] = [];
+    let best = -1,
+      bestIdx: number[] = []
     for (let i = 0; i < cands.length; i++) {
-      const c = cands[i];
+      const c = cands[i]
       // sample KO depth
-      const r = rand();
-      let cum = 0, k = 0;
-      for (const d of c.depth) { cum += d.p; if (r <= cum) { k = d.k; break; } }
-      const remaining = c.groupRemaining + k;
-      const extra = remaining > 0 ? samplePoisson(c.rate * remaining, rand) : 0;
-      const final = c.value + extra;
-      if (final > best) { best = final; bestIdx = [i]; }
-      else if (final === best) bestIdx.push(i);
+      const r = rand()
+      let cum = 0,
+        k = 0
+      for (const d of c.depth) {
+        cum += d.p
+        if (r <= cum) {
+          k = d.k
+          break
+        }
+      }
+      const remaining = c.groupRemaining + k
+      const extra = remaining > 0 ? samplePoisson(c.rate * remaining, rand) : 0
+      const final = c.value + extra
+      if (final > best) {
+        best = final
+        bestIdx = [i]
+      } else if (final === best) bestIdx.push(i)
     }
-    if (best > 0) { const share = 1 / bestIdx.length; for (const i of bestIdx) wins[i] += share; }
+    if (best > 0) {
+      const share = 1 / bestIdx.length
+      for (const i of bestIdx) wins[i] += share
+    }
   }
-  const out = new Map<number, number>();
-  cands.forEach((_, i) => out.set(i, wins[i] / MC_ITERS));
-  return out;
+  const out = new Map<number, number>()
+  cands.forEach((_, i) => out.set(i, wins[i] / MC_ITERS))
+  return out
 }
 
 // The candidate set for one race: every player with a positive tally, each with their shrunk per-match rate
@@ -181,22 +223,36 @@ function buildCands(
   teams: Record<string, TeamProb>,
   played: Map<string, number>,
   groupRemaining: Map<string, number>,
-  koPlayed: Map<string, number>,
+  koPlayed: Map<string, number>
 ): Cand[] {
-  const valueOf = (t: Tally) => (metric === "goals" ? t.goals : t.assists);
+  const valueOf = (t: Tally) => (metric === "goals" ? t.goals : t.assists)
   return tallies
     .filter((t) => valueOf(t) > 0)
     .map((t) => {
-      const tp = teams[t.teamCode];
-      const matches = played.get(t.teamCode) ?? 0;
-      const rate = Math.min(RATE_CAP, (valueOf(t) + PRIOR_STRENGTH * priorRate) / (matches + PRIOR_STRENGTH));
-      const gr = groupRemaining.get(t.teamCode) ?? 0;
-      const depth = tp ? koDepthDist(tp) : [{ k: 0, p: 1 }];
+      const tp = teams[t.teamCode]
+      const matches = played.get(t.teamCode) ?? 0
+      const rate = Math.min(
+        RATE_CAP,
+        (valueOf(t) + PRIOR_STRENGTH * priorRate) / (matches + PRIOR_STRENGTH)
+      )
+      const gr = groupRemaining.get(t.teamCode) ?? 0
+      const depth = tp ? koDepthDist(tp) : [{ k: 0, p: 1 }]
       // Remaining KO = expected total KO minus KO already played (the reach-probs count played rounds as 1).
-      const koLeft = Math.max(0, (tp ? expectedKoMatches(tp) : 0) - (koPlayed.get(t.teamCode) ?? 0));
-      const expRemaining = gr + koLeft;
-      return { player: t.player, teamCode: t.teamCode, value: valueOf(t), rate, groupRemaining: gr, depth, expRemaining };
-    });
+      const koLeft = Math.max(
+        0,
+        (tp ? expectedKoMatches(tp) : 0) - (koPlayed.get(t.teamCode) ?? 0)
+      )
+      const expRemaining = gr + koLeft
+      return {
+        player: t.player,
+        teamCode: t.teamCode,
+        value: valueOf(t),
+        rate,
+        groupRemaining: gr,
+        depth,
+        expRemaining,
+      }
+    })
 }
 
 // Turn scored candidates + their win probabilities into the sorted board. `winProbs` is keyed by candidate
@@ -212,13 +268,16 @@ function assembleBoard(
   metric: "goals" | "assists",
   played: Map<string, number>,
   winProbs: Map<number, number>,
-  tournamentOver: boolean,
+  tournamentOver: boolean
 ): AwardEntry[] {
-  const secondaryOf = (t: { goals: number; assists: number }) => (metric === "goals" ? t.assists : t.goals);
-  const leaderValue = cands.reduce((m, c) => Math.max(m, c.value), 0);
-  const FROZEN = 0.01; // expected remaining matches ≈ 0 → the team has no game left to add to the tally
+  const secondaryOf = (t: { goals: number; assists: number }) =>
+    metric === "goals" ? t.assists : t.goals
+  const leaderValue = cands.reduce((m, c) => Math.max(m, c.value), 0)
+  const FROZEN = 0.01 // expected remaining matches ≈ 0 → the team has no game left to add to the tally
   const built = cands.map((c, i) => {
-    const t = tallies.find((x) => x.player === c.player && x.teamCode === c.teamCode)!;
+    const t = tallies.find(
+      (x) => x.player === c.player && x.teamCode === c.teamCode
+    )!
     return {
       player: c.player,
       teamCode: c.teamCode,
@@ -233,16 +292,19 @@ function assembleBoard(
       // Eliminated: frozen tally already behind the leader → can never catch up.
       eliminated: c.expRemaining < FROZEN && c.value < leaderValue,
       clinched: false,
-    };
-  });
+    }
+  })
   // Clinched: only once the tournament is over (nobody can score again) does the top tally — broken by the
   // secondary metric (assists for the Boot, goals for assists) — lock the award. Ties on both share it.
   if (tournamentOver && built.length) {
-    const top = built.filter((e) => e.value === leaderValue);
-    const maxSec = top.reduce((m, e) => Math.max(m, secondaryOf(e)), 0);
-    for (const e of top) if (secondaryOf(e) === maxSec) e.clinched = true;
+    const top = built.filter((e) => e.value === leaderValue)
+    const maxSec = top.reduce((m, e) => Math.max(m, secondaryOf(e)), 0)
+    for (const e of top) if (secondaryOf(e) === maxSec) e.clinched = true
   }
-  return built.sort((a, b) => b.value - a.value || b.winProb - a.winProb || b.projected - a.projected);
+  return built.sort(
+    (a, b) =>
+      b.value - a.value || b.winProb - a.winProb || b.projected - a.projected
+  )
 }
 
 function buildBoard(
@@ -254,11 +316,19 @@ function buildBoard(
   groupRemaining: Map<string, number>,
   koPlayed: Map<string, number>,
   tournamentOver: boolean,
-  rand: () => number,
+  rand: () => number
 ): AwardEntry[] {
-  const cands = buildCands(tallies, metric, priorRate, teams, played, groupRemaining, koPlayed);
-  const winProbs = simulateRace(cands, rand);
-  return assembleBoard(cands, tallies, metric, played, winProbs, tournamentOver);
+  const cands = buildCands(
+    tallies,
+    metric,
+    priorRate,
+    teams,
+    played,
+    groupRemaining,
+    koPlayed
+  )
+  const winProbs = simulateRace(cands, rand)
+  return assembleBoard(cands, tallies, metric, played, winProbs, tournamentOver)
 }
 
 export async function computeAwards(
@@ -266,17 +336,46 @@ export async function computeAwards(
   teams: Record<string, TeamProb>,
   getSummary: (m: MatchInfo) => Promise<MatchSummary>,
   squadPositions: Record<string, string> = {},
-  seed = FORECAST_SEED,
+  seed = FORECAST_SEED
 ): Promise<Awards> {
-  const { tallies, matchesCounted } = await aggregateScorers(matches, getSummary);
-  const { played, groupRemaining, koPlayed } = teamMatchCounts(matches);
-  const rand = mulberry32(seed);
+  const { tallies, matchesCounted } = await aggregateScorers(
+    matches,
+    getSummary
+  )
+  const { played, groupRemaining, koPlayed } = teamMatchCounts(matches)
+  const rand = mulberry32(seed)
   // The award can only be clinched once nobody can score again — i.e. every match is final.
-  const tournamentOver = matches.length > 0 && matches.every((m) => m.status === "final");
-  const goldenBoot = buildBoard(tallies, "goals", PRIOR_GOAL_RATE, teams, played, groupRemaining, koPlayed, tournamentOver, rand);
-  const assists = buildBoard(tallies, "assists", PRIOR_ASSIST_RATE, teams, played, groupRemaining, koPlayed, tournamentOver, rand);
-  const players = await aggregatePlayers(matches, getSummary, tallies, squadPositions);
-  return { goldenBoot, assists, players, matchesCounted };
+  const tournamentOver =
+    matches.length > 0 && matches.every((m) => m.status === "final")
+  const goldenBoot = buildBoard(
+    tallies,
+    "goals",
+    PRIOR_GOAL_RATE,
+    teams,
+    played,
+    groupRemaining,
+    koPlayed,
+    tournamentOver,
+    rand
+  )
+  const assists = buildBoard(
+    tallies,
+    "assists",
+    PRIOR_ASSIST_RATE,
+    teams,
+    played,
+    groupRemaining,
+    koPlayed,
+    tournamentOver,
+    rand
+  )
+  const players = await aggregatePlayers(
+    matches,
+    getSummary,
+    tallies,
+    squadPositions
+  )
+  return { goldenBoot, assists, players, matchesCounted }
 }
 
 // Render-time live refresh of the boards. The cron stores a FINAL-SETTLED baseline (completed matches only);
@@ -290,58 +389,95 @@ export async function liveAwards(
   kvMatches: MatchInfo[],
   live: LiveMatch[],
   teams: Record<string, TeamProb>,
-  getSummary: (m: MatchInfo) => Promise<MatchSummary>,
+  getSummary: (m: MatchInfo) => Promise<MatchSummary>
 ): Promise<Awards> {
-  const pair = (a: string, b: string) => [a, b].sort().join("-");
+  const pair = (a: string, b: string) => [a, b].sort().join("-")
   // Matches the baseline already counts (the cron has absorbed them as final) must NOT be double-counted here.
   const absorbed = new Set(
-    kvMatches.filter((m) => m.status === "final" && m.home && m.away).map((m) => pair(m.home!, m.away!)),
-  );
+    kvMatches
+      .filter((m) => m.status === "final" && m.home && m.away)
+      .map((m) => pair(m.home!, m.away!))
+  )
   // In-progress or just-finished matches the baseline hasn't absorbed yet — these carry the live deltas.
   const activePairs = new Set(
     live
-      .filter((l) => (l.state === "in" || l.state === "post") && !absorbed.has(pair(l.homeCode, l.awayCode)))
-      .map((l) => pair(l.homeCode, l.awayCode)),
-  );
-  if (!activePairs.size) return baseline;
+      .filter(
+        (l) =>
+          (l.state === "in" || l.state === "post") &&
+          !absorbed.has(pair(l.homeCode, l.awayCode))
+      )
+      .map((l) => pair(l.homeCode, l.awayCode))
+  )
+  if (!activePairs.size) return baseline
 
-  const overlaid = overlayLive(kvMatches, live);
-  const deltaMatches = overlaid.filter((m) => m.home && m.away && activePairs.has(pair(m.home, m.away)));
-  const { tallies: liveTallies } = await aggregateScorers(deltaMatches, getSummary);
-  if (!liveTallies.length) return baseline;
+  const overlaid = overlayLive(kvMatches, live)
+  const deltaMatches = overlaid.filter(
+    (m) => m.home && m.away && activePairs.has(pair(m.home, m.away))
+  )
+  const { tallies: liveTallies } = await aggregateScorers(
+    deltaMatches,
+    getSummary
+  )
+  if (!liveTallies.length) return baseline
 
   // Rebuild the full tally set: the baseline boards already carry every settled scorer's goals/assists/
   // penalties (union the two boards — a player can be on one and not the other), then add the live deltas.
-  const byKey = new Map<string, Tally>();
+  const byKey = new Map<string, Tally>()
   for (const e of [...baseline.goldenBoot, ...baseline.assists]) {
-    const key = `${e.player}|${e.teamCode}`;
-    if (!byKey.has(key)) byKey.set(key, { player: e.player, teamCode: e.teamCode, goals: e.goals, penalties: e.penalties, assists: e.assists });
+    const key = `${e.player}|${e.teamCode}`
+    if (!byKey.has(key))
+      byKey.set(key, {
+        player: e.player,
+        teamCode: e.teamCode,
+        goals: e.goals,
+        penalties: e.penalties,
+        assists: e.assists,
+      })
   }
   for (const lt of liveTallies) {
-    const key = `${lt.player}|${lt.teamCode}`;
-    const t = byKey.get(key);
-    if (t) { t.goals += lt.goals; t.penalties += lt.penalties; t.assists += lt.assists; }
-    else byKey.set(key, { ...lt });
+    const key = `${lt.player}|${lt.teamCode}`
+    const t = byKey.get(key)
+    if (t) {
+      t.goals += lt.goals
+      t.penalties += lt.penalties
+      t.assists += lt.assists
+    } else byKey.set(key, { ...lt })
   }
-  const merged = [...byKey.values()];
-  const { played, groupRemaining, koPlayed } = teamMatchCounts(overlaid);
+  const merged = [...byKey.values()]
+  const { played, groupRemaining, koPlayed } = teamMatchCounts(overlaid)
 
   // Something is live, so the awards cannot be clinched; carry win probabilities from the matching baseline
   // entry (new live scorers fall through to 0 until the next cron run computes their forecast).
-  const refresh = (metric: "goals" | "assists", priorRate: number, cached: AwardEntry[]): AwardEntry[] => {
-    const cands = buildCands(merged, metric, priorRate, teams, played, groupRemaining, koPlayed);
-    const carried = new Map(cached.map((e) => [`${e.player}|${e.teamCode}`, e.winProb]));
-    const winProbs = new Map<number, number>();
-    cands.forEach((c, i) => winProbs.set(i, carried.get(`${c.player}|${c.teamCode}`) ?? 0));
-    return assembleBoard(cands, merged, metric, played, winProbs, false);
-  };
+  const refresh = (
+    metric: "goals" | "assists",
+    priorRate: number,
+    cached: AwardEntry[]
+  ): AwardEntry[] => {
+    const cands = buildCands(
+      merged,
+      metric,
+      priorRate,
+      teams,
+      played,
+      groupRemaining,
+      koPlayed
+    )
+    const carried = new Map(
+      cached.map((e) => [`${e.player}|${e.teamCode}`, e.winProb])
+    )
+    const winProbs = new Map<number, number>()
+    cands.forEach((c, i) =>
+      winProbs.set(i, carried.get(`${c.player}|${c.teamCode}`) ?? 0)
+    )
+    return assembleBoard(cands, merged, metric, played, winProbs, false)
+  }
 
   return {
     goldenBoot: refresh("goals", PRIOR_GOAL_RATE, baseline.goldenBoot),
     assists: refresh("assists", PRIOR_ASSIST_RATE, baseline.assists),
     players: baseline.players,
     matchesCounted: baseline.matchesCounted + deltaMatches.length,
-  };
+  }
 }
 
 // Full-squad player universe: union of everyone named in a matchday squad (from ESPN lineups, incl. keepers)
@@ -351,54 +487,93 @@ async function aggregatePlayers(
   matches: MatchInfo[],
   getSummary: (m: MatchInfo) => Promise<MatchSummary>,
   tallies: Tally[],
-  squadPositions: Record<string, string> = {},
+  squadPositions: Record<string, string> = {}
 ): Promise<PlayerInfo[]> {
-  const played = matches.filter((m) => (m.status === "final" || m.status === "live") && m.home && m.away);
-  const summaries = await Promise.all(played.map((m) => getSummary(m).catch(() => ({ events: [], stats: null }) as MatchSummary)));
-  const map = new Map<string, PlayerInfo>();
+  const played = matches.filter(
+    (m) => (m.status === "final" || m.status === "live") && m.home && m.away
+  )
+  const summaries = await Promise.all(
+    played.map((m) =>
+      getSummary(m).catch(() => ({ events: [], stats: null }) as MatchSummary)
+    )
+  )
+  const map = new Map<string, PlayerInfo>()
   const add = (name: string, teamCode: string, position: string) => {
-    const key = `${name}|${teamCode}`;
-    let e = map.get(key);
-    if (!e) { e = { name, teamCode, position, appearances: 0, goals: 0, assists: 0, penalties: 0 }; map.set(key, e); }
-    e.appearances++;
-    if (!e.position && position) e.position = position;
-    return e;
-  };
+    const key = `${name}|${teamCode}`
+    let e = map.get(key)
+    if (!e) {
+      e = {
+        name,
+        teamCode,
+        position,
+        appearances: 0,
+        goals: 0,
+        assists: 0,
+        penalties: 0,
+      }
+      map.set(key, e)
+    }
+    e.appearances++
+    if (!e.position && position) e.position = position
+    return e
+  }
   played.forEach((m, i) => {
-    const lu = summaries[i].lineups;
-    if (!lu) return;
-    for (const p of lu.home) add(p.player, m.home!, p.position);
-    for (const p of lu.away) add(p.player, m.away!, p.position);
-  });
+    const lu = summaries[i].lineups
+    if (!lu) return
+    for (const p of lu.home) add(p.player, m.home!, p.position)
+    for (const p of lu.away) add(p.player, m.away!, p.position)
+  })
   // Guarantee a page for EVERYONE named in a match timeline — scorers, assisters, carded and substituted
   // players — even if that match had no parsed lineup, or the event spells a name slightly differently than
   // the squad list. Keyed by the event's own name so the deterministic slug always resolves (every name shown
   // in a timeline links to a real page). These don't bump `appearances` — that's squad-list membership only.
-  const ensure = (name: string | undefined, teamCode: string | null | undefined) => {
-    if (!name || !teamCode) return;
-    const key = `${name}|${teamCode}`;
-    if (!map.has(key)) map.set(key, { name, teamCode, position: "", appearances: 0, goals: 0, assists: 0, penalties: 0 });
-  };
+  const ensure = (
+    name: string | undefined,
+    teamCode: string | null | undefined
+  ) => {
+    if (!name || !teamCode) return
+    const key = `${name}|${teamCode}`
+    if (!map.has(key))
+      map.set(key, {
+        name,
+        teamCode,
+        position: "",
+        appearances: 0,
+        goals: 0,
+        assists: 0,
+        penalties: 0,
+      })
+  }
   played.forEach((m, i) => {
     for (const e of summaries[i].events) {
-      ensure(e.player, e.teamCode); // scorer / carded / sub coming on
-      ensure(e.assist, e.teamCode); // assist provider (same team)
-      ensure(e.playerOff, e.teamCode); // player going off (same team)
+      ensure(e.player, e.teamCode) // scorer / carded / sub coming on
+      ensure(e.assist, e.teamCode) // assist provider (same team)
+      ensure(e.playerOff, e.teamCode) // player going off (same team)
     }
-  });
+  })
   // Merge tallies (and include any scorer who somehow wasn't in a parsed lineup).
   for (const t of tallies) {
-    const key = `${t.player}|${t.teamCode}`;
-    const e = map.get(key) ?? { name: t.player, teamCode: t.teamCode, position: "", appearances: 0, goals: 0, assists: 0, penalties: 0 };
-    e.goals = t.goals; e.assists = t.assists; e.penalties = t.penalties;
-    map.set(key, e);
+    const key = `${t.player}|${t.teamCode}`
+    const e = map.get(key) ?? {
+      name: t.player,
+      teamCode: t.teamCode,
+      position: "",
+      appearances: 0,
+      goals: 0,
+      assists: 0,
+      penalties: 0,
+    }
+    e.goals = t.goals
+    e.assists = t.assists
+    e.penalties = t.penalties
+    map.set(key, e)
   }
   // Authoritative pass: the squad roster carries each player's real position even when they only ever appeared
   // as a substitute (a benched player's matchday position is "Substitute"). Canonical position wins; the
   // match-derived one stays as the fallback for names not on the squad list (e.g. ESPN name variants).
   for (const e of map.values()) {
-    const canon = squadPositions[`${e.name}|${e.teamCode}`];
-    if (canon) e.position = canon;
+    const canon = squadPositions[`${e.name}|${e.teamCode}`]
+    if (canon) e.position = canon
   }
-  return [...map.values()];
+  return [...map.values()]
 }
