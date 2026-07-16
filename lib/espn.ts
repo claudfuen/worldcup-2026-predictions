@@ -12,6 +12,10 @@ const VENUE_BY_PAIR = new Map<string, string>(
 );
 
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+// The full tournament window as one scoreboard query. `limit=500` is REQUIRED: ESPN's scoreboard defaults
+// to ~100 events per request and silently truncates the newest matches off the end, so a plain ranged fetch
+// drops the semifinals/final once >100 matches exist. All 104 matches fit well under 500.
+const SCOREBOARD_ALL = `${SCOREBOARD}?dates=20260611-20260719&limit=500`;
 // Last calendar day (UTC) any GROUP match is played — DERIVED from the schedule so it can't go stale.
 // Its job: separate group results from knockout REMATCHES of two same-group teams. `group` is set whenever
 // both teams share a group (see below), so a same-group QF/SF would otherwise pollute group standings; the
@@ -48,7 +52,7 @@ function shootout(c: { shootoutScore?: string | number } | undefined): number | 
 
 // Fetch all COMPLETED matches (full-time only) across the tournament window.
 export async function fetchResults(): Promise<FetchedMatch[]> {
-  const res = await fetch(`${SCOREBOARD}?dates=20260611-20260719`, { cache: "no-store" });
+  const res = await fetch(SCOREBOARD_ALL, { cache: "no-store" });
   if (!res.ok) throw new Error(`ESPN ${res.status}`);
   const data = (await res.json()) as { events?: EspnEvent[] };
   const out: FetchedMatch[] = [];
@@ -123,7 +127,7 @@ export function parseLiveMinute(displayClock?: string, detail?: string, period?:
 // moves standings/ratings (the cron recompute owns the model); this only lets a match show its current
 // or final score the instant it changes, closing the gap between full-time and the next cron tick.
 export async function fetchLive(): Promise<LiveMatch[]> {
-  const res = await fetch(`${SCOREBOARD}?dates=20260611-20260719`, { cache: "no-store" });
+  const res = await fetch(SCOREBOARD_ALL, { cache: "no-store" });
   if (!res.ok) return [];
   const data = (await res.json()) as { events?: EspnEvent[] };
   const out: LiveMatch[] = [];
