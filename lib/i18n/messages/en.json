@@ -330,7 +330,11 @@
     "projectedLower": "projected",
     "theFinal": "The final",
     "inFinal": "In the final",
-    "stageNextRound": "Next: {round}"
+    "stageNextRound": "Next: {round}",
+    "actFinal": "The final ahead",
+    "standingsTeaserTitle": "Where every team finished",
+    "standingsTeaserBody": "The official final ranking of all 48 teams — champions down to last.",
+    "standingsTeaserCta": "View full standings"
   },
   "watch": {
     "roundOf32": "Round of 32",

@@ -14,6 +14,7 @@ import { MatchesToWatch } from "@/components/matches-to-watch"
 import { BracketTeaser } from "@/components/bracket-teaser"
 import { GroupsPreview } from "@/components/groups-preview"
 import { GoldenBootRace } from "@/components/golden-boot-race"
+import { FinalStandingsTeaser } from "@/components/final-standings-teaser"
 import { StadiumSpotlight } from "@/components/stadium-spotlight"
 import { LaunchRail } from "@/components/launch-rail"
 import { computeWatchability } from "@/lib/watchability"
@@ -67,6 +68,13 @@ export default async function Page() {
   // Once every group match is in, the group stage is settled — drop the (now-static) groups snapshot so the
   // homepage doesn't carry dead weight into the knockouts.
   const groupStageOver = groupPlayed >= data.totalGroupMatches
+  // Endgame: the only matches left are the final and/or the 3rd-place play-off. The page then leads with the
+  // final itself (not a "Right now" band over empty live state), and drops the forward "matches to watch"
+  // plan — which at this point only repeats the two remaining fixtures the live rail already shows.
+  const upcoming = matches.filter((m) => m.status !== "final")
+  const endgame =
+    upcoming.length > 0 &&
+    upcoming.every((m) => m.round === "FINAL" || m.round === "3P")
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -90,21 +98,26 @@ export default async function Page() {
         className="mt-6"
       />
 
-      {/* ACT II — RIGHT NOW: the live heartbeat (Today emphasized), closing on the venue spotlight. */}
+      {/* ACT II — RIGHT NOW (or, at the endgame, THE FINAL): the live heartbeat with Today emphasized, or —
+          when only the final/3rd-place remain — the final itself elevated to the hero, closing on the venue. */}
       <section className="mt-14 border-t border-border/60 pt-6 sm:mt-16">
         <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
-          {t("home.actNow")}
+          {endgame ? t("home.actFinal") : t("home.actNow")}
         </h2>
+        {endgame && (
+          <BracketTeaser matches={lMatches} teams={teams} className="mt-5" />
+        )}
         <LiveTodayRail
           matches={lMatches}
           hotReasons={hotReasons}
-          className="mt-5"
+          className={endgame ? "mt-4" : "mt-5"}
         />
         <StadiumSpotlight matches={lMatches} className="mt-4" />
       </section>
 
-      {/* ACT III — THE ROAD AHEAD: where the bracket is heading, the season-long races, and the games worth
-          planning for. Grid widens to 3 columns only when the groups tile is present. */}
+      {/* ACT III — THE ROAD AHEAD (or THE RACES at the endgame): where the bracket is heading and the
+          season-long races. The final teaser moves up to Act II at the endgame; the forward watch-plan is
+          dropped there (it would only repeat the two remaining fixtures the live rail already shows). */}
       <section className="mt-14 border-t border-border/60 pt-6 sm:mt-16">
         <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
           {t("home.actAhead")}
@@ -112,16 +125,19 @@ export default async function Page() {
         <div
           className={`mt-5 grid gap-4 sm:grid-cols-2 ${groupStageOver ? "" : "lg:grid-cols-3"}`}
         >
-          <BracketTeaser matches={lMatches} teams={teams} />
+          {!endgame && <BracketTeaser matches={lMatches} teams={teams} />}
           {!groupStageOver && <GroupsPreview groups={lGroups} />}
           <GoldenBootRace entries={awards.goldenBoot} />
+          {endgame && <FinalStandingsTeaser />}
         </div>
-        <MatchesToWatch
-          matches={lMatches}
-          teams={teams}
-          groups={lGroups}
-          className="mt-8"
-        />
+        {!endgame && (
+          <MatchesToWatch
+            matches={lMatches}
+            teams={teams}
+            groups={lGroups}
+            className="mt-8"
+          />
+        )}
       </section>
 
       <LaunchRail
