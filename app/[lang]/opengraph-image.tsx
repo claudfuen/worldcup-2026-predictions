@@ -18,17 +18,33 @@ export default async function OpengraphImage() {
   let matchesPlayed = 0
   let totalGroup = 72
   let iterations = 20000
+  let playedMatches = 0
+  let totalMatches = 0
+  let champion: string | null = null
   try {
     const data = await getPredictions()
-    teams = data.teams
+    // Only teams still alive — an eliminated side at a bare 0% is an ugly "title odds" row on the share card.
+    const alive = data.teams.filter((t) => t.title > 0)
+    teams = (alive.length ? alive : data.teams)
       .slice(0, 5)
       .map((t) => ({ name: t.name, title: t.title }))
     matchesPlayed = data.matchesPlayed
     totalGroup = data.totalGroupMatches
     iterations = data.iterations
+    playedMatches = data.matches.filter((m) => m.status === "final").length
+    totalMatches = data.matches.length
+    champion = data.complete
+      ? (data.teams.find((t) => t.code === data.champion)?.name ?? null)
+      : null
   } catch {
     /* fall back to the no-data layout */
   }
+  // Eyebrow reflects where the tournament actually is: overall progress through the endgame, or the crown.
+  const eyebrow = champion
+    ? "2026 FIFA WORLD CUP · CHAMPIONS"
+    : totalMatches > 0
+      ? `MONTE CARLO FORECAST · ${playedMatches}/${totalMatches} MATCHES PLAYED`
+      : `MONTE CARLO FORECAST · ${matchesPlayed}/${totalGroup} GROUP MATCHES PLAYED`
   const maxTitle = teams[0]?.title || 1
   const pct = (v: number) =>
     `${Math.max(1, Math.round(Math.min(v, 0.99) * 100))}%`
@@ -58,7 +74,7 @@ export default async function OpengraphImage() {
           fontWeight: 600,
         }}
       >
-        MONTE CARLO FORECAST · {matchesPlayed}/{totalGroup} GROUP MATCHES PLAYED
+        {eyebrow}
       </div>
 
       {/* main: title + live leaderboard */}
