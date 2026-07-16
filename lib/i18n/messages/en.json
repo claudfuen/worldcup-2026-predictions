@@ -329,7 +329,8 @@
     "ft": "FT",
     "projectedLower": "projected",
     "theFinal": "The final",
-    "inFinal": "In the final"
+    "inFinal": "In the final",
+    "stageNextRound": "Next: {round}"
   },
   "watch": {
     "roundOf32": "Round of 32",

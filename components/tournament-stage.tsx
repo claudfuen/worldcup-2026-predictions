@@ -41,9 +41,24 @@ export async function TournamentStage({
   const t = await getT()
   const playedIn = (round: string) =>
     matches.filter((m) => m.round === round && m.status === "final").length
+  // The 3rd-place play-off has no phase of its own (it's off the road to the final), but it's a real match —
+  // fold it into the FINAL segment so the meter's denominator (Σ phase totals) matches the numeric label's
+  // (matches.length), and the play-off's completion is represented rather than dropped.
+  const thirdTotal = matches.filter((m) => m.round === "3P").length
+  const thirdPlayed = playedIn("3P")
   const phases = PHASES.map((p) => {
-    const total = p.key === "GROUP" ? totalGroupMatches : p.total
-    const played = p.key === "GROUP" ? matchesPlayed : playedIn(p.key)
+    const total =
+      p.key === "GROUP"
+        ? totalGroupMatches
+        : p.key === "FINAL"
+          ? p.total + thirdTotal
+          : p.total
+    const played =
+      p.key === "GROUP"
+        ? matchesPlayed
+        : p.key === "FINAL"
+          ? playedIn("FINAL") + thirdPlayed
+          : playedIn(p.key)
     return { ...p, total, played, done: played >= total }
   })
   const firstUndone = phases.findIndex((p) => !p.done)
@@ -92,9 +107,14 @@ export async function TournamentStage({
       </>
     )
   } else {
+    // The genuinely next match to be played — across ALL rounds, not just the current phase. This is what
+    // surfaces the 3rd-place play-off (a day before the final) instead of skipping straight to the final.
     const next = matches
-      .filter((m) => m.round === curPhase.key && m.status !== "final")
+      .filter((m) => m.status !== "final")
       .sort((a, b) => a.utc.localeCompare(b.utc))[0]
+    const nextRound = next
+      ? t(`rounds.${next.round === "3P" ? "THIRD" : next.round}`)
+      : ""
     context = (
       <>
         {t("home.stageKnockoutContext", {
@@ -105,7 +125,8 @@ export async function TournamentStage({
         {next && (
           <>
             {" "}
-            · {t("home.stageNext")} <LocalTime utc={next.utc} mode="day" />
+            · {t("home.stageNextRound", { round: nextRound })}{" "}
+            <LocalTime utc={next.utc} mode="day" />
           </>
         )}
       </>
