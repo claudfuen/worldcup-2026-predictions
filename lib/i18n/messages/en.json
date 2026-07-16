@@ -678,7 +678,17 @@
     "fullScheduleLink": "Full schedule",
     "howItWorksLink": "How it works",
     "footerOdds": "Odds from a World Football Elo + Poisson model, {iterations} Monte Carlo simulations, updated live.",
-    "howItWorksArrow": "How it works →"
+    "howItWorksArrow": "How it works →",
+    "ledeInFinal": "{team} are in the World Cup final. The model makes them {pct} to lift the trophy.",
+    "ledeRunnerUp": "{team} finished runners-up — beaten in the final.",
+    "ledeInThird": "{team} reached the semi-finals and play for third place.",
+    "ledeThird": "{team} finished third at World Cup 2026.",
+    "ledeFourth": "{team} finished fourth at World Cup 2026.",
+    "ledeKnockedOut": "{team} were knocked out in the {round}, finishing {place} of 48.",
+    "shareInFinal": "{team} are in the World Cup 2026 final — {pct} to win it.",
+    "shareRunnerUp": "{team} finished runners-up at World Cup 2026.",
+    "shareSemi": "{team} reached the semi-finals of World Cup 2026.",
+    "shareKnockedOut": "{team} were knocked out of World Cup 2026 in the {round}."
   },
   "groupDetail": {
     "fallbackTitle": "Group",

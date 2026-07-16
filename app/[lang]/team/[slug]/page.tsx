@@ -31,6 +31,7 @@ import { hasReachedRound, isEliminated } from "@/lib/teamStatus"
 import { teamAdvanceDisplay } from "@/lib/view/advance"
 import { isClinched } from "@/lib/view/types"
 import { forecastPct, ordinal } from "@/lib/format"
+import { computeFinalRanking } from "@/lib/finalRanking"
 import type { Metadata } from "next"
 import { getT, getLocale } from "@/lib/i18n/server"
 import { buildAlternates } from "@/lib/i18n/links"
@@ -151,6 +152,31 @@ export default async function TeamPage({
     : undefined
   const advanceClinched = !!advanceDisp && isClinched(advanceDisp)
   const advanceOut = advanceDisp?.kind === "eliminated"
+  // Knockout-aware finish (real results, not the sim): once a team clears its group its story is the bracket,
+  // not the frozen "won the group" line. The final ranking gives the tier it reached and — for KO exits —
+  // the exact place, so the lede reads "in the final" / "knocked out in the Quarter-finals, finishing 6th".
+  const finish = computeFinalRanking(data.matches).find(
+    (r) => r.code === team.code
+  )
+  const koFinal = finish?.tier === "FINAL" && finish.outcome !== "runnerUp"
+  const koRunnerUp = finish?.outcome === "runnerUp"
+  const koThird = finish?.tier === "THIRD" && !finish.outcome
+  const koExitRound =
+    finish?.tier === "QF" || finish?.tier === "R16" || finish?.tier === "R32"
+      ? finish.tier
+      : null
+  const koPlace =
+    finish?.settled && finish.rank
+      ? ordinal(finish.rank, localeConfig(locale).intl)
+      : ""
+  // A team whose real story is the bracket (reached the final / play-off, or was knocked out of it).
+  const koStory =
+    koFinal ||
+    koRunnerUp ||
+    koThird ||
+    finish?.outcome === "third" ||
+    finish?.outcome === "fourth" ||
+    !!koExitRound
   const statusWord =
     row?.status === "won_group"
       ? t("team.statusWonGroup")
@@ -230,7 +256,26 @@ export default async function TeamPage({
             {t("team.ledeChampion", { team: lTeam.name })}
           </p>
         )}
-        {pred && !isChampion && (
+        {pred && !isChampion && koStory && (
+          <p className="mt-3 text-sm text-pretty text-muted-foreground">
+            {koFinal
+              ? t("team.ledeInFinal", { team: lTeam.name, pct: titlePct })
+              : koRunnerUp
+                ? t("team.ledeRunnerUp", { team: lTeam.name })
+                : koThird
+                  ? t("team.ledeInThird", { team: lTeam.name })
+                  : finish?.outcome === "third"
+                    ? t("team.ledeThird", { team: lTeam.name })
+                    : finish?.outcome === "fourth"
+                      ? t("team.ledeFourth", { team: lTeam.name })
+                      : t("team.ledeKnockedOut", {
+                          team: lTeam.name,
+                          round: t(`rounds.${koExitRound}`),
+                          place: koPlace,
+                        })}
+          </p>
+        )}
+        {pred && !isChampion && !koStory && (
           <p className="mt-3 text-sm text-pretty text-muted-foreground">
             {t("team.ledePrefix", { team: lTeam.name, status: statusWord })}
             {advanceOut ? (
@@ -266,18 +311,31 @@ export default async function TeamPage({
           <div className="mt-4">
             <ShareBar
               text={
-                advanceClinched
-                  ? t("team.shareClinched", {
-                      team: lTeam.name,
-                      title: titlePct,
-                    })
-                  : advanceOut
-                    ? t("team.shareOut", { team: lTeam.name })
-                    : t("team.shareRace", {
-                        team: lTeam.name,
-                        advance: advancePct,
-                        title: titlePct,
-                      })
+                koFinal
+                  ? t("team.shareInFinal", { team: lTeam.name, pct: titlePct })
+                  : koRunnerUp
+                    ? t("team.shareRunnerUp", { team: lTeam.name })
+                    : koThird ||
+                        finish?.outcome === "third" ||
+                        finish?.outcome === "fourth"
+                      ? t("team.shareSemi", { team: lTeam.name })
+                      : koExitRound
+                        ? t("team.shareKnockedOut", {
+                            team: lTeam.name,
+                            round: t(`rounds.${koExitRound}`),
+                          })
+                        : advanceClinched
+                          ? t("team.shareClinched", {
+                              team: lTeam.name,
+                              title: titlePct,
+                            })
+                          : advanceOut
+                            ? t("team.shareOut", { team: lTeam.name })
+                            : t("team.shareRace", {
+                                team: lTeam.name,
+                                advance: advancePct,
+                                title: titlePct,
+                              })
               }
               path={`/team/${slug}`}
             />
