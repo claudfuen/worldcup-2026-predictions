@@ -124,9 +124,12 @@ export async function BracketTeaser({
         ) : (
           <div className="flex flex-col gap-1">
             <Countdown utc={final.utc} label={t("home.toTheFinal")} />
-            <div className="text-[11px] text-muted-2">
-              {t("home.r32Confirmed", { set: setCount, total: r32.length })}
-            </div>
+            {/* Once the finalists are locked the R32-confirmation line is a dead early-round artifact. */}
+            {!bothConfirmed && (
+              <div className="text-[11px] text-muted-2">
+                {t("home.r32Confirmed", { set: setCount, total: r32.length })}
+              </div>
+            )}
           </div>
         )}
       </div>

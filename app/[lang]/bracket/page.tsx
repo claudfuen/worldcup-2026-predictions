@@ -89,6 +89,9 @@ export default async function BracketPage() {
       : null
   const r32 = matches.filter((m) => m.round === "R32")
   const r32Set = r32.filter((m) => m.defined).length
+  // Both finalists resolved from real results but the final not yet played — the pairing is LOCKED, not a
+  // projection, so it reads "the final is set", never "the most likely outcome / R32 ties confirmed".
+  const finalLocked = Boolean(finalM?.home && finalM?.away) && !complete
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <LiveAutoRefresh enabled={hasLive} />
@@ -111,6 +114,15 @@ export default async function BracketPage() {
             {finalResult && (
               <span className="text-muted-foreground"> {finalResult}</span>
             )}
+          </p>
+        ) : champ && finalLocked ? (
+          <p className="mt-3 text-base text-pretty">
+            {t("bracket.finalSetLede", {
+              home: finalM!.homeName!,
+              away: finalM!.awayName!,
+              fav: champ.name,
+              pct: forecastPct(champ.title),
+            })}
           </p>
         ) : champ ? (
           <p className="mt-3 text-base text-pretty">

@@ -386,7 +386,8 @@
     "relWinnerOf": "Winner of",
     "relLoserOf": "Loser of",
     "relWinnerTo": "Winner → {round}",
-    "relLoserTo": "Loser → {round}"
+    "relLoserTo": "Loser → {round}",
+    "finalSetLede": "The final is set — {home} vs {away}. {fav} are the model’s pick to lift the trophy, at {pct}."
   },
   "groups": {
     "metaTitle": "World Cup 2026 Groups, Standings & Qualification Odds",
