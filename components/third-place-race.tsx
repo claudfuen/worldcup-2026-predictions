@@ -220,26 +220,41 @@ function Row({
   )
 }
 
-export function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
+export function ThirdPlaceRace({
+  entries,
+  settled = false,
+}: {
+  entries: ThirdPlaceEntry[]
+  settled?: boolean
+}) {
   const t = useT()
   const locale = useLocale()
   if (!entries.length) return null
   return (
     <section className="mt-10">
       <h2 className="text-base font-semibold tracking-tight">
-        {t("groups.thirdRaceHeading")}
+        {settled
+          ? t("groups.thirdRaceHeadingSettled")
+          : t("groups.thirdRaceHeading")}
       </h2>
-      <p className="mt-1 mb-3 text-sm text-muted-foreground">
-        {t("groups.thirdRaceIntroLead")}{" "}
-        <span className="text-foreground">
-          {t("groups.thirdRaceIntroEightBest")}
-        </span>{" "}
-        {t("groups.thirdRaceIntroMid")}{" "}
-        <span className="text-foreground">
-          {t("groups.thirdRaceIntroChance")}
-        </span>{" "}
-        {t("groups.thirdRaceIntroTail")}
-      </p>
+      {settled ? (
+        // The race is over — a past-tense one-liner, not the "still to play / 495 combinations" language.
+        <p className="mt-1 mb-3 text-sm text-muted-foreground">
+          {t("groups.thirdRaceIntroSettled")}
+        </p>
+      ) : (
+        <p className="mt-1 mb-3 text-sm text-muted-foreground">
+          {t("groups.thirdRaceIntroLead")}{" "}
+          <span className="text-foreground">
+            {t("groups.thirdRaceIntroEightBest")}
+          </span>{" "}
+          {t("groups.thirdRaceIntroMid")}{" "}
+          <span className="text-foreground">
+            {t("groups.thirdRaceIntroChance")}
+          </span>{" "}
+          {t("groups.thirdRaceIntroTail")}
+        </p>
+      )}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
@@ -274,14 +289,16 @@ export function ThirdPlaceRace({ entries }: { entries: ThirdPlaceEntry[] }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-muted-2">
-        {t("groups.thirdRaceFootnoteLead")}{" "}
-        <span className="text-foreground/80">
-          {t("groups.thirdRaceFootnoteChance")}
-        </span>{" "}
-        {t("groups.thirdRaceFootnoteMid")} <span className="text-win">✓</span>{" "}
-        {t("groups.thirdRaceFootnoteTail")}
-      </p>
+      {!settled && (
+        <p className="mt-2 text-xs text-muted-2">
+          {t("groups.thirdRaceFootnoteLead")}{" "}
+          <span className="text-foreground/80">
+            {t("groups.thirdRaceFootnoteChance")}
+          </span>{" "}
+          {t("groups.thirdRaceFootnoteMid")} <span className="text-win">✓</span>{" "}
+          {t("groups.thirdRaceFootnoteTail")}
+        </p>
+      )}
     </section>
   )
 }

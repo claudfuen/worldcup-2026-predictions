@@ -92,6 +92,10 @@ export default async function GroupsPage() {
         })
   // Localize team display names on the FINAL structures (after finalizeGroups re-derives English names),
   // right before passing them to components. Slugs/codes/logic are unaffected.
+  // Knockouts under way ⇒ the group stage is history; reframe the page (and the best-third race) past tense.
+  const koStarted = data.matches.some(
+    (m) => m.round !== "GROUP" && m.status === "final"
+  )
   const localizedGroups = localizeGroups(groups, t)
   const localizedThird = localizeThird(thirdRace, t)
   return (
@@ -102,11 +106,11 @@ export default async function GroupsPage() {
           {t("groups.eyebrow")}
         </div>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {t("groups.heading")}
+          {koStarted ? t("groups.headingFinal") : t("groups.heading")}
         </h1>
         <p className="mt-2 text-base text-pretty text-foreground">{verdict}</p>
         <p className="mt-2 text-xs text-pretty text-muted-2">
-          {t("groups.subhead")}
+          {koStarted ? t("groups.subheadFinal") : t("groups.subhead")}
         </p>
       </header>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -128,7 +132,7 @@ export default async function GroupsPage() {
         {t("groups.footnoteClinch")} <span className="text-win">▲</span>
         <span className="text-destructive">▼</span> {t("groups.footnoteDelta")}
       </p>
-      <ThirdPlaceRace entries={localizedThird} />
+      <ThirdPlaceRace entries={localizedThird} settled={koStarted} />
       <RelatedLinks
         links={[
           {

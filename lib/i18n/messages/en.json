@@ -487,7 +487,11 @@
     "routeBestThird": "Best third",
     "routeFacesWinner": "faces a group winner",
     "routeTieSet": "· tie set by the final standings",
-    "routeFootnote": "Where {name} lands in the Round of 32 depends on where it finishes Group {group}."
+    "routeFootnote": "Where {name} lands in the Round of 32 depends on where it finishes Group {group}.",
+    "headingFinal": "Final group standings",
+    "subheadFinal": "How the 12 groups finished — the top two of each, plus the eight best third-placed teams, advanced to the Round of 32.",
+    "thirdRaceHeadingSettled": "How the best-third race finished",
+    "thirdRaceIntroSettled": "The eight best of the twelve third-placed teams took the last Round-of-32 places. ✓ advanced · the rest went out."
   },
   "schedule": {
     "metaTitle": "World Cup 2026 Schedule & Predictions - All 104 Matches",
