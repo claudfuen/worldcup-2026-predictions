@@ -179,7 +179,15 @@ function FeaturedLeader({
           </div>
           <div className="mt-0.5 truncate text-xs text-muted-2">
             {t(`teams.${entry.teamCode}`)}
-            {left > 0 && <> · {t("awards.matchesLeftFull", { n: left })}</>}
+            {left > 0 && (
+              <>
+                {" "}
+                ·{" "}
+                {left === 1
+                  ? t("awards.matchesLeftOne")
+                  : t("awards.matchesLeftFull", { n: left })}
+              </>
+            )}
             {metric === "goals" && entry.penalties > 0 && (
               <> · {t("awards.penNote", { n: entry.penalties })}</>
             )}

@@ -85,8 +85,14 @@ export async function GoldenBootRace({
                     </span>
                     <span className="sr-only"> {t("awards.colGoals")}</span>
                   </span>
-                  <span className="w-9 shrink-0 text-right font-mono text-sm font-semibold text-contention tabular-nums">
-                    {e.clinched ? t("awards.won") : forecastPct(e.winProb)}
+                  <span
+                    className={`w-9 shrink-0 text-right font-mono text-sm font-semibold tabular-nums ${e.eliminated ? "text-muted-2" : "text-contention"}`}
+                  >
+                    {e.clinched
+                      ? t("awards.won")
+                      : e.eliminated
+                        ? t("awards.out")
+                        : forecastPct(e.winProb)}
                     <span className="sr-only"> {t("awards.chance")}</span>
                   </span>
                 </Link>

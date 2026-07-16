@@ -164,6 +164,24 @@ function expectedKoMatches(t: TeamProb): number {
   return t.advance + t.r16 + t.qf + 2 * t.sf
 }
 
+// The distribution of KO matches a team STILL has to play, from the full-tournament depth minus the ones it
+// already played. `koDepthDist` counts total KO matches; the reach-probs are conditioned on real results, so a
+// round already won carries prob 1 and the impossible lower-k paths carry 0. Shifting by koPlayed and
+// renormalising therefore leaves the remaining matches only — during the group stage (koPlayed=0) this is a
+// no-op, so behaviour there is unchanged. Without it, simulateRace hands a finalist ~5 more scoring matches
+// when only the final remains, inflating win% at the endgame and letting eliminated players phantom-compete.
+function remainingKoDepth(
+  dist: { k: number; p: number }[],
+  koPlayed: number
+): { k: number; p: number }[] {
+  const shifted = dist
+    .filter((d) => d.k >= koPlayed)
+    .map((d) => ({ k: d.k - koPlayed, p: d.p }))
+  const total = shifted.reduce((s, d) => s + d.p, 0)
+  if (total <= 0) return [{ k: 0, p: 1 }]
+  return shifted.map((d) => ({ k: d.k, p: d.p / total }))
+}
+
 type Cand = {
   player: string
   teamCode: string
@@ -236,12 +254,13 @@ function buildCands(
         (valueOf(t) + PRIOR_STRENGTH * priorRate) / (matches + PRIOR_STRENGTH)
       )
       const gr = groupRemaining.get(t.teamCode) ?? 0
-      const depth = tp ? koDepthDist(tp) : [{ k: 0, p: 1 }]
+      const koPlayedN = koPlayed.get(t.teamCode) ?? 0
+      // REMAINING KO depth (not full-from-R32), so the win% MC never credits already-played rounds.
+      const depth = tp
+        ? remainingKoDepth(koDepthDist(tp), koPlayedN)
+        : [{ k: 0, p: 1 }]
       // Remaining KO = expected total KO minus KO already played (the reach-probs count played rounds as 1).
-      const koLeft = Math.max(
-        0,
-        (tp ? expectedKoMatches(tp) : 0) - (koPlayed.get(t.teamCode) ?? 0)
-      )
+      const koLeft = Math.max(0, (tp ? expectedKoMatches(tp) : 0) - koPlayedN)
       const expRemaining = gr + koLeft
       return {
         player: t.player,

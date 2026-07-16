@@ -194,7 +194,8 @@
     "overviewEmpty": "Opens with the first goal.",
     "viewFull": "Full awards & forecast",
     "footnote": "A forecast is never a certainty — win% caps at 99%. Own goals excluded; penalties counted.",
-    "linkBracketHint": "See how far each player's team is projected to go"
+    "linkBracketHint": "See how far each player's team is projected to go",
+    "matchesLeftOne": "1 match left"
   },
   "scorecard": {
     "metaTitle": "How the Model Did — World Cup 2026 Prediction Accuracy",
