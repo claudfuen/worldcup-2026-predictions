@@ -66,7 +66,20 @@
     "metaDesc": "Live champion odds for every 2026 World Cup team from 20,000 Monte Carlo simulations.",
     "metaDescLeader": "{team} lead the 2026 World Cup title race at {pct} to lift the trophy. Live champion odds for every team, from 20,000 simulations.",
     "metaDescWon": "{team} won the 2026 World Cup. The final title-race standings from the model.",
-    "inFinal": "in the final"
+    "inFinal": "in the final",
+    "standingsHeading": "Where every team finished",
+    "standingsIntro": "The official FIFA final ranking — teams are ordered by the stage they reached, then by points (a knockout tie won on penalties counts as a draw), goal difference and goals scored across every match.",
+    "standingsPending": "1st–4th are still to be decided by the final and the third-place play-off.",
+    "colPts": "Pts",
+    "colGd": "GD",
+    "colGf": "GF",
+    "champions": "Champions",
+    "runnersUp": "Runners-up",
+    "thirdPlace": "3rd place",
+    "fourthPlace": "4th place",
+    "inThirdPlace": "3rd-place play-off",
+    "tierFinal": "The final",
+    "tierThird": "Third-place play-off"
   },
   "venues": {
     "metaTitle": "World Cup 2026 Stadiums — All 16 Host Venues, Matches & Results",

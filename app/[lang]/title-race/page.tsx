@@ -6,6 +6,8 @@ import { LiveAutoRefresh } from "@/components/live-auto-refresh"
 import { Flag } from "@/components/flag"
 import { Delta } from "@/components/delta"
 import { RelatedLinks } from "@/components/related-links"
+import { FinalStandings } from "@/components/final-standings"
+import { finalRankingReady } from "@/lib/finalRanking"
 import { forecastPct } from "@/lib/format"
 import { slugForCode } from "@/lib/slug"
 import { localizeTeams } from "@/lib/i18n/localize-payload"
@@ -133,6 +135,12 @@ export default async function TitleRacePage() {
         <span className="text-destructive">▼</span> {t("home.changeSinceStart")}{" "}
         · {t("titleRace.footnote")}
       </p>
+
+      {/* Once the knockouts have begun, the full 48-team official final ranking — where EVERY team ended,
+          including the eliminated ones — sits below the live title race. */}
+      {finalRankingReady(data.matches) && (
+        <FinalStandings matches={data.matches} className="mt-10" />
+      )}
 
       <RelatedLinks
         links={[

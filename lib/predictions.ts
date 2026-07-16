@@ -581,12 +581,10 @@ export async function computePredictions(
     const oppCode =
       lockedSlotFor && oppGroup ? winnerByGroup[oppGroup] : undefined // certain only if winner clinched
     const advProb = sim.teams[code].advance
-    const opp = (r32Opponents[code] ?? [])
-      .slice(0, 3)
-      .map((o) => ({
-        ...o,
-        prob: advProb > 0 ? Math.min(o.prob / advProb, 1) : o.prob,
-      })) // conditional on advancing
+    const opp = (r32Opponents[code] ?? []).slice(0, 3).map((o) => ({
+      ...o,
+      prob: advProb > 0 ? Math.min(o.prob / advProb, 1) : o.prob,
+    })) // conditional on advancing
     return {
       rank: i + 1,
       group: t.group,
