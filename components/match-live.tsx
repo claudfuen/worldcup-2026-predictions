@@ -118,6 +118,17 @@ function shareTextFor(
   })
 }
 
+// The knockout "who goes through" bar isn't really "to advance" at the last two matches: the final decides
+// the champion and the third-place play-off decides the bronze. Round-aware labels so the marquee pages read
+// right (and the sr-only label matches what's on screen).
+function advanceLabelKeys(round: string): { pre: string; now: string } {
+  if (round === "FINAL")
+    return { pre: "match.toWinCup", now: "match.toWinCupNow" }
+  if (round === "3P")
+    return { pre: "match.toFinishThird", now: "match.toFinishThirdNow" }
+  return { pre: "match.toAdvance", now: "match.toAdvanceNow" }
+}
+
 // A two-way "to advance" bar for knockout matches (someone always goes through — no draw endpoint). Home in
 // pitch-green, away in cool-blue; percentages below, mirroring WinProbBar so the two read consistently.
 function AdvanceBar({
@@ -127,6 +138,7 @@ function AdvanceBar({
   awayName,
   t,
   secondary,
+  srLabel,
 }: {
   home: number
   away: number
@@ -134,6 +146,7 @@ function AdvanceBar({
   awayName: string
   t: TFunction
   secondary?: boolean
+  srLabel?: string
 }) {
   // Compact variant (the pre-match row stacked under the live one): thinner, dimmer, single-line labels —
   // mirrors WinProbBar's `secondary` so the knockout layout matches the group-stage Now/Pre-match stack.
@@ -185,7 +198,7 @@ function AdvanceBar({
           </div>
           <div className="mt-0.5 font-mono text-base font-semibold tabular-nums">
             {forecastPct(home)}
-            <span className="sr-only"> {t("awards.toWin")}</span>
+            <span className="sr-only"> {srLabel ?? t("awards.toWin")}</span>
           </div>
         </div>
         <div className="min-w-0 text-right">
@@ -347,7 +360,7 @@ export function MatchHero({
             // Knockout: lead with who ADVANCES (no draw endpoint); regulation W/D/L is the secondary read.
             <>
               <div className="mb-2 text-center font-mono text-[10px] font-semibold tracking-wide text-muted-2 uppercase">
-                {t("match.toAdvance")}
+                {t(advanceLabelKeys(m.round).pre)}
               </div>
               <AdvanceBar
                 home={m.advance.home}
@@ -355,6 +368,7 @@ export function MatchHero({
                 homeName={homeName!}
                 awayName={awayName!}
                 t={t}
+                srLabel={t(advanceLabelKeys(m.round).pre)}
               />
               {m.probs && (
                 <p className="mt-3 text-center text-xs text-pretty text-muted-2">
@@ -654,7 +668,7 @@ export function MatchBody({
               // and the pre-match advance follow as comparison.
               <>
                 <div className="mb-2 font-mono text-[10px] font-semibold tracking-wide text-live uppercase">
-                  {t("match.toAdvanceNow")}
+                  {t(advanceLabelKeys(m.round).now)}
                 </div>
                 <AdvanceBar
                   home={liveProbs.advance.home}
@@ -662,6 +676,7 @@ export function MatchBody({
                   homeName={homeName!}
                   awayName={awayName!}
                   t={t}
+                  srLabel={t(advanceLabelKeys(m.round).now)}
                 />
                 {m.advance && (
                   <div className="mt-4 border-t border-border/50 pt-3">
@@ -724,6 +739,7 @@ export function MatchBody({
                 homeName={homeName!}
                 awayName={awayName!}
                 t={t}
+                srLabel={t(advanceLabelKeys(m.round).pre)}
               />
             ) : (
               <WinProbBar

@@ -611,7 +611,11 @@
     "statShots": "Shots",
     "statShotsOnTarget": "Shots on target",
     "statCorners": "Corners",
-    "statFouls": "Fouls"
+    "statFouls": "Fouls",
+    "toWinCup": "To lift the trophy",
+    "toWinCupNow": "To lift the trophy — now",
+    "toFinishThird": "To take third",
+    "toFinishThirdNow": "To take third — now"
   },
   "team": {
     "fallbackTitle": "Team",
