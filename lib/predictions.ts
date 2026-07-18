@@ -230,8 +230,9 @@ function fillMatchForecast(
     winProb: Math.max(p.win, p.loss),
   }
   // Knockout: who ADVANCES (regulation + ET + shootout). The draw above is the chance it goes the distance.
+  // The third-place play-off skips extra time (FIFA rule): a level 90' goes straight to penalties.
   if (info.round !== "GROUP") {
-    const adv = koAdvanceProb(diff)
+    const adv = koAdvanceProb(diff, {}, info.round === "3P")
     info.advance = { home: adv, away: 1 - adv }
   }
   const [lh, la] = eloToLambdas(diff)

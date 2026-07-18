@@ -89,32 +89,40 @@ export function scorelineDist(
 
 // Probability the home/first side ADVANCES in a knockout: regulation, then ~1/3-length extra time,
 // then a coin-flip shootout on the remaining tie mass. Removes the favorite over-statement of bare Elo We.
+// The third-place play-off is the one knockout with NO extra time (FIFA rule): a level regulation goes
+// straight to penalties, so pass noExtraTime to send the draw mass directly to the coin-flip shootout.
 function koAdvanceRaw(
   ratingDiff: number,
-  cfg: { supDiv?: number; totalGoals?: number; rho?: number }
+  cfg: { supDiv?: number; totalGoals?: number; rho?: number },
+  noExtraTime = false
 ): number {
   const [lh, la] = eloToLambdas(ratingDiff, cfg)
   const rho = cfg.rho ?? POISSON_CONFIG.rho
   const reg = wdlFromLambdas(lh, la, rho, 8)
+  if (noExtraTime) return reg.win + reg.draw * 0.5 // straight to a coin-flip shootout
   const et = wdlFromLambdas(lh * 0.33, la * 0.33, rho, 8) // extra time ~ 1/3 of a match
   return reg.win + reg.draw * (et.win + et.draw * 0.5)
 }
 // Memoized on the default config (smooth in ratingDiff; bucket to 4 Elo for a large Monte Carlo speedup).
+// Separate caches for the ET and no-ET (third-place) variants.
 const koCache = new Map<number, number>()
+const koCacheNoET = new Map<number, number>()
 export function koAdvanceProb(
   ratingDiff: number,
-  cfg: { supDiv?: number; totalGoals?: number; rho?: number } = {}
+  cfg: { supDiv?: number; totalGoals?: number; rho?: number } = {},
+  noExtraTime = false
 ): number {
   if (cfg.supDiv == null && cfg.totalGoals == null && cfg.rho == null) {
+    const cache = noExtraTime ? koCacheNoET : koCache
     const key = Math.round(ratingDiff / 4)
-    let v = koCache.get(key)
+    let v = cache.get(key)
     if (v === undefined) {
-      v = koAdvanceRaw(key * 4, cfg)
-      koCache.set(key, v)
+      v = koAdvanceRaw(key * 4, cfg, noExtraTime)
+      cache.set(key, v)
     }
     return v
   }
-  return koAdvanceRaw(ratingDiff, cfg)
+  return koAdvanceRaw(ratingDiff, cfg, noExtraTime)
 }
 
 function dcTau(
@@ -196,9 +204,11 @@ export function liveKoAdvance(
   hg: number,
   ag: number,
   frac: number,
-  cfg: { supDiv?: number; totalGoals?: number; rho?: number } = {}
+  cfg: { supDiv?: number; totalGoals?: number; rho?: number } = {},
+  noExtraTime = false // third-place play-off: level regulation -> straight to penalties
 ): number {
   const reg = liveWdl(ratingDiff, hg, ag, frac, cfg, 8)
+  if (noExtraTime) return reg.win + reg.draw * 0.5 // straight to a coin-flip shootout
   const [lh, la] = eloToLambdas(ratingDiff, cfg)
   const rho = cfg.rho ?? POISSON_CONFIG.rho
   const et = wdlFromLambdas(lh * 0.33, la * 0.33, rho, 8) // extra time from level

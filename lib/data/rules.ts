@@ -4,5 +4,6 @@ export const POINTS = { win: 3, draw: 1, loss: 0 } as const
 // Group tiebreaker order (after points): H2H points -> H2H GD -> H2H GF -> overall GD -> overall GF -> conduct -> FIFA ranking.
 // Third-place ranking (cross-group, no H2H): points -> overall GD -> overall GF -> conduct -> FIFA ranking.
 // Knockouts: draw -> 30' extra time -> penalties. No away-goals rule.
+// EXCEPTION: the third-place play-off (round "3P") has no extra time — a level 90' goes straight to penalties.
 // FIFA-ranking fallback approximated by pre-tournament Elo (higher = higher rank). Used only in the rare unresolved tie.
 export const THIRDS_ADVANCING = 8

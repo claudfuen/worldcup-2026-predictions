@@ -222,9 +222,10 @@ export function liveMatchProbs(
     away: wdl.loss,
   }
   if (m.round !== "GROUP") {
+    const noET = m.round === "3P" // third-place play-off: level 90' -> straight to penalties, no extra time
     out.advance = {
-      home: liveKoAdvance(diff, m.homeScore, m.awayScore, frac),
-      away: liveKoAdvance(-diff, m.awayScore, m.homeScore, frac),
+      home: liveKoAdvance(diff, m.homeScore, m.awayScore, frac, {}, noET),
+      away: liveKoAdvance(-diff, m.awayScore, m.homeScore, frac, {}, noET),
     }
   }
   return out
