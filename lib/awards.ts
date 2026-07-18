@@ -186,6 +186,7 @@ type Cand = {
   player: string
   teamCode: string
   value: number // goals or assists
+  tiebreak: number // secondary metric for tie resolution (assists for the Boot, goals for assists)
   rate: number // shrunk per-match rate
   groupRemaining: number
   depth: { k: number; p: number }[]
@@ -194,7 +195,10 @@ type Cand = {
 
 // Run the seeded Monte Carlo over one race (Golden Boot or assists). Each iteration draws every candidate's
 // remaining team matches (group + a sampled KO depth) and their goals/assists in those matches (Poisson at
-// the shrunk rate), then credits the win to the final leader (ties split). Returns winProb per candidate.
+// the shrunk rate), then credits the win to the final leader. A tie on the headline metric is broken by the
+// secondary metric (assists for the Boot, goals for the assists race) — mirroring FIFA, which does NOT share
+// the Golden Boot; only candidates still tied after that split the win. (FIFA's final tiebreak, fewer minutes
+// played, isn't modelled.) Returns winProb per candidate.
 function simulateRace(cands: Cand[], rand: () => number): Map<number, number> {
   const wins = new Array(cands.length).fill(0)
   for (let it = 0; it < MC_ITERS; it++) {
@@ -222,8 +226,11 @@ function simulateRace(cands: Cand[], rand: () => number): Map<number, number> {
       } else if (final === best) bestIdx.push(i)
     }
     if (best > 0) {
-      const share = 1 / bestIdx.length
-      for (const i of bestIdx) wins[i] += share
+      // Break a tie on the headline metric by the secondary one; split only among those still level.
+      const maxTb = bestIdx.reduce((m, i) => Math.max(m, cands[i].tiebreak), -1)
+      const winnersIdx = bestIdx.filter((i) => cands[i].tiebreak === maxTb)
+      const share = 1 / winnersIdx.length
+      for (const i of winnersIdx) wins[i] += share
     }
   }
   const out = new Map<number, number>()
@@ -266,6 +273,7 @@ function buildCands(
         player: t.player,
         teamCode: t.teamCode,
         value: valueOf(t),
+        tiebreak: metric === "goals" ? t.assists : t.goals,
         rate,
         groupRemaining: gr,
         depth,
@@ -399,10 +407,11 @@ export async function computeAwards(
 
 // Render-time live refresh of the boards. The cron stores a FINAL-SETTLED baseline (completed matches only);
 // here we fold in the goals/assists from matches in progress RIGHT NOW so a live hat-trick lands on the Golden
-// Boot immediately — the same overlay the score ticker uses for matches. Cheap by design: it re-reads only the
-// in-progress matches' (KV-cached, ~15s) summaries and CARRIES each player's win probability from the baseline
-// instead of re-running the per-race Monte Carlo. A brand-new live scorer appears with a 0% forecast that the
-// next cron tick fills in. Returns the baseline untouched when nothing live is outstanding.
+// Boot immediately — the same overlay the score ticker uses for matches. It re-reads only the in-progress
+// matches' (KV-cached, ~15s) summaries, then re-runs the per-race Monte Carlo so each player's win% stays
+// consistent with the freshly-projected finish (a live result can eliminate a contender or shorten a leader's
+// road, which a carried-over probability would ignore). A brand-new live scorer is included immediately.
+// Returns the baseline untouched when nothing live is outstanding.
 export async function liveAwards(
   baseline: Awards,
   kvMatches: MatchInfo[],
@@ -465,12 +474,15 @@ export async function liveAwards(
   const merged = [...byKey.values()]
   const { played, groupRemaining, koPlayed } = teamMatchCounts(overlaid)
 
-  // Something is live, so the awards cannot be clinched; carry win probabilities from the matching baseline
-  // entry (new live scorers fall through to 0 until the next cron run computes their forecast).
+  // Something is live, so the awards cannot be clinched. Re-run the per-race Monte Carlo (not just the live
+  // tally): a live result can change who's still playing and how many matches each contender has left, so a
+  // carried-over win% would contradict the freshly-projected finish (a chaser whose team was just eliminated,
+  // or a leader now one game from the title, must have its probability move with its projection). The MC is
+  // cheap — a few dozen candidates × 20k iters — so it's fine to run at render time while a match is live.
+  const rand = mulberry32(FORECAST_SEED)
   const refresh = (
     metric: "goals" | "assists",
-    priorRate: number,
-    cached: AwardEntry[]
+    priorRate: number
   ): AwardEntry[] => {
     const cands = buildCands(
       merged,
@@ -481,19 +493,13 @@ export async function liveAwards(
       groupRemaining,
       koPlayed
     )
-    const carried = new Map(
-      cached.map((e) => [`${e.player}|${e.teamCode}`, e.winProb])
-    )
-    const winProbs = new Map<number, number>()
-    cands.forEach((c, i) =>
-      winProbs.set(i, carried.get(`${c.player}|${c.teamCode}`) ?? 0)
-    )
+    const winProbs = simulateRace(cands, rand)
     return assembleBoard(cands, merged, metric, played, winProbs, false)
   }
 
   return {
-    goldenBoot: refresh("goals", PRIOR_GOAL_RATE, baseline.goldenBoot),
-    assists: refresh("assists", PRIOR_ASSIST_RATE, baseline.assists),
+    goldenBoot: refresh("goals", PRIOR_GOAL_RATE),
+    assists: refresh("assists", PRIOR_ASSIST_RATE),
     players: baseline.players,
     matchesCounted: baseline.matchesCounted + deltaMatches.length,
   }

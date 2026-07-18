@@ -160,7 +160,7 @@
     "verdictNoData": "No goals scored yet — the race opens with the first match.",
     "subhead": "Live standings from every goal scored, plus a forecast of the final finish: each player's tally projected over the matches their team is still expected to play. Own goals don't count; penalties do.",
     "goldenBoot": "Golden Boot",
-    "goldenBootDesc": "Most goals. The official tiebreaker is fewer minutes played, which we don't model — ties shown as-is.",
+    "goldenBootDesc": "Most goals; ties broken by assists, as FIFA does. Its next tiebreaker, fewer minutes played, isn't modelled.",
     "playmaker": "Most assists",
     "playmakerDesc": "Not an official FIFA award, but fully data-driven from the same timelines.",
     "colPlayer": "Player",
